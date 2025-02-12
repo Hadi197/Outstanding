@@ -22,7 +22,7 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background-color: #333;
+            background: linear-gradient(135deg, #00008B 0%, #1E90FF 50%, #00008B 100%); /* Dark blue gradient with lighting effect */
             color: white;
             display: flex;
             flex-direction: column;
@@ -180,6 +180,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-3d"></script>
 </head>
 <body>
     <!-- Wrapper -->
@@ -254,6 +255,8 @@
     </div>
     <script>
         let globalRows = []; // Variabel untuk menyimpan data CSV global
+        let selectedPeriod = null; // Store selected period for multi-filter
+        let selectedGT = null; // Store selected GT range for multi-filter
 
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQe997zmYQN79SbSc5uMuV85f7CrAUr0Jiqa5-oXTDqYNkE-marAU_0OC3gyhF8HL48hz1thkW4tCnf/pub?gid=0&single=true&output=csv";
 
@@ -370,11 +373,21 @@
 
                         console.log("Periode yang dipilih:", label); // Debugging
 
+                        selectedPeriod = label; // Store selected period
                         updateCardsForPeriod(label, globalRows, gtColumnIndex);
                         updateSPBCountsForPeriod(label, globalRows, spbColumnIndex);
-                        updateTableForPeriod(label, globalRows);
+                        filterTable(globalRows, gtColumnIndex, spbColumnIndex);
                     }
                 };
+
+                // Add click event listeners to the cards
+                document.querySelectorAll('.card').forEach(card => {
+                    card.addEventListener('click', function() {
+                        const gtRange = this.querySelector('h3').textContent;
+                        selectedGT = gtRange; // Store selected GT range
+                        filterTable(globalRows, gtColumnIndex, spbColumnIndex);
+                    });
+                });
             } catch (error) {
                 console.error("Error fetching CSV:", error);
             }
@@ -442,12 +455,23 @@
             document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
         }
 
-        function updateTableForPeriod(period, rows) {
+        function filterTable(rows, gtColumnIndex, spbColumnIndex) {
             const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
             tableBody.innerHTML = ""; // Clear existing table data
 
             rows.slice(1).forEach(row => {
-                if (row[12] === period) { // Assuming PERIOD is the 13th column
+                const periodMatch = !selectedPeriod || row[12] === selectedPeriod; // Match period if selected
+                const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                const gtMatch = !selectedGT || (
+                    (selectedGT === "GT < 500" && gtValue < 500) ||
+                    (selectedGT === "GT 501 - 3000" && gtValue >= 501 && gtValue <= 3000) ||
+                    (selectedGT === "GT 3001 - 6000" && gtValue >= 3001 && gtValue <= 6000) ||
+                    (selectedGT === "GT 6001 - 10000" && gtValue >= 6001 && gtValue <= 10000) ||
+                    (selectedGT === "GT 10001 - 15000" && gtValue >= 10001 && gtValue <= 15000) ||
+                    (selectedGT === "GT > 15000" && gtValue > 15000)
+                );
+
+                if (periodMatch && gtMatch) {
                     const newRow = tableBody.insertRow();
                     newRow.insertCell(0).textContent = row[2]; // NO PKK PHINNISI
                     newRow.insertCell(1).textContent = row[5]; // NAMA KAPAL
@@ -464,6 +488,12 @@
             const sortedData = sortedKeys.map(key => data[key]);
 
             const ctx = document.getElementById('periodChart').getContext('2d');
+
+            // Buat efek 3D menggunakan gradien warna
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, "rgba(0, 123, 255, 1)");
+            gradient.addColorStop(1, "rgba(0, 123, 255, 0.5)");
+
             window.periodChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -471,26 +501,34 @@
                     datasets: [{
                         label: 'Jumlah Data',
                         data: sortedData,
-                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        backgroundColor: gradient, // Pakai gradien untuk efek 3D
                         borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
+                        borderWidth: 1,
+                        borderSkipped: false, // Hilangkan border atas untuk efek lebih 3D
+                        hoverBackgroundColor: 'rgba(0, 123, 255, 0.8)', // Warna hover lebih gelap
+                        barThickness: 40, // Make bars larger
                     }]
                 },
                 options: {
                     plugins: {
+                        legend: { display: false }, // Sembunyikan legend
                         datalabels: {
                             anchor: 'end',
                             align: 'end',
                             color: '#000',
-                            font: {
-                                weight: 'bold'
-                            },
-                            formatter: (value) => value // Display the value as the label
+                            font: { weight: 'bold' },
+                            formatter: (value) => value // Tampilkan angka di atas bar
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            display: false // Hide y-axis values
+                        },
+                        x: {
+                            grid: {
+                                display: false // Hide background grid
+                            }
                         }
                     }
                 }
