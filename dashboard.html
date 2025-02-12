@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <style>
+        /* Reset Default Margin & Padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Layout Wrapper */
+        .wrapper {
+            display: flex;
+            min-height: 100vh; /* Ensure the page can extend */
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            position: fixed;
+            height: 100%;
+        }
+
+        .sidebar img {
+            width: 100%; /* Adjust image to fit the width of the sidebar */
+            height: auto;
+            margin-bottom: 20px; /* Add some space below the image */
+        }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            color: white;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        /* Topbar */
+        .topbar {
+            width: calc(100% - 250px);
+            height: 100px; /* Increase height */
+            background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the title */
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Konten */
+        .content {
+            margin-left: 250px;
+            margin-top: 100px; /* Adjust for new topbar height */
+            padding: 20px;
+            width: calc(100% - 250px);
+            overflow-y: auto; /* Scrollable */
+            background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-container {
+            width: 100%; /* Full width */
+            height: 400px;
+        }
+
+        .card-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            gap: 20px; /* Add gap between cards */
+        }
+
+        .card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Dark blue gradient */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            width: calc(33.33% - 20px); /* Adjust width to account for gap */
+            text-align: center; /* Center text */
+            color: white; /* White text */
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            font-size: 14px; /* Smaller font size */
+            color: white; /* White text */
+        }
+
+        .card p {
+            font-size: 16px;
+            color: white; /* White text */
+            font-weight: bold; /* Bold text */
+        }
+
+        #spb-counts {
+            margin-top: 20px;
+        }
+
+        .data-table-container {
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #ddd; /* Add border to table */
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #333;
+            color: white;
+        }
+
+        /* Responsif: Sidebar bisa disembunyikan */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding-top: 10px;
+            }
+
+            .sidebar img {
+                width: 100%; /* Adjust image to fit the width of the sidebar */
+                height: auto;
+                margin-bottom: 10px; /* Adjust space below the image */
+            }
+
+            .sidebar a {
+                text-align: center;
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .topbar {
+                width: calc(100% - 60px);
+                left: 60px;
+            }
+
+            .content {
+                margin-left: 60px;
+                width: calc(100% - 60px);
+            }
+
+            .card-container {
+                flex-direction: column;
+            }
+
+            .card {
+                width: 100%;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</head>
+<body>
+    <!-- Wrapper -->
+    <div class="wrapper">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="https://www.bersamabumn.com/wp-content/uploads/2023/12/Lowongan-Kerja-Magang-BUMN-PT-Pelindo-Jasa-Maritim.webp" alt="Logo">
+            <a href="index.html">Tabel</a>
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <h2>OUTSTANDING PERAK - GRESIK</h2>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="chart-container">
+                <canvas id="periodChart"></canvas>
+            </div>
+            <div id="spb-counts">
+                <p>SPB.IDSUB: <span id="spb-idsub-count">0</span></p>
+                <p>SPB.IDGRE: <span id="spb-idgre-count">0</span></p>
+            </div>
+            <div class="card-container">
+                <div class="card">
+                    <h3>GT < 500</h3>
+                    <p id="gt-less-500">0</p>
+                </div>
+                <div class="card">
+                    <h3>GT 501 - 3000</h3>
+                    <p id="gt-501-3000">0</p>
+                </div>
+                <div class="card">
+                    <h3>GT 3001 - 6000</h3>
+                    <p id="gt-3001-6000">0</p>
+                </div>
+                <div class="card">
+                    <h3>GT 6001 - 10000</h3>
+                    <p id="gt-6001-10000">0</p>
+                </div>
+                <div class="card">
+                    <h3>GT 10001 - 15000</h3>
+                    <p id="gt-10001-15000">0</p>
+                </div>
+                <div class="card">
+                    <h3>GT > 15000</h3>
+                    <p id="gt-greater-15000">0</p>
+                </div>
+            </div>
+            <div class="data-table-container">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>NO PKK PHINNISI</th>
+                            <th>NAMA KAPAL</th>
+                            <th>NAMA KEAGENAN</th>
+                            <th>GT</th>
+                            <th>LOA</th>
+                            <th>SPB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        let globalRows = []; // Variabel untuk menyimpan data CSV global
+
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQe997zmYQN79SbSc5uMuV85f7CrAUr0Jiqa5-oXTDqYNkE-marAU_0OC3gyhF8HL48hz1thkW4tCnf/pub?gid=0&single=true&output=csv";
+
+        async function loadCSV() {
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                const rows = csvText.split("\n").map(row => {
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by commas not inside quotes
+                    return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
+                });
+
+                globalRows = rows; // Simpan data ke variabel global agar bisa diakses di event chart
+
+                console.log("Header CSV:", rows[0]); // Debug header CSV
+
+                // Mencari indeks kolom SPB
+                const spbColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "spb");
+
+                if (spbColumnIndex === -1) {
+                    console.error("Kolom SPB tidak ditemukan!");
+                    return;
+                }
+
+                console.log("Indeks Kolom SPB:", spbColumnIndex); // Debug indeks kolom SPB
+
+                // Menghitung jumlah SPB.IDSUB dan SPB.IDGRE
+                const spbIdsubCount = rows.slice(1).filter(row => {
+                    console.log("Data SPB:", row[spbColumnIndex]); // Debug data SPB
+                    return row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDSUB");
+                }).length;
+                const spbIdgreCount = rows.slice(1).filter(row => {
+                    console.log("Data SPB:", row[spbColumnIndex]); // Debug data SPB
+                    return row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDGRE");
+                }).length;
+
+                console.log("Jumlah SPB.IDSUB:", spbIdsubCount);
+                console.log("Jumlah SPB.IDGRE:", spbIdgreCount);
+
+                // Memperbarui tampilan di HTML
+                document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
+                document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
+
+                // Create the chart
+                const periodData = {};
+                const gtColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "gt");
+                const gtCounts = {
+                    less500: 0,
+                    between501And3000: 0,
+                    between3001And6000: 0,
+                    between6001And10000: 0,
+                    between10001And15000: 0,
+                    greater15000: 0
+                };
+
+                if (gtColumnIndex !== -1) {
+                    rows.slice(1).forEach(row => {
+                        const period = row[12]; // Assuming PERIOD is the 13th column
+                        if (period) {
+                            periodData[period] = (periodData[period] || 0) + 1;
+                        }
+
+                        // Count GT categories
+                        const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                        console.log("GT Ditemukan:", gtValue); // Debugging GT
+                        if (!isNaN(gtValue)) {
+                            if (gtValue < 500) {
+                                gtCounts.less500++;
+                            } else if (gtValue >= 501 && gtValue <= 3000) {
+                                gtCounts.between501And3000++;
+                            } else if (gtValue >= 3001 && gtValue <= 6000) {
+                                gtCounts.between3001And6000++;
+                            } else if (gtValue >= 6001 && gtValue <= 10000) {
+                                gtCounts.between6001And10000++;
+                            } else if (gtValue >= 10001 && gtValue <= 15000) {
+                                gtCounts.between10001And15000++;
+                            } else if (gtValue > 15000) {
+                                gtCounts.greater15000++;
+                            }
+                        } else {
+                            console.log("GT Invalid atau Kosong:", row[gtColumnIndex]); // Cek jika GT bermasalah
+                        }
+                    });
+                } else {
+                    console.error("Kolom 'GT' tidak ditemukan dalam CSV!");
+                }
+
+                createChart(periodData);
+
+                // Update GT counts
+                document.getElementById("gt-less-500").textContent = gtCounts.less500 || "0";
+                document.getElementById("gt-501-3000").textContent = gtCounts.between501And3000 || "0";
+                document.getElementById("gt-3001-6000").textContent = gtCounts.between3001And6000 || "0";
+                document.getElementById("gt-6001-10000").textContent = gtCounts.between6001And10000 || "0";
+                document.getElementById("gt-10001-15000").textContent = gtCounts.between10001And15000 || "0";
+                document.getElementById("gt-greater-15000").textContent = gtCounts.greater15000 || "0";
+
+                console.log("Final GT Counts:", gtCounts);
+                console.log("Elemen GT ditemukan?", 
+                    document.getElementById("gt-less-500"), 
+                    document.getElementById("gt-501-3000"), 
+                    document.getElementById("gt-3001-6000"),
+                    document.getElementById("gt-6001-10000"), 
+                    document.getElementById("gt-10001-15000"), 
+                    document.getElementById("gt-greater-15000")
+                );
+
+                // Add click event listener to the chart
+                document.getElementById('periodChart').onclick = function(evt) {
+                    const activePoints = window.periodChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                    if (activePoints.length > 0) {
+                        const firstPoint = activePoints[0];
+                        const label = window.periodChart.data.labels[firstPoint.index]; // Periode yang dipilih
+
+                        console.log("Periode yang dipilih:", label); // Debugging
+
+                        updateCardsForPeriod(label, globalRows, gtColumnIndex);
+                        updateSPBCountsForPeriod(label, globalRows, spbColumnIndex);
+                        updateTableForPeriod(label, globalRows);
+                    }
+                };
+            } catch (error) {
+                console.error("Error fetching CSV:", error);
+            }
+        }
+
+        function updateCardsForPeriod(period, rows, gtColumnIndex) {
+            const gtCounts = {
+                less500: 0,
+                between501And3000: 0,
+                between3001And6000: 0,
+                between6001And10000: 0,
+                between10001And15000: 0,
+                greater15000: 0
+            };
+
+            rows.slice(1).forEach(row => {
+                if (row[12] === period) { // Assuming PERIOD is the 13th column
+                    const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                    if (!isNaN(gtValue)) {
+                        if (gtValue < 500) {
+                            gtCounts.less500++;
+                        } else if (gtValue >= 501 && gtValue <= 3000) {
+                            gtCounts.between501And3000++;
+                        } else if (gtValue >= 3001 && gtValue <= 6000) {
+                            gtCounts.between3001And6000++;
+                        } else if (gtValue >= 6001 && gtValue <= 10000) {
+                            gtCounts.between6001And10000++;
+                        } else if (gtValue >= 10001 && gtValue <= 15000) {
+                            gtCounts.between10001And15000++;
+                        } else if (gtValue > 15000) {
+                            gtCounts.greater15000++;
+                        }
+                    }
+                }
+            });
+
+            // Update GT counts
+            document.getElementById("gt-less-500").textContent = gtCounts.less500 || "0";
+            document.getElementById("gt-501-3000").textContent = gtCounts.between501And3000 || "0";
+            document.getElementById("gt-3001-6000").textContent = gtCounts.between3001And6000 || "0";
+            document.getElementById("gt-6001-10000").textContent = gtCounts.between6001And10000 || "0";
+            document.getElementById("gt-10001-15000").textContent = gtCounts.between10001And15000 || "0";
+            document.getElementById("gt-greater-15000").textContent = gtCounts.greater15000 || "0";
+        }
+
+        function updateSPBCountsForPeriod(period, rows, spbColumnIndex) {
+            let spbIdsubCount = 0;
+            let spbIdgreCount = 0;
+
+            rows.slice(1).forEach(row => {
+                if (row[12] === period) { // Assuming PERIOD is the 13th column
+                    if (row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDSUB")) {
+                        spbIdsubCount++;
+                    } else if (row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDGRE")) {
+                        spbIdgreCount++;
+                    }
+                }
+            });
+
+            console.log(`SPB.IDSUB pada ${period}:`, spbIdsubCount); // Debugging
+            console.log(`SPB.IDGRE pada ${period}:`, spbIdgreCount); // Debugging
+
+            // Update ke halaman
+            document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
+            document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
+        }
+
+        function updateTableForPeriod(period, rows) {
+            const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+            tableBody.innerHTML = ""; // Clear existing table data
+
+            rows.slice(1).forEach(row => {
+                if (row[12] === period) { // Assuming PERIOD is the 13th column
+                    const newRow = tableBody.insertRow();
+                    newRow.insertCell(0).textContent = row[2]; // NO PKK PHINNISI
+                    newRow.insertCell(1).textContent = row[5]; // NAMA KAPAL
+                    newRow.insertCell(2).textContent = row[6]; // NAMA KEAGENAN
+                    newRow.insertCell(3).textContent = row[7]; // GT
+                    newRow.insertCell(4).textContent = row[8]; // LOA
+                    newRow.insertCell(5).textContent = row[10]; // SPB
+                }
+            });
+        }
+
+        function createChart(data) {
+            const sortedKeys = Object.keys(data).sort((a, b) => a - b);
+            const sortedData = sortedKeys.map(key => data[key]);
+
+            const ctx = document.getElementById('periodChart').getContext('2d');
+            window.periodChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sortedKeys,
+                    datasets: [{
+                        label: 'Jumlah Data',
+                        data: sortedData,
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'end',
+                            color: '#000',
+                            font: {
+                                weight: 'bold'
+                            },
+                            formatter: (value) => value // Display the value as the label
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        loadCSV();
+    </script>
+</body>
+</html>

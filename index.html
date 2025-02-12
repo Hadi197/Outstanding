@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets Data</title>
+    <style>
+        /* Reset Default Margin & Padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Layout Wrapper */
+        .wrapper {
+            display: flex;
+            height: 100vh; /* Full height */
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            position: fixed;
+            height: 100%;
+        }
+
+        .sidebar img {
+            width: 100%; /* Adjust image to fit the width of the sidebar */
+            height: auto;
+            margin-bottom: 20px; /* Add some space below the image */
+        }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            color: white;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        /* Topbar */
+        .topbar {
+            width: calc(100% - 250px);
+            height: 100px; /* Increase height */
+            background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the title */
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 250px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Konten */
+        .content {
+            margin-left: 250px;
+            margin-top: 100px; /* Adjust for new topbar height */
+            padding: 20px;
+            width: calc(100% - 250px);
+            height: calc(100vh - 100px); /* Adjust for new topbar height */
+            overflow-y: auto; /* Scrollable */
+            background-color: #f4f4f4;
+        }
+
+        /* Responsif: Sidebar bisa disembunyikan */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 60px;
+                padding-top: 10px;
+            }
+
+            .sidebar img {
+                width: 100%; /* Adjust image to fit the width of the sidebar */
+                height: auto;
+                margin-bottom: 10px; /* Adjust space below the image */
+            }
+
+            .sidebar a {
+                text-align: center;
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .topbar {
+                width: calc(100% - 60px);
+                left: 60px;
+            }
+
+            .content {
+                margin-left: 60px;
+                width: calc(100% - 60px);
+            }
+        }
+
+        .table-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%; /* Ensure the table expands to the full width */
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px; /* Add padding for better spacing */
+            text-align: left;
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Prevent text from overflowing */
+            text-overflow: ellipsis; /* Add "..." if text is too long */
+        }
+        th {
+            background-color: blue;
+            color: white;
+            font-weight: bold;
+        }
+        td {
+            min-height: 50px; /* Set minimum height */
+        }
+        table thead tr {
+            background-color: #0000FF; /* Blue color */
+            color: #ffffff; /* White text */
+            text-align: left;
+            font-weight: bold; /* Bold text */
+        }
+        table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+        table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+        table tbody tr:last-of-type {
+            border-bottom: 2px solid #009879;
+        }
+        table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(0,152,121,1) 0%, rgba(0,212,255,1) 100%);
+            color: #ffffff;
+        }
+        #total-data {
+            font-size: 36px; /* Twice as large */
+            font-weight: bold; /* Bolder text */
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+        .search-container input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            box-sizing: border-box;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+</head>
+<body>
+    <!-- Wrapper -->
+    <div class="wrapper">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="https://www.bersamabumn.com/wp-content/uploads/2023/12/Lowongan-Kerja-Magang-BUMN-PT-Pelindo-Jasa-Maritim.webp" alt="Logo">
+            <a href="index.html">Tabel</a>
+            <a href="dashboard.html">Dashboard</a>
+        </div>
+
+        <!-- Topbar -->
+        <div class="topbar">
+            <h2>OUTSTANDING PERAK - GRESIK</h2>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div id="tabel" class="page active">
+                <div class="table-container">
+                    <p id="total-data">Total data: 0</p>
+                    <div class="search-container">
+                        <input type="text" id="search-input" onkeyup="searchTable()" placeholder="Search for names..">
+                    </div>
+                </div>
+                <table border="1" id="data-table">
+                    <thead>
+                        <!-- Header will be inserted here -->
+                    </thead>
+                    <tbody>
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQe997zmYQN79SbSc5uMuV85f7CrAUr0Jiqa5-oXTDqYNkE-marAU_0OC3gyhF8HL48hz1thkW4tCnf/pub?gid=0&single=true&output=csv";
+        let globalRows = []; // Store CSV data globally
+
+        async function loadCSV() {
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text();
+                const rows = csvText.split("\n").map(row => {
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by commas not inside quotes
+                    return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
+                });
+
+                globalRows = rows; // Save data globally
+
+                let thead = document.querySelector("#data-table thead");
+                let tbody = document.querySelector("#data-table tbody");
+                const headerLength = rows[0].length;
+
+                // Insert header
+                let headerRow = document.createElement("tr");
+                rows[0].forEach(header => {
+                    let th = document.createElement("th");
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+
+                // Insert data rows
+                rows.slice(1).forEach(row => { // Skip the first row
+                    let tr = document.createElement("tr");
+                    for (let i = 0; i < headerLength; i++) {
+                        let td = document.createElement("td");
+                        td.textContent = row[i] || ""; // Fill with empty string if data is missing
+                        tr.appendChild(td);
+                    }
+                    tbody.appendChild(tr);
+                });
+
+                // Update total data count
+                document.getElementById("total-data").textContent = `Total data: ${rows.length - 1}`;
+
+                // Adjust row heights
+                adjustRowHeights();
+            } catch (error) {
+                console.error("Error fetching CSV:", error);
+            }
+        }
+
+        function searchTable() {
+            const input = document.getElementById("search-input");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("data-table");
+            const trs = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < trs.length; i++) {
+                const tds = trs[i].getElementsByTagName("td");
+                let found = false;
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j].textContent.toLowerCase().includes(filter)) {
+                        found = true;
+                        break;
+                    }
+                }
+                trs[i].style.display = found ? "" : "none";
+            }
+        }
+
+        function adjustRowHeights() {
+            const rows = document.querySelectorAll("table tr");
+            let maxHeight = 0;
+
+            // Find the maximum height in all rows
+            rows.forEach(row => {
+                if (row.offsetHeight > maxHeight) {
+                    maxHeight = row.offsetHeight;
+                }
+            });
+
+            // Apply the maximum height to all rows
+            rows.forEach(row => {
+                row.style.height = maxHeight + "px";
+            });
+        }
+
+        function updateTableForPeriod(period) {
+            const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+            tableBody.innerHTML = ""; // Clear existing table data
+
+            globalRows.slice(1).forEach(row => {
+                if (row[12] === period) { // Assuming PERIOD is the 13th column
+                    const newRow = tableBody.insertRow();
+                    newRow.insertCell(0).textContent = row[0]; // NO PKK PHINNISI
+                    newRow.insertCell(1).textContent = row[1]; // NAMA KAPAL
+                    newRow.insertCell(2).textContent = row[2]; // NAMA KEAGENAN
+                    newRow.insertCell(3).textContent = row[3]; // GT
+                    newRow.insertCell(4).textContent = row[4]; // LOA
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            adjustRowHeights();
+        });
+
+        loadCSV();
+    </script>
+</body>
+</html>
