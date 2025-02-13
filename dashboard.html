@@ -113,7 +113,7 @@
         }
 
         .card {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Dark blue gradient */
+            background: linear-gradient(135deg, #00008B 50%, #fff 175%); /* Dark blue to white gradient */
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow to cards */
             padding: 20px;
@@ -511,15 +511,24 @@
         }
 
         function createChart(data) {
-            const sortedKeys = Object.keys(data).sort((a, b) => a - b);
+            const sortedKeys = Object.keys(data).filter(key => key).sort((a, b) => a - b);
             const sortedData = sortedKeys.map(key => data[key]);
+
+            if (sortedKeys.length === 0 || sortedData.length === 0) {
+                console.error("⚠️ Data untuk chart kosong!");
+                return;
+            }
+
+            console.log("📊 Data Barchart:", sortedKeys, sortedData);
 
             const ctx = document.getElementById('periodChart').getContext('2d');
 
-            // Create a red gradient for the bars
+            // Create gradient for bars
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
             gradient.addColorStop(0, "rgba(255, 0, 0, 1)");
             gradient.addColorStop(1, "rgba(255, 99, 71, 0.5)");
+
+            Chart.register(ChartDataLabels); // Ensure datalabels plugin is active
 
             window.periodChart = new Chart(ctx, {
                 type: 'bar',
@@ -528,34 +537,35 @@
                     datasets: [{
                         label: 'Jumlah Data',
                         data: sortedData,
-                        backgroundColor: gradient, // Use gradient for 3D effect
+                        backgroundColor: sortedData.map(value => value <= 9 ? 'yellow' : gradient),
                         borderColor: 'rgba(255, 0, 0, 1)',
                         borderWidth: 1,
-                        borderSkipped: false, // Remove top border for more 3D effect
-                        hoverBackgroundColor: 'rgba(255, 0, 0, 0.8)', // Darker hover color
-                        barThickness: 40, // Make bars larger
+                        barThickness: 40,
                     }]
                 },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false }, // Hide legend
                         datalabels: {
-                            anchor: 'end',
-                            align: 'end',
-                            color: '#000',
-                            font: { weight: 'bold' },
-                            formatter: (value) => value // Display numbers above bars
+                            display: true, // Ensure datalabels are always displayed
+                            anchor: 'end', // Position at the end of the bar
+                            align: 'end', // Align text at the top
+                            color: '#000000', // Ensure text contrasts with background
+                            font: { weight: 'bold', size: 14 },
+                            formatter: (value) => value, // Display value directly
+                        },
+                        tooltip: {
+                            enabled: true, // Keep tooltip enabled for hover
                         }
                     },
                     scales: {
                         y: {
-                            beginAtZero: true,
-                            display: false // Hide y-axis values
+                            beginAtZero: true
                         },
                         x: {
-                            grid: {
-                                display: false // Hide background grid
-                            }
+                            grid: { display: false }
                         }
                     }
                 }
