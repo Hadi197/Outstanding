@@ -88,14 +88,11 @@
             background: linear-gradient(to top, #87CEFA 18%, rgba(176, 224, 230, 0) 18%); /* Strong color at bottom 20%, fade to 0% */
             padding: 20px; /* Optional: Add padding */
             position: relative; /* For positioning the total data text */
+            overflow-x: auto; /* Add horizontal scroll */
         }
 
         .chart-container .total-data {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            font-size: 16px;
-            font-weight: bold;
+            display: none; /* Hide total data display */
         }
 
         .card-container-wrapper {
@@ -198,6 +195,37 @@
                 margin-bottom: 20px;
             }
         }
+
+        .hidden {
+            display: none;
+        }
+
+        .chart-wrapper {
+            width: 100%; /* Adjust to fit the container width */
+            height: 300px; /* Make the chart smaller */
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center; /* Center the buttons */
+            gap: 10px; /* Add space between buttons */
+            margin-bottom: 20px; /* Add margin below the buttons */
+        }
+
+        .button-container button {
+            background-color: #4CAF50; /* Modern green color */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px; /* Rounded corners */
+            transition: background-color 0.3s; /* Smooth transition */
+        }
+
+        .button-container button:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -221,15 +249,33 @@
 
         <!-- Main Content -->
         <div class="content">
-            <div class="chart-container">
-                <div class="total-data">Total Data: <span id="total-data-count">0</span></div>
-                <canvas id="periodChart"></canvas>
+            <!-- Buttons above the chart container -->
+            <div class="button-container">
+                <button id="periode-button">PERIODE</button>
+                <button id="agent-button">AGENT</button>
+            </div>
+            <!-- New containers for PERIODE and AGENT -->
+            <div id="periode-container" class="hidden">
+                <!-- Content for PERIODE -->
+                <div class="chart-container">
+                    <div class="total-data">Total Data: <span id="total-data-count">0</span></div>
+                    <canvas id="periodChart"></canvas>
+                </div>
+            </div>
+            <div id="agent-container" class="hidden">
+                <!-- Content for AGENT -->
+                <div class="chart-container">
+                    <div class="chart-wrapper">
+                        <div class="total-data">Total Data: <span id="total-agent-data-count">0</span></div>
+                        <canvas id="agentChart"></canvas>
+                    </div>
+                </div>
             </div>
             <div id="spb-counts">
                 <p>SPB.IDSUB: <span id="spb-idsub-count">0</span></p>
                 <p>SPB.IDGRE: <span id="spb-idgre-count">0</span></p>
             </div>
-            <div class="card-container-wrapper">
+            <div id="periode-card-container" class="card-container-wrapper">
                 <div class="card-container">
                     <div class="card">
                         <h3>GT < 500</h3>
@@ -257,8 +303,26 @@
                     </div>
                 </div>
             </div>
-            <div class="data-table-container">
-                <table id="data-table">
+            <div id="periode-table-container" class="data-table-container">
+                <table id="periode-table">
+                    <thead>
+                        <tr>
+                            <th>NO PKK PHINNISI</th>
+                            <th>NAMA KAPAL</th>
+                            <th>NAMA KEAGENAN</th>
+                            <th>GT</th>
+                            <th>LOA</th>
+                            <th>SPB</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Copy and rename periode-table to agent-table -->
+            <div id="agent-table-container" class="data-table-container hidden">
+                <table id="agent-table">
                     <thead>
                         <tr>
                             <th>NO PKK PHINNISI</th>
@@ -281,6 +345,7 @@
         let globalRows = []; // Variabel untuk menyimpan data CSV global
         let selectedPeriod = null; // Store selected period for multi-filter
         let selectedGT = null; // Store selected GT range for multi-filter
+        let selectedAgent = null; // Store selected agent for multi-filter
 
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQe997zmYQN79SbSc5uMuV85f7CrAUr0Jiqa5-oXTDqYNkE-marAU_0OC3gyhF8HL48hz1thkW4tCnf/pub?gid=0&single=true&output=csv";
 
@@ -324,7 +389,7 @@
                 document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
                 document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
 
-                // Create the chart
+                // Create the period chart
                 const periodData = {};
                 const gtColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "gt");
                 const gtCounts = {
@@ -368,7 +433,23 @@
                     console.error("Kolom 'GT' tidak ditemukan dalam CSV!");
                 }
 
-                createChart(periodData);
+                createChart(periodData, 'periodChart');
+
+                // Create the agent chart
+                const agentData = {};
+                const agentColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "nama keagenan");
+                if (agentColumnIndex !== -1) {
+                    rows.slice(1).forEach(row => {
+                        const agent = row[agentColumnIndex];
+                        if (agent) {
+                            agentData[agent] = (agentData[agent] || 0) + 1;
+                        }
+                    });
+                } else {
+                    console.error("Kolom 'NAMA KEAGENAN' tidak ditemukan dalam CSV!");
+                }
+
+                createChart(agentData, 'agentChart', true);
 
                 // Update GT counts
                 document.getElementById("gt-less-500").textContent = gtCounts.less500 || "0";
@@ -412,6 +493,20 @@
                         filterTable(globalRows, gtColumnIndex, spbColumnIndex);
                     });
                 });
+
+                // Add click event listener to the agent chart
+                document.getElementById('agentChart').onclick = function(evt) {
+                    const activePoints = window.agentChart.getElementsAtEventForMode(evt, 'nearest', { intersect: true }, true);
+                    if (activePoints.length > 0) {
+                        const firstPoint = activePoints[0];
+                        const label = window.agentChart.data.labels[firstPoint.index]; // Agent yang dipilih
+
+                        console.log("Agent yang dipilih:", label); // Debugging
+
+                        selectedAgent = label; // Store selected agent
+                        filterAgentTable(globalRows, agentColumnIndex);
+                    }
+                };
 
                 // Update total data count
                 document.getElementById("total-data-count").textContent = rows.length - 1;
@@ -483,7 +578,7 @@
         }
 
         function filterTable(rows, gtColumnIndex, spbColumnIndex) {
-            const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
+            const tableBody = document.getElementById("periode-table").getElementsByTagName("tbody")[0];
             tableBody.innerHTML = ""; // Clear existing table data
 
             rows.slice(1).forEach(row => {
@@ -510,9 +605,39 @@
             });
         }
 
-        function createChart(data) {
-            const sortedKeys = Object.keys(data).filter(key => key).sort((a, b) => a - b);
-            const sortedData = sortedKeys.map(key => data[key]);
+        function filterAgentTable(rows, agentColumnIndex) {
+            const tableBody = document.getElementById("agent-table").getElementsByTagName("tbody")[0];
+            tableBody.innerHTML = ""; // Clear existing table data
+
+            rows.slice(1).forEach(row => {
+                const agentMatch = !selectedAgent || row[agentColumnIndex] === selectedAgent; // Match agent if selected
+
+                if (agentMatch) {
+                    const newRow = tableBody.insertRow();
+                    newRow.insertCell(0).textContent = row[2]; // NO PKK PHINNISI
+                    newRow.insertCell(1).textContent = row[5]; // NAMA KAPAL
+                    newRow.insertCell(2).textContent = row[6]; // NAMA KEAGENAN
+                    newRow.insertCell(3).textContent = row[7]; // GT
+                    newRow.insertCell(4).textContent = row[8]; // LOA
+                    newRow.insertCell(5).textContent = row[10]; // SPB
+                }
+            });
+        }
+
+        function createChart(data, chartId, sortDescending = false) {
+            let sortedKeys = Object.keys(data).filter(key => key);
+            if (sortDescending) {
+                sortedKeys.sort((a, b) => data[b] - data[a]);
+            } else {
+                sortedKeys.sort((a, b) => a - b);
+            }
+            let sortedData = sortedKeys.map(key => data[key]);
+
+            // Limit to 16 data points for agent chart
+            if (chartId === 'agentChart') {
+                sortedKeys = sortedKeys.slice(0, 20);
+                sortedData = sortedData.slice(0, 20);
+            }
 
             if (sortedKeys.length === 0 || sortedData.length === 0) {
                 console.error("⚠️ Data untuk chart kosong!");
@@ -521,7 +646,7 @@
 
             console.log("📊 Data Barchart:", sortedKeys, sortedData);
 
-            const ctx = document.getElementById('periodChart').getContext('2d');
+            const ctx = document.getElementById(chartId).getContext('2d');
 
             // Create gradient for bars
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
@@ -530,7 +655,7 @@
 
             Chart.register(ChartDataLabels); // Ensure datalabels plugin is active
 
-            window.periodChart = new Chart(ctx, {
+            window[chartId] = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: sortedKeys,
@@ -540,7 +665,7 @@
                         backgroundColor: sortedData.map(value => value <= 9 ? 'yellow' : gradient),
                         borderColor: 'rgba(255, 0, 0, 1)',
                         borderWidth: 1,
-                        barThickness: 40,
+                        barThickness: 'flex', // Adjust bar thickness to fit container
                     }]
                 },
                 options: {
@@ -558,6 +683,14 @@
                         },
                         tooltip: {
                             enabled: true, // Keep tooltip enabled for hover
+                            callbacks: {
+                                title: (tooltipItems) => {
+                                    return tooltipItems[0].label; // Display agent name in tooltip
+                                },
+                                label: (tooltipItem) => {
+                                    return `Jumlah Data: ${tooltipItem.raw}`; // Display data count in tooltip
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -565,7 +698,10 @@
                             beginAtZero: true
                         },
                         x: {
-                            grid: { display: false }
+                            grid: { display: false },
+                            ticks: {
+                                display: chartId !== 'agentChart' // Hide x-axis labels for agent chart
+                            }
                         }
                     }
                 }
@@ -573,6 +709,22 @@
         }
 
         loadCSV();
+
+        document.getElementById('periode-button').addEventListener('click', function() {
+            document.getElementById('periode-container').classList.remove('hidden');
+            document.getElementById('agent-container').classList.add('hidden');
+            document.getElementById('periode-card-container').classList.remove('hidden');
+            document.getElementById('periode-table-container').classList.remove('hidden');
+            document.getElementById('agent-table-container').classList.add('hidden'); // Hide agent table
+        });
+
+        document.getElementById('agent-button').addEventListener('click', function() {
+            document.getElementById('agent-container').classList.remove('hidden');
+            document.getElementById('periode-container').classList.add('hidden');
+            document.getElementById('periode-card-container').classList.add('hidden');
+            document.getElementById('periode-table-container').classList.add('hidden');
+            document.getElementById('agent-table-container').classList.remove('hidden'); // Show agent table
+        });
     </script>
 </body>
 </html>
