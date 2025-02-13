@@ -23,7 +23,7 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background-color: #333;
+            background: linear-gradient(135deg, #00008B 0%, #1E90FF 50%, #00008B 100%); /* Dark blue gradient with lighting effect */
             color: white;
             display: flex;
             flex-direction: column;
@@ -54,7 +54,7 @@
         /* Topbar */
         .topbar {
             width: calc(100% - 250px);
-            height: 100px; /* Increase height */
+            height: 110px; /* Increase height */
             background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center;
             background-size: cover;
             color: white;
@@ -66,6 +66,7 @@
             top: 0;
             left: 250px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* Ensure the topbar is always on top */
         }
 
         /* Konten */
@@ -153,6 +154,10 @@
             background: linear-gradient(90deg, rgba(0,152,121,1) 0%, rgba(0,212,255,1) 100%);
             color: #ffffff;
         }
+        table tbody tr.selected {
+            background-color: red;
+            color: white;
+        }
         #total-data {
             font-size: 36px; /* Twice as large */
             font-weight: bold; /* Bolder text */
@@ -171,6 +176,18 @@
             width: 300px;
             box-sizing: border-box;
         }
+
+        .total-data-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: #fff; /* Optional: Add background color */
+            padding: 10px; /* Optional: Add padding */
+            border-radius: 8px; /* Optional: Add rounded corners */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add shadow */
+            width: 100%; /* Match the width of the table */
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -181,8 +198,8 @@
 
         <!-- Sidebar -->
         <div class="sidebar">
-            <img src="https://www.bersamabumn.com/wp-content/uploads/2023/12/Lowongan-Kerja-Magang-BUMN-PT-Pelindo-Jasa-Maritim.webp" alt="Logo">
-            <a href="index.html">Tabel</a>
+            <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
+            <a href="index.html">Tabel Outstanding</a>
             <a href="dashboard.html">Dashboard</a>
         </div>
 
@@ -194,7 +211,7 @@
         <!-- Main Content -->
         <div class="content">
             <div id="tabel" class="page active">
-                <div class="table-container">
+                <div class="total-data-container">
                     <p id="total-data">Total data: 0</p>
                     <div class="search-container">
                         <input type="text" id="search-input" onkeyup="searchTable()" placeholder="Search for names..">
@@ -233,6 +250,9 @@
 
                 // Insert header
                 let headerRow = document.createElement("tr");
+                let thCheckbox = document.createElement("th");
+                thCheckbox.innerHTML = '<input type="checkbox" id="select-all" onclick="toggleSelectAll()">';
+                headerRow.appendChild(thCheckbox);
                 rows[0].forEach(header => {
                     let th = document.createElement("th");
                     th.textContent = header;
@@ -241,8 +261,11 @@
                 thead.appendChild(headerRow);
 
                 // Insert data rows
-                rows.slice(1).forEach(row => { // Skip the first row
+                rows.slice(1).forEach((row, index) => { // Skip the first row
                     let tr = document.createElement("tr");
+                    let tdCheckbox = document.createElement("td");
+                    tdCheckbox.innerHTML = `<input type="checkbox" class="row-checkbox" data-index="${index}" onclick="toggleRowSelection(this)">`;
+                    tr.appendChild(tdCheckbox);
                     for (let i = 0; i < headerLength; i++) {
                         let td = document.createElement("td");
                         td.textContent = row[i] || ""; // Fill with empty string if data is missing
@@ -256,6 +279,9 @@
 
                 // Adjust row heights
                 adjustRowHeights();
+
+                // Restore checkbox states
+                restoreCheckboxStates();
             } catch (error) {
                 console.error("Error fetching CSV:", error);
             }
@@ -294,6 +320,41 @@
             // Apply the maximum height to all rows
             rows.forEach(row => {
                 row.style.height = maxHeight + "px";
+            });
+        }
+
+        function toggleSelectAll() {
+            const selectAllCheckbox = document.getElementById("select-all");
+            const checkboxes = document.querySelectorAll(".row-checkbox");
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+                toggleRowSelection(checkbox);
+            });
+            saveCheckboxStates();
+        }
+
+        function toggleRowSelection(checkbox) {
+            const row = checkbox.closest("tr");
+            if (checkbox.checked) {
+                row.classList.add("selected");
+            } else {
+                row.classList.remove("selected");
+            }
+            saveCheckboxStates();
+        }
+
+        function saveCheckboxStates() {
+            const checkboxes = document.querySelectorAll(".row-checkbox");
+            const checkboxStates = Array.from(checkboxes).map(checkbox => checkbox.checked);
+            localStorage.setItem("checkboxStates", JSON.stringify(checkboxStates));
+        }
+
+        function restoreCheckboxStates() {
+            const checkboxStates = JSON.parse(localStorage.getItem("checkboxStates") || "[]");
+            const checkboxes = document.querySelectorAll(".row-checkbox");
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = checkboxStates[index] || false;
+                toggleRowSelection(checkbox);
             });
         }
 

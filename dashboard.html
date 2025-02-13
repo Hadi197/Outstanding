@@ -22,7 +22,7 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: linear-gradient(135deg, #00008B 0%, #1E90FF 50%, #00008B 100%); /* Dark blue gradient with lighting effect */
+            background: linear-gradient(135deg, #00008B 0%, #1E90FF 15%, #00008B 70%); /* Dark blue gradient with lighting effect */
             color: white;
             display: flex;
             flex-direction: column;
@@ -53,7 +53,7 @@
         /* Topbar */
         .topbar {
             width: calc(100% - 250px);
-            height: 100px; /* Increase height */
+            height: 110px; /* Increase height */
             background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center;
             background-size: cover;
             color: white;
@@ -65,6 +65,7 @@
             top: 0;
             left: 250px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* Ensure the topbar is always on top */
         }
 
         /* Konten */
@@ -82,19 +83,39 @@
         .chart-container {
             width: 100%; /* Full width */
             height: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow frame */
+            border-radius: 8px; /* Optional: Add rounded corners */
+            background: linear-gradient(to top, #87CEFA 18%, rgba(176, 224, 230, 0) 18%); /* Strong color at bottom 20%, fade to 0% */
+            padding: 20px; /* Optional: Add padding */
+            position: relative; /* For positioning the total data text */
+        }
+
+        .chart-container .total-data {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .card-container-wrapper {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow frame */
+            border-radius: 8px; /* Optional: Add rounded corners */
+            background-color: white; /* Optional: Add background color */
+            padding: 20px; /* Optional: Add padding */
+            margin-top: 20px; /* Add margin to separate from other elements */
         }
 
         .card-container {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
             gap: 20px; /* Add gap between cards */
         }
 
         .card {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); /* Dark blue gradient */
             border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow to cards */
             padding: 20px;
             width: calc(33.33% - 20px); /* Adjust width to account for gap */
             text-align: center; /* Center text */
@@ -188,8 +209,8 @@
 
         <!-- Sidebar -->
         <div class="sidebar">
-            <img src="https://www.bersamabumn.com/wp-content/uploads/2023/12/Lowongan-Kerja-Magang-BUMN-PT-Pelindo-Jasa-Maritim.webp" alt="Logo">
-            <a href="index.html">Tabel</a>
+            <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
+            <a href="index.html">Tabel Outstanding</a>
             <a href="dashboard.html">Dashboard</a>
         </div>
 
@@ -201,36 +222,39 @@
         <!-- Main Content -->
         <div class="content">
             <div class="chart-container">
+                <div class="total-data">Total Data: <span id="total-data-count">0</span></div>
                 <canvas id="periodChart"></canvas>
             </div>
             <div id="spb-counts">
                 <p>SPB.IDSUB: <span id="spb-idsub-count">0</span></p>
                 <p>SPB.IDGRE: <span id="spb-idgre-count">0</span></p>
             </div>
-            <div class="card-container">
-                <div class="card">
-                    <h3>GT < 500</h3>
-                    <p id="gt-less-500">0</p>
-                </div>
-                <div class="card">
-                    <h3>GT 501 - 3000</h3>
-                    <p id="gt-501-3000">0</p>
-                </div>
-                <div class="card">
-                    <h3>GT 3001 - 6000</h3>
-                    <p id="gt-3001-6000">0</p>
-                </div>
-                <div class="card">
-                    <h3>GT 6001 - 10000</h3>
-                    <p id="gt-6001-10000">0</p>
-                </div>
-                <div class="card">
-                    <h3>GT 10001 - 15000</h3>
-                    <p id="gt-10001-15000">0</p>
-                </div>
-                <div class="card">
-                    <h3>GT > 15000</h3>
-                    <p id="gt-greater-15000">0</p>
+            <div class="card-container-wrapper">
+                <div class="card-container">
+                    <div class="card">
+                        <h3>GT < 500</h3>
+                        <p id="gt-less-500">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>GT 501 - 3000</h3>
+                        <p id="gt-501-3000">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>GT 3001 - 6000</h3>
+                        <p id="gt-3001-6000">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>GT 6001 - 10000</h3>
+                        <p id="gt-6001-10000">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>GT 10001 - 15000</h3>
+                        <p id="gt-10001-15000">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>GT > 15000</h3>
+                        <p id="gt-greater-15000">0</p>
+                    </div>
                 </div>
             </div>
             <div class="data-table-container">
@@ -388,6 +412,9 @@
                         filterTable(globalRows, gtColumnIndex, spbColumnIndex);
                     });
                 });
+
+                // Update total data count
+                document.getElementById("total-data-count").textContent = rows.length - 1;
             } catch (error) {
                 console.error("Error fetching CSV:", error);
             }
@@ -489,10 +516,10 @@
 
             const ctx = document.getElementById('periodChart').getContext('2d');
 
-            // Buat efek 3D menggunakan gradien warna
+            // Create a red gradient for the bars
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, "rgba(0, 123, 255, 1)");
-            gradient.addColorStop(1, "rgba(0, 123, 255, 0.5)");
+            gradient.addColorStop(0, "rgba(255, 0, 0, 1)");
+            gradient.addColorStop(1, "rgba(255, 99, 71, 0.5)");
 
             window.periodChart = new Chart(ctx, {
                 type: 'bar',
@@ -501,23 +528,23 @@
                     datasets: [{
                         label: 'Jumlah Data',
                         data: sortedData,
-                        backgroundColor: gradient, // Pakai gradien untuk efek 3D
-                        borderColor: 'rgba(0, 123, 255, 1)',
+                        backgroundColor: gradient, // Use gradient for 3D effect
+                        borderColor: 'rgba(255, 0, 0, 1)',
                         borderWidth: 1,
-                        borderSkipped: false, // Hilangkan border atas untuk efek lebih 3D
-                        hoverBackgroundColor: 'rgba(0, 123, 255, 0.8)', // Warna hover lebih gelap
+                        borderSkipped: false, // Remove top border for more 3D effect
+                        hoverBackgroundColor: 'rgba(255, 0, 0, 0.8)', // Darker hover color
                         barThickness: 40, // Make bars larger
                     }]
                 },
                 options: {
                     plugins: {
-                        legend: { display: false }, // Sembunyikan legend
+                        legend: { display: false }, // Hide legend
                         datalabels: {
                             anchor: 'end',
                             align: 'end',
                             color: '#000',
                             font: { weight: 'bold' },
-                            formatter: (value) => value // Tampilkan angka di atas bar
+                            formatter: (value) => value // Display numbers above bars
                         }
                     },
                     scales: {
