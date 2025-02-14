@@ -246,6 +246,23 @@
         .button-container button:hover {
             background-color: #45a049; /* Darker green on hover */
         }
+
+        .total-data {
+            font-size: 24px; /* Large font size */
+            font-weight: bold; /* Bold text */
+            text-align: right; /* Align text to the right */
+            margin-top: 10px; /* Add some margin at the top */
+        }
+
+        .spb-counts-container {
+            display: flex;
+            justify-content: space-between;  /* Sebar elemen dengan jarak seimbang */
+            align-items: center; /* Pastikan elemen sejajar vertikal */
+            margin-top: 10px; /* Beri jarak dari elemen atas */
+            padding: 10px 20px; /* Tambahkan padding agar lebih rapi */
+            font-size: 18px; /* Sesuaikan ukuran font */
+            font-weight: bold; /* Buat teks lebih jelas */
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -279,7 +296,6 @@
             <div id="periode-container">
                 <!-- Content for PERIODE -->
                 <div class="chart-container">
-                    <div class="total-data">Total Data: <span id="total-data-count">0</span></div>
                     <canvas id="periodChart"></canvas>
                 </div>
             </div>
@@ -287,14 +303,15 @@
                 <!-- Content for AGENT -->
                 <div class="chart-container">
                     <div class="chart-wrapper">
-                        <div class="total-data">Total Data: <span id="total-agent-data-count">0</span></div>
                         <canvas id="agentChart"></canvas>
                     </div>
                 </div>
+                <!-- Remove the "Total Data" section in the agent bar chart -->
             </div>
-            <div id="spb-counts">
+            <div class="spb-counts-container">
                 <p>SPB.IDSUB: <span id="spb-idsub-count">0</span></p>
                 <p>SPB.IDGRE: <span id="spb-idgre-count">0</span></p>
+                <p>Total Data: <span id="total-data-count">0</span></p>
             </div>
             <div id="periode-card-container" class="card-container-wrapper">
                 <div class="card-container">

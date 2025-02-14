@@ -188,6 +188,11 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add shadow */
             width: 100%; /* Match the width of the table */
         }
+
+        .highlight {
+            background-color: red;
+            color: white;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -220,7 +225,10 @@
                 </div>
                 <table border="1" id="data-table">
                     <thead>
-                        <!-- Header will be inserted here -->
+                        <tr>
+                            <th>Select</th>
+                            <!-- Dynamically insert headers from CSV -->
+                        </tr>
                     </thead>
                     <tbody>
                         <!-- Data will be inserted here -->
@@ -245,21 +253,16 @@
 
                 globalRows = rows; // Save data globally
 
-                let thead = document.querySelector("#data-table thead");
+                let thead = document.querySelector("#data-table thead tr");
                 let tbody = document.querySelector("#data-table tbody");
                 const headerLength = rows[0].length;
 
-                // Insert header
-                let headerRow = document.createElement("tr");
-                let thCheckbox = document.createElement("th");
-                thCheckbox.innerHTML = '<input type="checkbox" id="select-all" onclick="toggleSelectAll()">';
-                headerRow.appendChild(thCheckbox);
+                // Insert headers from CSV
                 rows[0].forEach(header => {
                     let th = document.createElement("th");
                     th.textContent = header;
-                    headerRow.appendChild(th);
+                    thead.appendChild(th);
                 });
-                thead.appendChild(headerRow);
 
                 // Insert data rows
                 rows.slice(1).forEach((row, index) => { // Skip the first row
@@ -273,6 +276,12 @@
                         tr.appendChild(td);
                     }
                     tbody.appendChild(tr);
+
+                    // Check if the row is marked in cookies
+                    if (getCookie(`row-${index}`) === 'true') {
+                        tr.classList.add('highlight');
+                        tdCheckbox.querySelector('input').checked = true;
+                    }
                 });
 
                 // Update total data count
@@ -337,9 +346,11 @@
         function toggleRowSelection(checkbox) {
             const row = checkbox.closest("tr");
             if (checkbox.checked) {
-                row.classList.add("selected");
+                row.classList.add("highlight");
+                setCookie(`row-${checkbox.dataset.index}`, 'true', 365);
             } else {
-                row.classList.remove("selected");
+                row.classList.remove("highlight");
+                setCookie(`row-${checkbox.dataset.index}`, '', -1);
             }
             saveCheckboxStates();
         }
@@ -357,6 +368,29 @@
                 checkbox.checked = checkboxStates[index] || false;
                 toggleRowSelection(checkbox);
             });
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + d.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+        function getCookie(name) {
+            const cname = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const ca = decodedCookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(cname) === 0) {
+                    return c.substring(cname.length, c.length);
+                }
+            }
+            return "";
         }
 
         function updateTableForPeriod(period) {
