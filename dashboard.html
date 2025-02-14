@@ -260,7 +260,7 @@
             <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
             <a href="index.html">Tabel Outstanding</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="whatsapps.html">Kirim WhatsApp</a> <!-- Add this line -->
+            <!-- Remove the "Kirim WhatsApp" button -->
         </div>
 
         <!-- Topbar -->
@@ -276,7 +276,7 @@
                 <button id="agent-button">AGENT</button>
             </div>
             <!-- New containers for PERIODE and AGENT -->
-            <div id="periode-container" class="hidden">
+            <div id="periode-container">
                 <!-- Content for PERIODE -->
                 <div class="chart-container">
                     <div class="total-data">Total Data: <span id="total-data-count">0</span></div>
@@ -700,8 +700,13 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true,  // Pastikan grafik bisa menyesuaikan ukuran
+                    maintainAspectRatio: false, // Izinkan ukuran menyesuaikan wadah
+                    layout: {
+                        padding: {
+                            top: 20 // Tambahkan padding atas
+                        }
+                    },
                     plugins: {
                         legend: { display: false }, // Hide legend
                         datalabels: {
@@ -729,7 +734,8 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            suggestedMax: Math.max(...sortedData) + 10 // Beri ruang di sumbu Y
                         },
                         x: {
                             grid: { display: false },
@@ -759,6 +765,13 @@
             document.getElementById('periode-table-container').classList.add('hidden');
             document.getElementById('agent-table-container').classList.remove('hidden'); // Show agent table
         });
+
+        // By default, display the period bar chart when the dashboard loads
+        document.getElementById('periode-container').classList.remove('hidden');
+        document.getElementById('agent-container').classList.add('hidden');
+        document.getElementById('periode-card-container').classList.remove('hidden');
+        document.getElementById('periode-table-container').classList.remove('hidden');
+        document.getElementById('agent-table-container').classList.add('hidden'); // Hide agent table
     </script>
     <script src="Script.js"></script>
 </body>
