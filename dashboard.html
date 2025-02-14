@@ -117,6 +117,7 @@
             width: calc(33.33% - 20px); /* Adjust width to account for gap */
             text-align: center; /* Center text */
             color: white; /* White text */
+            position: relative; /* Add this line */
         }
 
         .card h3 {
@@ -129,6 +130,25 @@
             font-size: 16px;
             color: white; /* White text */
             font-weight: bold; /* Bold text */
+        }
+
+        .card-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
+        .card:hover .card-tooltip {
+            display: block;
         }
 
         #spb-counts {
@@ -240,6 +260,7 @@
             <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
             <a href="index.html">Tabel Outstanding</a>
             <a href="dashboard.html">Dashboard</a>
+            <a href="whatsapps.html">Kirim WhatsApp</a> <!-- Add this line -->
         </div>
 
         <!-- Topbar -->
@@ -280,26 +301,32 @@
                     <div class="card">
                         <h3>GT < 500</h3>
                         <p id="gt-less-500">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                     <div class="card">
                         <h3>GT 501 - 3000</h3>
                         <p id="gt-501-3000">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                     <div class="card">
                         <h3>GT 3001 - 6000</h3>
                         <p id="gt-3001-6000">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                     <div class="card">
                         <h3>GT 6001 - 10000</h3>
                         <p id="gt-6001-10000">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                     <div class="card">
                         <h3>GT 10001 - 15000</h3>
                         <p id="gt-10001-15000">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                     <div class="card">
                         <h3>GT > 15000</h3>
                         <p id="gt-greater-15000">0</p>
+                        <div class="card-tooltip">Klik untuk menampilkan data detail pada Tabel di bawah</div>
                     </div>
                 </div>
             </div>
@@ -388,6 +415,10 @@
                 // Memperbarui tampilan di HTML
                 document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
                 document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
+
+                // Simpan data ke localStorage
+                localStorage.setItem("totalSurabaya", document.getElementById("spb-idsub-count").textContent);
+                localStorage.setItem("totalGresik", document.getElementById("spb-idgre-count").textContent);
 
                 // Create the period chart
                 const periodData = {};
@@ -662,7 +693,7 @@
                     datasets: [{
                         label: 'Jumlah Data',
                         data: sortedData,
-                        backgroundColor: sortedData.map(value => value <= 9 ? 'yellow' : gradient),
+                        backgroundColor: sortedData.map(value => value <= 4 ? 'yellow' : gradient),
                         borderColor: 'rgba(255, 0, 0, 1)',
                         borderWidth: 1,
                         barThickness: 'flex', // Adjust bar thickness to fit container
@@ -688,7 +719,10 @@
                                     return tooltipItems[0].label; // Display agent name in tooltip
                                 },
                                 label: (tooltipItem) => {
-                                    return `Jumlah Data: ${tooltipItem.raw}`; // Display data count in tooltip
+                                    return [
+                                        `Jumlah Data: ${tooltipItem.raw}`, 
+                                        "Klik untuk menampilkan data detail pada Tabel di bawah"
+                                    ];
                                 }
                             }
                         }
@@ -726,5 +760,6 @@
             document.getElementById('agent-table-container').classList.remove('hidden'); // Show agent table
         });
     </script>
+    <script src="Script.js"></script>
 </body>
 </html>
