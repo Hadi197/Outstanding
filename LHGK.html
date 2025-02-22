@@ -160,6 +160,7 @@
 
     <script>
         const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQt9wqoZ6rhlwKzIS0sK0i1buN_6K7zfcoJhd_nyfTCD78Bh4DT-S8KWfztYWcMhGEAF07MKWKIo7_h/pub?gid=473862423&single=true&output=csv";
+        const statusIndex = 52; // status_nota is in column BA
         let globalRows = [];
 
         async function loadCSV() {
@@ -171,24 +172,21 @@
                     return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
                 });
                 console.log("Fetched CSV data:", rows); // Log fetched data for debugging
+                const filteredRows = rows.filter((row, index) => {
+                    if (index === 0) return true; // Keep header
+                    console.log("Row status_nota:", row[statusIndex]); // Log status_nota for each row
+                    return row[statusIndex] === "BELUM VERIFIKASI" || row[statusIndex] === "MENUNGGU NOTA";
+                });
+                console.log("Filtered rows:", filteredRows); // Log filtered data for debugging
+                console.log("Filtered rows:", filteredRows); // Log filtered data for debugging
                 const tbody = document.querySelector("#data-table tbody"); // Declare tbody here
                 tbody.innerHTML = ''; // Clear existing data
-                rows.slice(1).forEach(row => {
+
+                filteredRows.slice(1).forEach(row => {
                     const tr = document.createElement("tr");
-                    row.forEach((cell, index) => {
+                    row.forEach((cell) => {
                         const td = document.createElement("td");
-                        // Format the Last Update column (assuming it's the 13th column)
-                        if (index === 12 && cell) {
-                            const date = new Date(cell);
-                            if (!isNaN(date)) {
-                                const formattedDate = date.toISOString().slice(0, 16).replace('T', ' ');
-                                td.textContent = formattedDate;
-                            } else {
-                                td.textContent = cell;
-                            }
-                        } else {
-                            td.textContent = cell;
-                        }
+                        td.textContent = cell; // Directly set cell content
                         tr.appendChild(td);
                     });
                     tbody.appendChild(tr);
