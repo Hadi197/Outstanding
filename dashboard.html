@@ -68,6 +68,10 @@
             z-index: 1000; /* Ensure the topbar is always on top */
         }
 
+        .htopbar2 {
+            font-size: 48px;
+        }
+
         /* Konten */
         .content {
             margin-left: 250px;
@@ -263,6 +267,20 @@
             font-size: 18px; /* Sesuaikan ukuran font */
             font-weight: bold; /* Buat teks lebih jelas */
         }
+
+        .gt-card span {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .gt-card {
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(to bottom, #6dd5ed, #2193b0);
+            color: white;
+            border-radius: 5px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
@@ -277,6 +295,7 @@
             <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
             <a href="index.html">Tabel Outstanding</a>
             <a href="dashboard.html">Dashboard</a>
+            <a href="LHGK.html">Laporan Gerakan</a>
             <!-- Remove the "Kirim WhatsApp" button -->
         </div>
 
@@ -796,6 +815,18 @@
         setTimeout(function() {
             location.reload();
         }, 60000);
+
+        // Auto-switch between period and agent bar charts every 2 minutes
+        setInterval(function() {
+            const periodeButton = document.getElementById('periode-button');
+            const agentButton = document.getElementById('agent-button');
+
+            if (document.getElementById('periode-container').classList.contains('hidden')) {
+                periodeButton.click();
+            } else {
+                agentButton.click();
+            }
+        }, 120000); // 2 minutes in milliseconds
     </script>
 </body>
 </html>
