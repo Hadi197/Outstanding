@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Gerakan</title>
+    <style>
+        /* Reset Default Margin & Padding */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        .wrapper {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #00008B 0%, #1E90FF 15%, #00008B 70%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding-top: 20px;
+            position: fixed;
+            height: 100%;
+        }
+
+        .sidebar img {
+            width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            padding: 15px 20px;
+            text-decoration: none;
+            font-size: 18px;
+            color: white;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        .content {
+            margin-left: 250px;
+            margin-top: 100px;
+            padding: 20px;
+            width: calc(100% - 250px);
+            height: calc(100vh - 100px);
+            overflow-y: auto;
+            background-color: #f4f4f4;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        th {
+            background-color: blue;
+            color: white;
+            font-weight: bold;
+        }
+
+        td {
+            min-height: 50px;
+        }
+
+        table tbody tr {
+            border-bottom: 1px solid #dddddd;
+        }
+
+        table tbody tr:nth-of-type(even) {
+            background-color: #f3f3f3;
+        }
+
+        table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(0,152,121,1) 0%, rgba(0,212,255,1) 100%);
+            color: #ffffff;
+        }
+
+        .total-data-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: #FFFFFF;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
+        }
+
+        #total-data {
+            font-size: 36px;
+            font-weight: bold;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .search-container input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <img src="https://media.licdn.com/dms/image/v2/C5603AQFZo58mjL5JWw/profile-displayphoto-shrink_200_200/profile-displayphoto-shrink_200_200/0/1636361312789?e=2147483647&v=beta&t=xaEuJJMHaQ7wtZNmMnoXMj71X9a4fkcfAHuBQkM5RbY" alt="Logo">
+            <a href="index.html">Tabel Outstanding</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="LHGK.html">Laporan Gerakan</a>
+            <!-- Remove the "Kirim WhatsApp" button -->
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="total-data-container">
+                <p id="total-data">Total data: 0</p>
+                <div class="search-container">
+                    <input type="text" id="search-input" onkeyup="searchTable()" placeholder="Search...">
+                </div>
+            </div>
+            <table border="1" id="data-table">
+                <thead>
+                    <tr>
+                        <!-- Headers will be populated dynamically -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQt9wqoZ6rhlwKzIS0sK0i1buN_6K7zfcoJhd_nyfTCD78Bh4DT-S8KWfztYWcMhGEAF07MKWKIo7_h/pub?gid=473862423&single=true&output=csv";
+        let globalRows = [];
+
+        async function loadCSV() {
+            try {
+                const response = await fetch(csvUrl);
+                const csvText = await response.text(); // Fetch CSV text
+                const rows = csvText.split("\n").map(row => {
+                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by commas not inside quotes
+                    return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
+                });
+                console.log("Fetched CSV data:", rows); // Log fetched data for debugging
+                const tbody = document.querySelector("#data-table tbody"); // Declare tbody here
+                tbody.innerHTML = ''; // Clear existing data
+                rows.slice(1).forEach(row => {
+                    const tr = document.createElement("tr");
+                    row.forEach((cell, index) => {
+                        const td = document.createElement("td");
+                        // Format the Last Update column (assuming it's the 13th column)
+                        if (index === 12 && cell) {
+                            const date = new Date(cell);
+                            if (!isNaN(date)) {
+                                const formattedDate = date.toISOString().slice(0, 16).replace('T', ' ');
+                                td.textContent = formattedDate;
+                            } else {
+                                td.textContent = cell;
+                            }
+                        } else {
+                            td.textContent = cell;
+                        }
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+
+                const thead = document.querySelector("#data-table thead tr"); // Declare thead here
+
+                // Clear existing headers
+                thead.innerHTML = '';
+
+                // Add headers
+                rows[0].forEach(header => {
+                    const th = document.createElement("th");
+                    th.textContent = header;
+                    thead.appendChild(th);
+                });
+
+                console.log("Table headers added:", rows[0]); // Log headers for debugging
+
+                // Update total data count
+                document.getElementById("total-data").textContent = `Total data: ${rows.length - 1}`;
+            } catch (error) {
+                console.error("Error loading CSV:", error);
+            }
+        }
+
+        function searchTable() {
+            const input = document.getElementById("search-input");
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById("data-table");
+            const trs = table.getElementsByTagName("tr");
+
+            for (let i = 1; i < trs.length; i++) {
+                const tds = trs[i].getElementsByTagName("td");
+                let found = false;
+                for (let j = 0; j < tds.length; j++) {
+                    if (tds[j].textContent.toLowerCase().includes(filter)) {
+                        found = true;
+                        break;
+                    }
+                }
+                trs[i].style.display = found ? "" : "none";
+            }
+        }
+
+        // Load CSV data when page loads
+        document.addEventListener("DOMContentLoaded", loadCSV);
+    </script>
+</body>
+</html>
