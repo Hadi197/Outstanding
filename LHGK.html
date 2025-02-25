@@ -52,10 +52,10 @@
 
         .content {
             margin-left: 250px;
-            margin-top: 100px;
+            margin-top: 110px;
             padding: 20px;
             width: calc(100% - 250px);
-            height: calc(100vh - 100px);
+            height: calc(100vh - 110px);
             overflow-y: auto;
             background-color: #f4f4f4;
         }
@@ -71,20 +71,13 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            border: 1px solid #ddd;
         }
 
         th {
             background-color: blue;
             color: white;
             font-weight: bold;
-        }
-
-        td {
-            min-height: 50px;
-        }
-
-        table tbody tr {
-            border-bottom: 1px solid #dddddd;
         }
 
         table tbody tr:nth-of-type(even) {
@@ -109,13 +102,8 @@
         }
 
         #total-data {
-            font-size: 36px;
+            font-size: 20px;
             font-weight: bold;
-        }
-
-        .search-container {
-            display: flex;
-            align-items: center;
         }
 
         .search-container input {
@@ -123,6 +111,8 @@
             font-size: 16px;
             width: 300px;
             box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -134,7 +124,6 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="index.html">Tabel Outstanding</a>
             <a href="LHGK.html">Laporan Gerakan</a>
-            <!-- Remove the "Kirim WhatsApp" button -->
         </div>
 
         <!-- Topbar -->
@@ -164,54 +153,41 @@
     </div>
 
     <script>
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQt9wqoZ6rhlwKzIS0sK0i1buN_6K7zfcoJhd_nyfTCD78Bh4DT-S8KWfztYWcMhGEAF07MKWKIo7_h/pub?gid=473862423&single=true&output=csv";
-        const statusIndex = 51; // status_nota is in column BA
-        let globalRows = [];
-
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVuKvVhGZOLyGBVqQIAKHCtHgnT8Ev-XYNAN5LG0G3F7PL_10vhd0dIYJsbD6_NMHjXsclEFJxGgdB/pub?gid=1242489999&single=true&output=csv";
+        
         async function loadCSV() {
             try {
                 const response = await fetch(csvUrl);
-                const csvText = await response.text(); // Fetch CSV text
-                const rows = csvText.split("\n").map(row => {
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by commas not inside quotes
-                    return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
-                });
-                console.log("Fetched CSV data:", rows); // Log fetched data for debugging
-                const filteredRows = rows.filter((row, index) => {
-                    if (index === 0) return true; // Keep header
-                    console.log("Row status_nota:", row[statusIndex]); // Log status_nota for each row
-                    return row[statusIndex] === "BELUM VERIFIKASI" || row[statusIndex] === "MENUNGGU NOTA";
-                });
-                console.log("Filtered rows:", filteredRows); // Log filtered data for debugging
-                console.log("Filtered rows:", filteredRows); // Log filtered data for debugging
-                const tbody = document.querySelector("#data-table tbody"); // Declare tbody here
-                tbody.innerHTML = ''; // Clear existing data
+                if (!response.ok) throw new Error("Gagal mengambil data CSV");
+                const csvText = await response.text();
+                const rows = csvText.split("\n").map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/(^"|"$)/g, '')));
 
-                filteredRows.slice(1).forEach(row => {
+                if (rows.length <= 1 || rows[0][0].includes("<!DOCTYPE html>")) {
+                    throw new Error("Data CSV tidak valid.");
+                }
+
+                const headers = rows[0];
+                const tbody = document.querySelector("#data-table tbody");
+                tbody.innerHTML = '';
+
+                rows.slice(1).forEach(row => {
                     const tr = document.createElement("tr");
-                    row.forEach((cell) => {
+                    row.forEach(cell => {
                         const td = document.createElement("td");
-                        td.textContent = cell; // Directly set cell content
+                        td.textContent = cell;
                         tr.appendChild(td);
                     });
                     tbody.appendChild(tr);
                 });
 
-                const thead = document.querySelector("#data-table thead tr"); // Declare thead here
-
-                // Clear existing headers
+                const thead = document.querySelector("#data-table thead tr");
                 thead.innerHTML = '';
-
-                // Add headers
-                rows[0].forEach(header => {
+                headers.forEach(header => {
                     const th = document.createElement("th");
                     th.textContent = header;
                     thead.appendChild(th);
                 });
 
-                console.log("Table headers added:", rows[0]); // Log headers for debugging
-
-                // Update total data count
                 document.getElementById("total-data").textContent = `Total data: ${rows.length - 1}`;
             } catch (error) {
                 console.error("Error loading CSV:", error);
@@ -219,25 +195,12 @@
         }
 
         function searchTable() {
-            const input = document.getElementById("search-input");
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById("data-table");
-            const trs = table.getElementsByTagName("tr");
-
-            for (let i = 1; i < trs.length; i++) {
-                const tds = trs[i].getElementsByTagName("td");
-                let found = false;
-                for (let j = 0; j < tds.length; j++) {
-                    if (tds[j].textContent.toLowerCase().includes(filter)) {
-                        found = true;
-                        break;
-                    }
-                }
-                trs[i].style.display = found ? "" : "none";
-            }
+            const filter = document.getElementById("search-input").value.toLowerCase();
+            document.querySelectorAll("#data-table tbody tr").forEach(tr => {
+                tr.style.display = [...tr.children].some(td => td.textContent.toLowerCase().includes(filter)) ? "" : "none";
+            });
         }
 
-        // Load CSV data when page loads
         document.addEventListener("DOMContentLoaded", loadCSV);
     </script>
 </body>

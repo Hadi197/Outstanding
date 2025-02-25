@@ -259,6 +259,11 @@
                     return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
                 });
 
+                if (rows.length <= 1) {
+                    console.error("No data found in CSV.");
+                    return;
+                }
+
                 globalRows = rows; // Save data globally
 
                 let thead = document.querySelector("#data-table thead tr");
