@@ -153,7 +153,7 @@
     </div>
 
     <script>
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRamhRDNlh6CfJCttO-FHkv3x11BrTu5nsSl9kUs-lULcAzC83pyp2op2BaRXXppLaSmmOmxIoVqGar/pub?gid=4285570&single=true&output=csv";
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQlckSf5qOJP6iw9iXI8edcIuMipGM4pQ85sLekCMSo5UycGgj4Vf_9uak4tP03ySQeaFUnU3ahH7om/pub?gid=601042106&single=true&output=csv";
         
         async function loadCSV() {
             try {
@@ -170,13 +170,33 @@
                 const tbody = document.querySelector("#data-table tbody");
                 tbody.innerHTML = '';
 
+                const rowMap = new Map();
                 rows.slice(1).forEach(row => {
+                    const rowKey = row.join(",");
+                    if (rowMap.has(rowKey)) {
+                        rowMap.get(rowKey).push(row);
+                    } else {
+                        rowMap.set(rowKey, [row]);
+                    }
+                });
+
+                const sortedRows = Array.from(rowMap.values()).flat().sort((a, b) => {
+                    const periodA = new Date(a[12]); // Assuming PERIOD is the 13th column
+                    const periodB = new Date(b[12]);
+                    return periodB - periodA;
+                });
+
+                sortedRows.forEach(row => {
                     const tr = document.createElement("tr");
                     row.forEach(cell => {
                         const td = document.createElement("td");
                         td.textContent = cell;
                         tr.appendChild(td);
                     });
+                    if (rowMap.get(row.join(",")).length > 1) {
+                        tr.style.backgroundColor = "red";
+                        tr.style.color = "white";
+                    }
                     tbody.appendChild(tr);
                 });
 
