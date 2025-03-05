@@ -1,6 +1,6 @@
-const dotenv = require('dotenv');
-const nodemailer = require('nodemailer');
-const fetch = require('node-fetch'); // Tambahkan ini
+import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
+import fetch from 'node-fetch';
 
 dotenv.config();
 console.log("EMAIL_USER:", process.env.EMAIL_USER);
@@ -53,21 +53,37 @@ function kirimEmail(totalSurabaya, totalGresik) {
     });
 }
 
-// URL Google Sheets CSV
-const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQe997zmYQN79SbSc5uMuV85f7CrAUr0Jiqa5-oXTDqYNkE-marAU_0OC3gyhF8HL48hz1thkW4tCnf/pub?gid=0&single=true&output=csv";
+// CORS Proxy URL
+const proxyUrl = "https://cors-anywhere.herokuapp.com/";
+const targetUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRamhRDNlh6CfJCttO-FHkv3x11BrTu5nsSl9kUs-lULcAzC83pyp2op2BaRXXppLaSmmOmxIoVqGar/pub?gid=4285570&single=true&output=csv";
 
 // Fungsi untuk mengambil data dari Google Sheets
 async function fetchCSV() {
     try {
-        const response = await fetch(csvUrl);
+        const response = await fetch(proxyUrl + targetUrl);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const csvText = await response.text();
-        console.log("✅ Data Google Sheets berhasil diambil");
+        console.log("✅ Data Google Sheets berhasil diambil:", csvText.slice(0, 100)); // Cek bagian pertama CSV
 
         // Parsing CSV sederhana
-        const rows = csvText.split("\n").map(row => row.split(","));
+        const rows = csvText.split("\n").map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/(^"|"$)/g, '').trim()));
+        console.log("✅ Header CSV:", rows[0]); // Debug header
+
+        const headers = rows[0].map(header => header.trim().toLowerCase()); // Bersihkan spasi dan ubah ke huruf kecil
+        const periodColumnIndex = headers.indexOf("periode");
+        const gtColumnIndex = headers.indexOf("grt");
+        const agentColumnIndex = headers.indexOf("nama agen");
+
+        console.log("🔍 Indeks Kolom:", { periodColumnIndex, gtColumnIndex, agentColumnIndex });
+
+        if (periodColumnIndex === -1 || gtColumnIndex === -1 || agentColumnIndex === -1) {
+            console.error("⚠️ Kolom yang diperlukan tidak ditemukan dalam CSV!");
+            console.error("📋 Header CSV:", headers);
+            return;
+        }
+
         const totalSurabaya = rows.length > 1 ? rows.length - 1 : 0;
         const totalGresik = Math.floor(totalSurabaya * 0.5);
 
@@ -79,5 +95,3 @@ async function fetchCSV() {
 
 // Jalankan fetchCSV()
 fetchCSV();
-
-
