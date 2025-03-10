@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sheets Data</title>
+    <title>Tabel Data</title>
     <style>
         /* Reset Default Margin & Padding */
         * {
@@ -13,17 +13,16 @@
             font-family: Arial, sans-serif;
         }
 
-        /* Layout Wrapper */
         .wrapper {
             display: flex;
-            height: 100vh; /* Full height */
+            height: 100vh;
             overflow: hidden;
         }
 
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: linear-gradient(135deg, #00008B 0%, #1E90FF 50%, #00008B 100%); /* Dark blue gradient with lighting effect */
+            background: linear-gradient(135deg, #00008B 0%, #1E90FF 15%, #00008B 70%);
             color: white;
             display: flex;
             flex-direction: column;
@@ -33,12 +32,9 @@
         }
 
         .sidebar img {
-            width: 100%; /* Adjust image to fit the width of the sidebar */
+            width: 100%;
             height: auto;
-            margin-bottom: 20px; /* Add some space below the image */
-            background-color: white;
-            padding: 10px;
-            box-sizing: border-box;
+            margin-bottom: 20px;
         }
 
         .sidebar a {
@@ -54,134 +50,43 @@
             background-color: #575757;
         }
 
-        /* Topbar */
-        .topbar {
-            width: calc(100% - 250px);
-            height: 110px; /* Increase height */
-            background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center;
-            background-size: cover;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Center the title */
-            padding: 0 20px;
-            position: fixed;
-            top: 0;
-            left: 250px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 1000; /* Ensure the topbar is always on top */
-        }
-
-        .htopbar2 {
-            font-size: 48px;
-        }
-
-        /* Konten */
         .content {
             margin-left: 250px;
-            margin-top: 100px; /* Adjust for new topbar height */
+            margin-top: 110px;
             padding: 20px;
             width: calc(100% - 250px);
-            height: calc(100vh - 100px); /* Adjust for new topbar height */
-            overflow-y: auto; /* Scrollable */
+            height: calc(100vh - 110px);
+            overflow-y: auto;
             background-color: #f4f4f4;
         }
 
-        /* Responsif: Sidebar bisa disembunyikan */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-                padding-top: 10px;
-            }
-
-            .sidebar img {
-                width: 100%; /* Adjust image to fit the width of the sidebar */
-                height: auto;
-                margin-bottom: 10px; /* Adjust space below the image */
-            }
-
-            .sidebar a {
-                text-align: center;
-                font-size: 14px;
-                padding: 10px;
-            }
-
-            .topbar {
-                width: calc(100% - 60px);
-                left: 60px;
-            }
-
-            .content {
-                margin-left: 60px;
-                width: calc(100% - 60px);
-            }
-        }
-
-        .table-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
         table {
-            width: 100%; /* Ensure the table expands to the full width */
+            width: 100%;
             border-collapse: collapse;
         }
+
         th, td {
-            padding: 10px; /* Add padding for better spacing */
+            padding: 10px;
             text-align: left;
-            white-space: nowrap; /* Prevent text from wrapping */
-            overflow: hidden; /* Prevent text from overflowing */
-            text-overflow: ellipsis; /* Add "..." if text is too long */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border: 1px solid #ddd;
         }
+
         th {
             background-color: blue;
             color: white;
             font-weight: bold;
         }
-        td {
-            min-height: 50px; /* Set minimum height */
-        }
-        table thead tr {
-            background-color: #0000FF; /* Blue color */
-            color: #ffffff; /* White text */
-            text-align: left;
-            font-weight: bold; /* Bold text */
-        }
-        table tbody tr {
-            border-bottom: 1px solid #dddddd;
-        }
+
         table tbody tr:nth-of-type(even) {
             background-color: #f3f3f3;
         }
-        table tbody tr:last-of-type {
-            border-bottom: 2px solid #009879;
-        }
+
         table tbody tr:hover {
             background: linear-gradient(90deg, rgba(0,152,121,1) 0%, rgba(0,212,255,1) 100%);
             color: #ffffff;
-        }
-        table tbody tr.selected {
-            background-color: red;
-            color: white;
-        }
-        #total-data {
-            font-size: 36px; /* Twice as large */
-            font-weight: bold; /* Bolder text */
-        }
-        .chart-container {
-            width: 100%;
-            height: 400px;
-        }
-        .search-container {
-            display: flex;
-            align-items: center;
-        }
-        .search-container input {
-            padding: 10px;
-            font-size: 16px;
-            width: 300px;
-            box-sizing: border-box;
         }
 
         .total-data-container {
@@ -189,252 +94,168 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            background-color: #FFFFFF; /* Dark grey background color */
-            padding: 10px; /* Optional: Add padding */
-            border-radius: 8px; /* Optional: Add rounded corners */
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: Add shadow */
-            width: 100%; /* Match the width of the table */
+            background-color: #FFFFFF;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 100%;
         }
 
-        .highlight {
-            background-color: red;
-            color: white;
+        #total-data {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .search-container input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </head>
 <body>
-    <!-- Wrapper -->
     <div class="wrapper">
-
         <!-- Sidebar -->
         <div class="sidebar">
-            <img src="https://jasamaritim.co.id/wp-content/uploads/2022/05/logo.png" alt="Logo">
+            <img src="https://jasamaritim.co.id/wp-content/uploads/2022/05/logo.png" alt="Logo" style="background-color: white; padding: 10px;">
             <a href="dashboard.html">Dashboard</a>
             <a href="index.html">Tabel Outstanding</a>
-            <a href="LHGK.html">Tabel Outstanding Ver. LHGK</a>
-            <!-- Remove the "Kirim WhatsApp" button -->
+            <!-- Remove LHGK link -->
         </div>
 
         <!-- Topbar -->
-        <div class="topbar">
+        <div class="topbar" style="width: calc(100% - 250px); height: 110px; background: url('https://sinay.ai/wp-content/uploads/2022/09/shutterstock_1918781705-scaled.jpg') no-repeat center center; background-size: cover; color: white; display: flex; align-items: center; justify-content: center; padding: 0 20px; position: fixed; top: 0; left: 250px; box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); z-index: 1000;">
             <h2>OUTSTANDING PERAK - GRESIK</h2>
         </div>
 
         <!-- Main Content -->
         <div class="content">
-            <div id="tabel" class="page active">
-                <div class="total-data-container">
-                    <p id="total-data">Total data: 0</p>
-                    <div class="search-container">
-                        <input type="text" id="search-input" onkeyup="searchTable()" placeholder="Search for names..">
-                    </div>
+            <div class="total-data-container">
+                <p id="total-data">Total data: 0</p>
+                <div class="search-container">
+                    <input type="text" id="search-input" onkeyup="searchTable()" placeholder="Search...">
                 </div>
-                <table border="1" id="data-table">
-                    <thead>
-                        <tr>
-                            <th>Select</th>
-                            <!-- Dynamically insert headers from CSV -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Data will be inserted here -->
-                    </tbody>
-                </table>
             </div>
+            <table border="1" id="data-table">
+                <thead>
+                    <tr>
+                        <th>NO PKK INAPORTNET</th>
+                        <th>NO PKK</th>
+                        <th>NAMA KAPAL</th>
+                        <th>GT</th>
+                        <th>LOA</th>
+                        <th>NAMA KEAGENAN</th>
+                        <th>NO SPB</th>
+                        <th>WAKTU SPB</th>
+                        <th>PERIODE SPB</th>
+                        <th>NAME PROCESS CODE</th>
+                        <th>NAME BRANCH</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be populated dynamically -->
+                </tbody>
+            </table>
         </div>
-
     </div>
-    <script>
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRamhRDNlh6CfJCttO-FHkv3x11BrTu5nsSl9kUs-lULcAzC83pyp2op2BaRXXppLaSmmOmxIoVqGar/pub?gid=4285570&single=true&output=csv";
-        let globalRows = []; // Store CSV data globally
 
+    <script>
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5vNblXh982I0q7lZ_d6roCrT8Rw3tRgEPEDE032ZkT30BIvPZzKoiyhlhKrJahOIJYQ9XA04ii-1k/pub?gid=367297739&single=true&output=csv";
+        
         async function loadCSV() {
             try {
                 const response = await fetch(csvUrl);
+                if (!response.ok) throw new Error("Gagal mengambil data CSV");
                 const csvText = await response.text();
-                const rows = csvText.split("\n").map(row => {
-                    const columns = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); // Split by commas not inside quotes
-                    return columns.map(col => col.replace(/(^"|"$)/g, '')); // Remove surrounding quotes
-                });
+                const rows = csvText.split("\n").map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/(^"|"$)/g, '')));
 
-                if (rows.length <= 1) {
-                    console.error("No data found in CSV.");
+                if (rows.length <= 1 || rows[0][0].includes("<!DOCTYPE html>")) {
+                    throw new Error("Data CSV tidak valid.");
+                }
+
+                const headers = rows[0].map(header => header.trim().toLowerCase()); // Bersihkan spasi dan ubah ke huruf kecil
+                const noPkkInaportnetIndex = headers.indexOf("no_pkk_inaportnet");
+                const noPkkIndex = headers.indexOf("no_pkk");
+                const vesselNameIndex = headers.indexOf("vessel_name");
+                const gtIndex = headers.indexOf("gt");
+                const loaIndex = headers.indexOf("loa");
+                const companyNameIndex = headers.indexOf("company_name");
+                const noSpbIndex = headers.indexOf("no_spb");
+                const waktuSpbIndex = headers.indexOf("waktu_spb");
+                const periodeSpbIndex = headers.indexOf("periode_spb");
+                const nameProcessCodeIndex = headers.indexOf("name_process_code");
+                const nameBranchIndex = headers.indexOf("name_branch");
+
+                console.log("🔍 Indeks Kolom:", { noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, gtIndex, loaIndex, companyNameIndex, noSpbIndex, waktuSpbIndex, periodeSpbIndex, nameProcessCodeIndex, nameBranchIndex });
+
+                if (noPkkInaportnetIndex === -1 || noPkkIndex === -1 || vesselNameIndex === -1 || gtIndex === -1 || loaIndex === -1 || companyNameIndex === -1 || noSpbIndex === -1 || waktuSpbIndex === -1 || periodeSpbIndex === -1 || nameProcessCodeIndex === -1 || nameBranchIndex === -1) {
+                    console.error("⚠️ Kolom yang diperlukan tidak ditemukan dalam CSV!");
+                    console.error("📋 Header CSV:", headers);
                     return;
                 }
 
-                globalRows = rows; // Save data globally
+                const tbody = document.querySelector("#data-table tbody");
+                tbody.innerHTML = '';
 
-                let thead = document.querySelector("#data-table thead tr");
-                let tbody = document.querySelector("#data-table tbody");
-                const headerLength = rows[0].length;
-
-                // Insert headers from CSV
-                rows[0].forEach(header => {
-                    let th = document.createElement("th");
-                    th.textContent = header;
-                    thead.appendChild(th);
+                const rowMap = new Map();
+                rows.slice(1).forEach(row => {
+                    const rowKey = row.join(",");
+                    if (rowMap.has(rowKey)) {
+                        rowMap.get(rowKey).push(row);
+                    } else {
+                        rowMap.set(rowKey, [row]);
+                    }
                 });
 
-                // Insert data rows
-                rows.slice(1).forEach((row, index) => { // Skip the first row
-                    let tr = document.createElement("tr");
-                    let tdCheckbox = document.createElement("td");
-                    tdCheckbox.innerHTML = `<input type="checkbox" class="row-checkbox" data-index="${index}" onclick="toggleRowSelection(this)">`;
-                    tr.appendChild(tdCheckbox);
-                    for (let i = 0; i < headerLength; i++) {
-                        let td = document.createElement("td");
-                        td.textContent = row[i] || ""; // Fill with empty string if data is missing
+                const sortedRows = Array.from(rowMap.values()).flat().sort((a, b) => {
+                    const periodA = new Date(a[periodeSpbIndex]); // Assuming PERIOD is the 13th column
+                    const periodB = new Date(b[periodeSpbIndex]);
+                    return periodB - periodA;
+                });
+
+                sortedRows.forEach(row => {
+                    const tr = document.createElement("tr");
+                    [
+                        noPkkInaportnetIndex,
+                        noPkkIndex,
+                        vesselNameIndex,
+                        gtIndex,
+                        loaIndex,
+                        companyNameIndex,
+                        noSpbIndex,
+                        waktuSpbIndex,
+                        periodeSpbIndex,
+                        nameProcessCodeIndex,
+                        nameBranchIndex
+                    ].forEach(index => {
+                        const td = document.createElement("td");
+                        td.textContent = row[index];
                         tr.appendChild(td);
+                    });
+                    if (rowMap.get(row.join(",")).length > 1) {
+                        tr.style.backgroundColor = "red";
+                        tr.style.color = "white";
                     }
                     tbody.appendChild(tr);
-
-                    // Check if the row is marked in cookies
-                    if (getCookie(`row-${index}`) === 'true') {
-                        tr.classList.add('highlight');
-                        tdCheckbox.querySelector('input').checked = true;
-                    }
                 });
 
-                // Update total data count
                 document.getElementById("total-data").textContent = `Total data: ${rows.length - 1}`;
-
-                // Adjust row heights
-                adjustRowHeights();
-
-                // Restore checkbox states
-                restoreCheckboxStates();
             } catch (error) {
-                console.error("Error fetching CSV:", error);
+                console.error("Error loading CSV:", error);
             }
         }
 
         function searchTable() {
-            const input = document.getElementById("search-input");
-            const filter = input.value.toLowerCase();
-            const table = document.getElementById("data-table");
-            const trs = table.getElementsByTagName("tr");
-
-            for (let i = 1; i < trs.length; i++) {
-                const tds = trs[i].getElementsByTagName("td");
-                let found = false;
-                for (let j = 0; j < tds.length; j++) {
-                    if (tds[j].textContent.toLowerCase().includes(filter)) {
-                        found = true;
-                        break;
-                    }
-                }
-                trs[i].style.display = found ? "" : "none";
-            }
-        }
-
-        function adjustRowHeights() {
-            const rows = document.querySelectorAll("table tr");
-            let maxHeight = 0;
-
-            // Find the maximum height in all rows
-            rows.forEach(row => {
-                if (row.offsetHeight > maxHeight) {
-                    maxHeight = row.offsetHeight;
-                }
-            });
-
-            // Apply the maximum height to all rows
-            rows.forEach(row => {
-                row.style.height = maxHeight + "px";
+            const filter = document.getElementById("search-input").value.toLowerCase();
+            document.querySelectorAll("#data-table tbody tr").forEach(tr => {
+                tr.style.display = [...tr.children].some(td => td.textContent.toLowerCase().includes(filter)) ? "" : "none";
             });
         }
 
-        function toggleSelectAll() {
-            const selectAllCheckbox = document.getElementById("select-all");
-            const checkboxes = document.querySelectorAll(".row-checkbox");
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAllCheckbox.checked;
-                toggleRowSelection(checkbox);
-            });
-            saveCheckboxStates();
-        }
-
-        function toggleRowSelection(checkbox) {
-            const row = checkbox.closest("tr");
-            if (checkbox.checked) {
-                row.classList.add("highlight");
-                setCookie(`row-${checkbox.dataset.index}`, 'true', 365);
-            } else {
-                row.classList.remove("highlight");
-                setCookie(`row-${checkbox.dataset.index}`, '', -1);
-            }
-            saveCheckboxStates();
-        }
-
-        function saveCheckboxStates() {
-            const checkboxes = document.querySelectorAll(".row-checkbox");
-            const checkboxStates = Array.from(checkboxes).map(checkbox => checkbox.checked);
-            localStorage.setItem("checkboxStates", JSON.stringify(checkboxStates));
-        }
-
-        function restoreCheckboxStates() {
-            const checkboxStates = JSON.parse(localStorage.getItem("checkboxStates") || "[]");
-            const checkboxes = document.querySelectorAll(".row-checkbox");
-            checkboxes.forEach((checkbox, index) => {
-                checkbox.checked = checkboxStates[index] || false;
-                toggleRowSelection(checkbox);
-            });
-        }
-
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
-        }
-
-        function getCookie(name) {
-            const cname = name + "=";
-            const decodedCookie = decodeURIComponent(document.cookie);
-            const ca = decodedCookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') {
-                    c = c.substring(1);
-                }
-                if (c.indexOf(cname) === 0) {
-                    return c.substring(cname.length, c.length);
-                }
-            }
-            return "";
-        }
-
-        function updateTableForPeriod(period) {
-            const tableBody = document.getElementById("data-table").getElementsByTagName("tbody")[0];
-            tableBody.innerHTML = ""; // Clear existing table data
-
-            globalRows.slice(1).forEach(row => {
-                if (row[12] === period) { // Assuming PERIOD is the 13th column
-                    const newRow = tableBody.insertRow();
-                    newRow.insertCell(0).textContent = row[0]; // NO PKK PHINNISI
-                    newRow.insertCell(1).textContent = row[1]; // NAMA KAPAL
-                    newRow.insertCell(2).textContent = row[2]; // NAMA KEAGENAN
-                    newRow.insertCell(3).textContent = row[3]; // GT
-                    newRow.insertCell(4).textContent = row[4]; // LOA
-                }
-            });
-        }
-
-        // Auto-refresh the page every 1 minute
-        setTimeout(function() {
-            location.reload();
-        }, 60000);
-
-        document.addEventListener("DOMContentLoaded", function() {
-            adjustRowHeights();
-        });
-
-        loadCSV();
+        document.addEventListener("DOMContentLoaded", loadCSV);
     </script>
-    <script src="Script.js"></script>
 </body>
 </html>
-<!-- Redeploy -->
-<!-- Redeploy -->

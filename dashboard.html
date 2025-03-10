@@ -295,8 +295,7 @@
             <img src="https://jasamaritim.co.id/wp-content/uploads/2022/05/logo.png" alt="Logo" style="background-color: white; padding: 10px;">
             <a href="dashboard.html">Dashboard</a>
             <a href="index.html">Tabel Outstanding</a>
-            <a href="LHGK.html">Tabel Outstanding Ver. LHGK</a>
-            <!-- Remove the "Kirim WhatsApp" button -->
+            <!-- Remove LHGK link -->
         </div>
 
         <!-- Topbar -->
@@ -370,13 +369,17 @@
                 <table id="periode-table">
                     <thead>
                         <tr>
-                            <th>NO PKK PHINNISI</th>
+                            <th>NO PKK INAPORTNET</th>
+                            <th>NO PKK</th>
                             <th>NAMA KAPAL</th>
-                            <th>NAMA KEAGENAN</th>
                             <th>GT</th>
                             <th>LOA</th>
-                            <th>SPB</th>
-                            <th>PERIODE</th> <!-- Add PERIODE column -->
+                            <th>NAMA KEAGENAN</th>
+                            <th>NO SPB</th>
+                            <th>WAKTU SPB</th>
+                            <th>PERIODE SPB</th>
+                            <th>NAME PROCESS CODE</th>
+                            <th>NAME BRANCH</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -389,14 +392,17 @@
                 <table id="agent-table">
                     <thead>
                         <tr>
-                            <th>NO PKK PHINNISI</th>
+                            <th>NO PKK INAPORTNET</th>
+                            <th>NO PKK</th>
                             <th>NAMA KAPAL</th>
-                            <th>NAMA KEAGENAN</th>
                             <th>GT</th>
                             <th>LOA</th>
-                            <th>SPB</th>
-                            <th>PERIODE</th> <!-- Add PERIODE column -->
-                            <th>NAMA AGEN</th> <!-- Add NAMA AGEN column -->
+                            <th>NAMA KEAGENAN</th>
+                            <th>NO SPB</th>
+                            <th>WAKTU SPB</th>
+                            <th>PERIODE SPB</th>
+                            <th>NAME PROCESS CODE</th>
+                            <th>NAME BRANCH</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -413,7 +419,7 @@
         let selectedGT = null; // Store selected GT range for multi-filter
         let selectedAgent = null; // Store selected agent for multi-filter
 
-        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRamhRDNlh6CfJCttO-FHkv3x11BrTu5nsSl9kUs-lULcAzC83pyp2op2BaRXXppLaSmmOmxIoVqGar/pub?gid=4285570&single=true&output=csv";
+        const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT5vNblXh982I0q7lZ_d6roCrT8Rw3tRgEPEDE032ZkT30BIvPZzKoiyhlhKrJahOIJYQ9XA04ii-1k/pub?gid=367297739&single=true&output=csv";
 
         async function loadCSV() {
             try {
@@ -430,26 +436,33 @@
                 console.log("Header CSV:", rows[0]); // Debug header CSV
 
                 // Mencari indeks kolom yang diperlukan
-                const spbColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "no spb");
-                const periodColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "periode");
-                const gtColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "grt");
-                const agentColumnIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "nama agen");
+                const noPkkInaportnetIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "no_pkk_inaportnet");
+                const noPkkIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "no_pkk");
+                const vesselNameIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "vessel_name");
+                const gtIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "gt");
+                const loaIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "loa");
+                const companyNameIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "company_name");
+                const noSpbIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "no_spb");
+                const waktuSpbIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "waktu_spb");
+                const periodeSpbIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "periode_spb");
+                const nameProcessCodeIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "name_process_code");
+                const nameBranchIndex = rows[0].findIndex(header => header.trim().toLowerCase() === "name_branch");
 
-                if (spbColumnIndex === -1 || periodColumnIndex === -1 || gtColumnIndex === -1 || agentColumnIndex === -1) {
+                if (noPkkInaportnetIndex === -1 || noPkkIndex === -1 || vesselNameIndex === -1 || gtIndex === -1 || loaIndex === -1 || companyNameIndex === -1 || noSpbIndex === -1 || waktuSpbIndex === -1 || periodeSpbIndex === -1 || nameProcessCodeIndex === -1 || nameBranchIndex === -1) {
                     console.error("Kolom yang diperlukan tidak ditemukan!");
                     return;
                 }
 
-                console.log("Indeks Kolom SPB:", spbColumnIndex); // Debug indeks kolom SPB
+                console.log("Indeks Kolom SPB:", noSpbIndex); // Debug indeks kolom SPB
 
                 // Menghitung jumlah SPB.IDSUB dan SPB.IDGRE
                 const spbIdsubCount = rows.slice(1).filter(row => {
-                    console.log("Data SPB:", row[spbColumnIndex]); // Debug data SPB
-                    return row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDSUB");
+                    console.log("Data SPB:", row[noSpbIndex]); // Debug data SPB
+                    return row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDSUB");
                 }).length;
                 const spbIdgreCount = rows.slice(1).filter(row => {
-                    console.log("Data SPB:", row[spbColumnIndex]); // Debug data SPB
-                    return row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDGRE");
+                    console.log("Data SPB:", row[noSpbIndex]); // Debug data SPB
+                    return row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDGRE");
                 }).length;
 
                 console.log("Jumlah SPB.IDSUB:", spbIdsubCount);
@@ -475,13 +488,13 @@
                 };
 
                 rows.slice(1).forEach(row => {
-                    const period = row[periodColumnIndex];
+                    const period = row[periodeSpbIndex];
                     if (period) {
                         periodData[period] = (periodData[period] || 0) + 1;
                     }
 
                     // Count GT categories
-                    const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                    const gtValue = row[gtIndex] ? parseFloat(row[gtIndex].trim()) : NaN;
                     console.log("GT Ditemukan:", gtValue); // Debugging GT
                     if (!isNaN(gtValue)) {
                         if (gtValue < 500) {
@@ -498,7 +511,7 @@
                             gtCounts.greater15000++;
                         }
                     } else {
-                        console.log("GT Invalid atau Kosong:", row[gtColumnIndex]); // Cek jika GT bermasalah
+                        console.log("GT Invalid atau Kosong:", row[gtIndex]); // Cek jika GT bermasalah
                     }
                 });
 
@@ -507,7 +520,7 @@
                 // Create the agent chart
                 const agentData = {};
                 rows.slice(1).forEach(row => {
-                    const agent = row[agentColumnIndex];
+                    const agent = row[companyNameIndex];
                     if (agent) {
                         agentData[agent] = (agentData[agent] || 0) + 1;
                     }
@@ -543,9 +556,9 @@
                         console.log("Periode yang dipilih:", label); // Debugging
 
                         selectedPeriod = label; // Store selected period
-                        updateCardsForPeriod(label, globalRows, gtColumnIndex);
-                        updateSPBCountsForPeriod(label, globalRows, spbColumnIndex);
-                        filterTable(globalRows, gtColumnIndex, spbColumnIndex, periodColumnIndex);
+                        updateCardsForPeriod(label, globalRows, gtIndex, periodeSpbIndex);
+                        updateSPBCountsForPeriod(label, globalRows, noSpbIndex, periodeSpbIndex);
+                        filterTable(globalRows, gtIndex, noSpbIndex, periodeSpbIndex, noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, loaIndex, companyNameIndex, waktuSpbIndex, nameProcessCodeIndex, nameBranchIndex);
                     }
                 };
 
@@ -554,7 +567,7 @@
                     card.addEventListener('click', function() {
                         const gtRange = this.querySelector('h3').textContent;
                         selectedGT = gtRange; // Store selected GT range
-                        filterTable(globalRows, gtColumnIndex, spbColumnIndex, periodColumnIndex);
+                        filterTable(globalRows, gtIndex, noSpbIndex, periodeSpbIndex, noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, loaIndex, companyNameIndex, waktuSpbIndex, nameProcessCodeIndex, nameBranchIndex);
                     });
                 });
 
@@ -568,7 +581,7 @@
                         console.log("Agent yang dipilih:", label); // Debugging
 
                         selectedAgent = label; // Store selected agent
-                        filterAgentTable(globalRows, agentColumnIndex);
+                        filterAgentTable(globalRows, companyNameIndex, noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, gtIndex, loaIndex, noSpbIndex, waktuSpbIndex, periodeSpbIndex, nameProcessCodeIndex, nameBranchIndex);
                     }
                 };
 
@@ -579,7 +592,7 @@
             }
         }
 
-        function updateCardsForPeriod(period, rows, gtColumnIndex) {
+        function updateCardsForPeriod(period, rows, gtIndex, periodeSpbIndex) {
             const gtCounts = {
                 less500: 0,
                 between501And3000: 0,
@@ -590,8 +603,8 @@
             };
 
             rows.slice(1).forEach(row => {
-                if (row[1] === period) { // Assuming PERIOD is the 13th column
-                    const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                if (row[periodeSpbIndex] === period) { // Assuming PERIOD is the 13th column
+                    const gtValue = row[gtIndex] ? parseFloat(row[gtIndex].trim()) : NaN;
                     if (!isNaN(gtValue)) {
                         if (gtValue < 500) {
                             gtCounts.less500++;
@@ -619,15 +632,15 @@
             document.getElementById("gt-greater-15000").textContent = gtCounts.greater15000 || "0";
         }
 
-        function updateSPBCountsForPeriod(period, rows, spbColumnIndex) {
+        function updateSPBCountsForPeriod(period, rows, noSpbIndex, periodeSpbIndex) {
             let spbIdsubCount = 0;
             let spbIdgreCount = 0;
 
             rows.slice(1).forEach(row => {
-                if (row[12] === period) { // Assuming PERIOD is the 13th column
-                    if (row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDSUB")) {
+                if (row[periodeSpbIndex] === period) { // Assuming PERIOD is the 13th column
+                    if (row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDSUB")) {
                         spbIdsubCount++;
-                    } else if (row[spbColumnIndex] && row[spbColumnIndex].includes("SPB.IDGRE")) {
+                    } else if (row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDGRE")) {
                         spbIdgreCount++;
                     }
                 }
@@ -641,13 +654,13 @@
             document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
         }
 
-        function filterTable(rows, gtColumnIndex, spbColumnIndex, periodColumnIndex) {
+        function filterTable(rows, gtIndex, noSpbIndex, periodeSpbIndex, noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, loaIndex, companyNameIndex, waktuSpbIndex, nameProcessCodeIndex, nameBranchIndex) {
             const tableBody = document.getElementById("periode-table").getElementsByTagName("tbody")[0];
             tableBody.innerHTML = ""; // Clear existing table data
 
             rows.slice(1).forEach(row => {
-                const periodMatch = !selectedPeriod || row[periodColumnIndex] === selectedPeriod; // Match period if selected
-                const gtValue = row[gtColumnIndex] ? parseFloat(row[gtColumnIndex].trim()) : NaN;
+                const periodMatch = !selectedPeriod || row[periodeSpbIndex] === selectedPeriod; // Match period if selected
+                const gtValue = row[gtIndex] ? parseFloat(row[gtIndex].trim()) : NaN;
                 const gtMatch = !selectedGT || (
                     (selectedGT === "GT < 500" && gtValue < 500) ||
                     (selectedGT === "GT 501 - 3000" && gtValue >= 501 && gtValue <= 3000) ||
@@ -659,33 +672,41 @@
 
                 if (periodMatch && gtMatch) {
                     const newRow = tableBody.insertRow();
-                    newRow.insertCell(0).textContent = row[2]; // NO PKK PHINNISI
-                    newRow.insertCell(1).textContent = row[4]; // NAMA KAPAL
-                    newRow.insertCell(2).textContent = row[6]; // NAMA KEAGENAN
-                    newRow.insertCell(3).textContent = row[11]; // GT
-                    newRow.insertCell(4).textContent = row[12]; // LOA
-                    newRow.insertCell(5).textContent = row[50]; // SPB
-                    newRow.insertCell(6).textContent = row[1]; // PERIODE
+                    newRow.insertCell(0).textContent = row[noPkkInaportnetIndex]; // NO PKK INAPORTNET
+                    newRow.insertCell(1).textContent = row[noPkkIndex]; // NO PKK
+                    newRow.insertCell(2).textContent = row[vesselNameIndex]; // NAMA KAPAL
+                    newRow.insertCell(3).textContent = row[gtIndex]; // GT
+                    newRow.insertCell(4).textContent = row[loaIndex]; // LOA
+                    newRow.insertCell(5).textContent = row[companyNameIndex]; // NAMA KEAGENAN
+                    newRow.insertCell(6).textContent = row[noSpbIndex]; // NO SPB
+                    newRow.insertCell(7).textContent = row[waktuSpbIndex]; // WAKTU SPB
+                    newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
+                    newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
+                    newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
                 }
             });
         }
 
-        function filterAgentTable(rows, agentColumnIndex) {
+        function filterAgentTable(rows, companyNameIndex, noPkkInaportnetIndex, noPkkIndex, vesselNameIndex, gtIndex, loaIndex, noSpbIndex, waktuSpbIndex, periodeSpbIndex, nameProcessCodeIndex, nameBranchIndex) {
             const tableBody = document.getElementById("agent-table").getElementsByTagName("tbody")[0];
             tableBody.innerHTML = ""; // Clear existing table data
 
             rows.slice(1).forEach(row => {
-                const agentMatch = !selectedAgent || row[agentColumnIndex] === selectedAgent; // Match agent if selected
+                const agentMatch = !selectedAgent || row[companyNameIndex] === selectedAgent; // Match agent if selected
 
                 if (agentMatch) {
                     const newRow = tableBody.insertRow();
-                    newRow.insertCell(0).textContent = row[2]; // NO PKK PHINNISI
-                    newRow.insertCell(1).textContent = row[4]; // NAMA KAPAL
-                    newRow.insertCell(2).textContent = row[6]; // NAMA KEAGENAN
-                    newRow.insertCell(3).textContent = row[11]; // GT
-                    newRow.insertCell(4).textContent = row[12]; // LOA
-                    newRow.insertCell(5).textContent = row[50]; // SPB
-                    newRow.insertCell(6).textContent = row[1]; // PERIODE
+                    newRow.insertCell(0).textContent = row[noPkkInaportnetIndex]; // NO PKK INAPORTNET
+                    newRow.insertCell(1).textContent = row[noPkkIndex]; // NO PKK
+                    newRow.insertCell(2).textContent = row[vesselNameIndex]; // NAMA KAPAL
+                    newRow.insertCell(3).textContent = row[gtIndex]; // GT
+                    newRow.insertCell(4).textContent = row[loaIndex]; // LOA
+                    newRow.insertCell(5).textContent = row[companyNameIndex]; // NAMA KEAGENAN
+                    newRow.insertCell(6).textContent = row[noSpbIndex]; // NO SPB
+                    newRow.insertCell(7).textContent = row[waktuSpbIndex]; // WAKTU SPB
+                    newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
+                    newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
+                    newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
                 }
             });
         }
@@ -810,12 +831,11 @@
         document.getElementById('periode-table-container').classList.remove('hidden');
         document.getElementById('agent-table-container').classList.add('hidden'); // Hide agent table
     </script>
-    <script src="Script.js"></script>
     <script>
         // Auto-refresh the page every 1 minute
         setTimeout(function() {
             location.reload();
-        }, 60000);
+        }, 300000);
 
         // Auto-switch between period and agent bar charts every 2 minutes
         setInterval(function() {
@@ -827,7 +847,7 @@
             } else {
                 agentButton.click();
             }
-        }, 120000); // 2 minutes in milliseconds
+        }, 300000); // 2 minutes in milliseconds
     </script>
 </body>
 </html>
