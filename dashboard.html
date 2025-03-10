@@ -327,8 +327,8 @@
                 <!-- Remove the "Total Data" section in the agent bar chart -->
             </div>
             <div class="spb-counts-container">
-                <p>SPB.IDSUB: <span id="spb-idsub-count">0</span></p>
-                <p>SPB.IDGRE: <span id="spb-idgre-count">0</span></p>
+                <p>Surabaya: <span id="spb-idsub-count">0</span></p>
+                <p>Gresik: <span id="spb-idgre-count">0</span></p>
                 <p>Total Data: <span id="total-data-count">0</span></p>
             </div>
             <div id="periode-card-container" class="card-container-wrapper">
@@ -455,27 +455,6 @@
 
                 console.log("Indeks Kolom SPB:", noSpbIndex); // Debug indeks kolom SPB
 
-                // Menghitung jumlah SPB.IDSUB dan SPB.IDGRE
-                const spbIdsubCount = rows.slice(1).filter(row => {
-                    console.log("Data SPB:", row[noSpbIndex]); // Debug data SPB
-                    return row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDSUB");
-                }).length;
-                const spbIdgreCount = rows.slice(1).filter(row => {
-                    console.log("Data SPB:", row[noSpbIndex]); // Debug data SPB
-                    return row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDGRE");
-                }).length;
-
-                console.log("Jumlah SPB.IDSUB:", spbIdsubCount);
-                console.log("Jumlah SPB.IDGRE:", spbIdgreCount);
-
-                // Memperbarui tampilan di HTML
-                document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
-                document.getElementById("spb-idgre-count").textContent = spbIdgreCount;
-
-                // Simpan data ke localStorage
-                localStorage.setItem("totalSurabaya", document.getElementById("spb-idsub-count").textContent);
-                localStorage.setItem("totalGresik", document.getElementById("spb-idgre-count").textContent);
-
                 // Create the period chart
                 const periodData = {};
                 const gtCounts = {
@@ -587,6 +566,23 @@
 
                 // Update total data count
                 document.getElementById("total-data-count").textContent = rows.length - 1;
+
+                // Count IDSUB and IDGRE in the no_pkk_inaportnet column
+                let idsubCount = 0;
+                let idgreCount = 0;
+
+                rows.slice(1).forEach(row => {
+                    if (row[noPkkInaportnetIndex] && row[noPkkInaportnetIndex].includes("IDSUB")) {
+                        idsubCount++;
+                    } else if (row[noPkkInaportnetIndex] && row[noPkkInaportnetIndex].includes("IDGRE")) {
+                        idgreCount++;
+                    }
+                });
+
+                // Update the values for Surabaya and Gresik
+                document.getElementById("spb-idsub-count").textContent = idsubCount;
+                document.getElementById("spb-idgre-count").textContent = idgreCount;
+
             } catch (error) {
                 console.error("Error fetching CSV:", error);
             }
@@ -638,16 +634,16 @@
 
             rows.slice(1).forEach(row => {
                 if (row[periodeSpbIndex] === period) { // Assuming PERIOD is the 13th column
-                    if (row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDSUB")) {
+                    if (row[noSpbIndex] && row[noSpbIndex].includes("Surabaya")) {
                         spbIdsubCount++;
-                    } else if (row[noSpbIndex] && row[noSpbIndex].includes("SPB.IDGRE")) {
+                    } else if (row[noSpbIndex] && row[noSpbIndex].includes("Gresik")) {
                         spbIdgreCount++;
                     }
                 }
             });
 
-            console.log(`SPB.IDSUB pada ${period}:`, spbIdsubCount); // Debugging
-            console.log(`SPB.IDGRE pada ${period}:`, spbIdgreCount); // Debugging
+            console.log(`Surabaya pada ${period}:`, spbIdsubCount); // Debugging
+            console.log(`Gresik pada ${period}:`, spbIdgreCount); // Debugging
 
             // Update ke halaman
             document.getElementById("spb-idsub-count").textContent = spbIdsubCount;
