@@ -656,7 +656,7 @@
             const tableBody = document.getElementById("periode-table").getElementsByTagName("tbody")[0];
             tableBody.innerHTML = ""; // Clear existing table data
 
-            rows.slice(1).forEach(row => {
+            const filteredRows = rows.slice(1).filter(row => {
                 const periodMatch = !selectedPeriod || row[periodeSpbIndex] === selectedPeriod; // Match period if selected
                 const gtValue = row[gtIndex] ? parseFloat(row[gtIndex].trim()) : NaN;
                 const gtMatch = !selectedGT || (
@@ -668,21 +668,26 @@
                     (selectedGT === "GT > 15000" && gtValue > 15000)
                 );
 
-                if (periodMatch && gtMatch) {
-                    const newRow = tableBody.insertRow();
-                    newRow.insertCell(0).textContent = row[noPkkInaportnetIndex]; // NO PKK INAPORTNET
-                    newRow.insertCell(1).textContent = row[noPkkIndex]; // NO PKK
-                    newRow.insertCell(2).textContent = row[vesselNameIndex]; // NAMA KAPAL
-                    newRow.insertCell(3).textContent = row[gtIndex]; // GT
-                    newRow.insertCell(4).textContent = row[loaIndex]; // LOA
-                    newRow.insertCell(5).textContent = row[companyNameIndex]; // NAMA KEAGENAN
-                    newRow.insertCell(6).textContent = row[noSpbIndex]; // NO SPB
-                    newRow.insertCell(7).textContent = row[waktuSpbIndex]; // WAKTU SPB
-                    newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
-                    newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
-                    newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
-                    newRow.insertCell(11).textContent = calculateOutstandingDays(row[waktuSpbIndex]); // LAMA OUTSTANDING
-                }
+                return periodMatch && gtMatch;
+            });
+
+            // Sort the filtered rows by "Lama Outstanding" in descending order
+            filteredRows.sort((a, b) => calculateOutstandingDays(b[waktuSpbIndex]) - calculateOutstandingDays(a[waktuSpbIndex]));
+
+            filteredRows.forEach(row => {
+                const newRow = tableBody.insertRow();
+                newRow.insertCell(0).textContent = row[noPkkInaportnetIndex]; // NO PKK INAPORTNET
+                newRow.insertCell(1).textContent = row[noPkkIndex]; // NO PKK
+                newRow.insertCell(2).textContent = row[vesselNameIndex]; // NAMA KAPAL
+                newRow.insertCell(3).textContent = row[gtIndex]; // GT
+                newRow.insertCell(4).textContent = row[loaIndex]; // LOA
+                newRow.insertCell(5).textContent = row[companyNameIndex]; // NAMA KEAGENAN
+                newRow.insertCell(6).textContent = row[noSpbIndex]; // NO SPB
+                newRow.insertCell(7).textContent = row[waktuSpbIndex]; // WAKTU SPB
+                newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
+                newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
+                newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
+                newRow.insertCell(11).textContent = calculateOutstandingDays(row[waktuSpbIndex]); // LAMA OUTSTANDING
             });
         }
 
