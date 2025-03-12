@@ -22,8 +22,8 @@
         /* Sidebar */
         .sidebar {
             width: 250px;
-            background: linear-gradient(135deg, #00008B 0%, #1E90FF 15%, #00008B 70%);
-            color: white;
+            background: #D3D3D3; /* Light gray color */
+            color: black;
             display: flex;
             flex-direction: column;
             padding-top: 20px;
@@ -41,13 +41,13 @@
             padding: 15px 20px;
             text-decoration: none;
             font-size: 18px;
-            color: white;
+            color: black;
             display: block;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            background-color: #575757;
+            background-color: #A9A9A9; /* Darker gray on hover */
         }
 
         .content {
@@ -153,6 +153,7 @@
                         <th>PERIODE SPB</th>
                         <th>NAME PROCESS CODE</th>
                         <th>NAME BRANCH</th>
+                        <th>SELESAI</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -235,6 +236,22 @@
                         td.textContent = row[index];
                         tr.appendChild(td);
                     });
+
+                    // Add clear button for "Selesai" column
+                    const clearTd = document.createElement("td");
+                    const clearButton = document.createElement("button");
+                    clearButton.textContent = "Clear";
+                    clearButton.addEventListener("click", function() {
+                        const vesselName = row[vesselNameIndex];
+                        const confirmed = confirm(`Apakah data Kapal ${vesselName} akan di anggap selesai..?`);
+                        if (confirmed) {
+                            tr.remove();
+                            alert(`Data Kapal ${vesselName} telah dihapus.`);
+                        }
+                    });
+                    clearTd.appendChild(clearButton);
+                    tr.appendChild(clearTd);
+
                     if (rowMap.get(row.join(",")).length > 1) {
                         tr.style.backgroundColor = "red";
                         tr.style.color = "white";

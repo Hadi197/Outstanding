@@ -380,6 +380,7 @@
                             <th>PERIODE SPB</th>
                             <th>NAME PROCESS CODE</th>
                             <th>NAME BRANCH</th>
+                            <th>LAMA OUTSTANDING</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -403,6 +404,7 @@
                             <th>PERIODE SPB</th>
                             <th>NAME PROCESS CODE</th>
                             <th>NAME BRANCH</th>
+                            <th>LAMA OUTSTANDING</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -679,6 +681,7 @@
                     newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
                     newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
                     newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
+                    newRow.insertCell(11).textContent = calculateOutstandingDays(row[waktuSpbIndex]); // LAMA OUTSTANDING
                 }
             });
         }
@@ -703,6 +706,7 @@
                     newRow.insertCell(8).textContent = row[periodeSpbIndex]; // PERIODE SPB
                     newRow.insertCell(9).textContent = row[nameProcessCodeIndex]; // NAME PROCESS CODE
                     newRow.insertCell(10).textContent = row[nameBranchIndex]; // NAME BRANCH
+                    newRow.insertCell(11).textContent = calculateOutstandingDays(row[waktuSpbIndex]); // LAMA OUTSTANDING
                 }
             });
         }
@@ -800,6 +804,14 @@
                     }
                 }
             });
+        }
+
+        function calculateOutstandingDays(waktuSpb) {
+            const today = new Date();
+            const spbDate = new Date(waktuSpb);
+            const diffTime = Math.abs(today - spbDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
         }
 
         loadCSV();
