@@ -8,7 +8,6 @@
 *.gsheet
 
 # Log / hasil uji coba
-*.txt
 *.log
 
 # Folder cache python
