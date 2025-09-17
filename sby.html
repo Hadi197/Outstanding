@@ -43,6 +43,12 @@
             padding: 10px 15px;
             border: 1px solid #ddd;
             border-radius: 6px;
+            box-shadow: 0 10px 10px rgba(0,0,0,0.15); /* added */
+            transition: box-shadow .25s ease, transform .25s ease; /* added */
+        }
+        .chart-container:hover { /* added */
+            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+            transform: translateY(-3px);
         }
         .chart-container h5 {
             font-size: 0.9rem;
@@ -64,6 +70,21 @@
             /* Hapus force width/height absolute supaya Chart.js hit detection akurat */
             height:100%;
             width:100%;
+        }
+        /* Tambahan efek shadow pada card */
+        .card {
+            /* Shadow dasar */
+            box-shadow: 0 8px 6px rgba(0,0,0,0.15);
+            transition: box-shadow .25s ease, transform .25s ease;
+        }
+        .card:hover {
+            /* Shadow saat hover */
+            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
+            transform: translateY(-3px);
+        }
+        /* (Opsional) Jika card punya background putih transparan, perjelas */
+        .card:not([class*="bg-"]) {
+            background: #fff;
         }
     </style>
 </head>
