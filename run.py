@@ -16,7 +16,7 @@ def run_script(script_name):
 def main():
     # Define the scripts to run
     scripts = [
-        "pkk.py",  # Updated from pmh.py to pkk.py
+        "pmh.py",
         "spb.py",
         "lookup.py"
     ]

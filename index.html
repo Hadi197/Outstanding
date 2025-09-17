@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Peta Indonesia</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- Leaflet CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+        html, body { height:100%; margin:0; }
+        #map { width:100%; height:100vh; }
+        .legend {
+            background:#fff;
+            padding:6px 10px;
+            font:12px/1.2 Arial, sans-serif;
+            border:1px solid #ccc;
+            border-radius:4px;
+        }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin="">
+</script>
+<script>
+    // Inisialisasi peta
+    const map = L.map('map', {
+        center: [-2.5, 118], // Perkiraan pusat geografis Indonesia
+        zoom: 5,
+        minZoom: 4,
+        worldCopyJump: true
+    });
+
+    // Layer dasar OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Tambahkan scale bar
+    L.control.scale({ metric: true, imperial: false }).addTo(map);
+
+    // (Opsional) Ambil batas negara Indonesia (GeoJSON sederhana)
+    // Sumber contoh: Natural Earth simplified (publik). Bisa diganti sumber Anda sendiri.
+    fetch("https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson")
+        .then(r => r.json())
+        .then(geo => {
+            const indoFeature = {
+                "type": "FeatureCollection",
+                "features": geo.features.filter(f => f.properties.ADMIN === "Indonesia")
+            };
+            L.geoJSON(indoFeature, {
+                style: {
+                    color: "#d9534f",
+                    weight: 2,
+                    fillColor: "#f9b29b",
+                    fillOpacity: 0.25
+                }
+            }).addTo(map);
+        })
+        .catch(err => console.error("Gagal memuat batas Indonesia:", err));
+
+    // Contoh marker (hapus jika tidak diperlukan)
+    const samplePorts = [
+        { name: "Pelabuhan Tanjung Priok", coord: [-6.1045, 106.8775] },
+        { name: "Pelabuhan Tanjung Perak", coord: [-7.2039, 112.7365] },
+        { name: "Pelabuhan Belawan", coord: [3.7859, 98.6881] },
+        { name: "Pelabuhan Makassar", coord: [-5.1364, 119.4124] },
+    ];
+    samplePorts.forEach(p => {
+        const m = L.marker(p.coord)
+            .addTo(map)
+            .bindPopup(`<strong>${p.name}</strong>`)
+            .bindTooltip(p.name, {
+                direction: 'top',
+                offset: [0, -4],
+                opacity: 0.9
+            }); // Tooltip muncul saat hover
+
+        // (Opsional) paksa open/close jika ingin kontrol manual:
+        // m.on('mouseover', () => m.openTooltip());
+        // m.on('mouseout', () => m.closeTooltip());
+
+        if (p.name === "Pelabuhan Tanjung Perak") {
+            m.on("click", () => {
+                window.location.href = "sby.html"; // buka halaman Surabaya
+            });
+        }
+    });
+
+    // Legend sederhana
+    const legend = L.control({ position: "bottomleft" });
+    legend.onAdd = function() {
+        const div = L.DomUtil.create("div", "legend");
+        div.innerHTML = `
+            <div><strong>Legenda</strong></div>
+            <div style="margin-top:4px;">
+                <span style="display:inline-block;width:14px;height:14px;background:#f9b29b;border:2px solid #d9534f;margin-right:4px;vertical-align:middle;"></span>
+                <span>Wilayah Indonesia</span>
+            </div>
+            <div style="margin-top:4px;">
+                <span style="display:inline-block;width:14px;height:14px;background:#2e7dd7;border-radius:50%;margin-right:6px;vertical-align:middle;border:1px solid #0d4d8a;"></span>
+                <span>Pelabuhan contoh</span>
+            </div>
+        `;
+        return div;
+    };
+    legend.addTo(map);
+</script>
+</body>
+</html>

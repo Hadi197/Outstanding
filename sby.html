@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outstanding Tanjung Perak</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <style>
+        table {
+            width: 100%; /* Match table width to card width */
+        }
+        table td, table th {
+            font-size: 0.7rem; /* Make table text smaller */
+        }
+        .pagination {
+            display: none; /* Hide pagination */
+        }
+        .card {
+            flex: 1; /* Make cards equal width */
+            margin: 5px; /* Add spacing between cards */
+            cursor: pointer; /* Make cards clickable */
+        }
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between; /* Align cards in a single row */
+        }
+        .card-title {
+            font-size: 0.8rem; /* Make card titles smaller */
+            text-align: center; /* Center-align text and values */
+        }
+        .card-text {
+            font-size: 1.5rem; /* Make card values larger */
+            font-weight: bold; /* Make card values bold */
+            text-align: center; /* Center-align text and values */
+        }
+        .chart-container {
+            margin-top: 15px;
+            margin-bottom: 25px;
+            background: #ffffff;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+        .chart-container h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        #cardsContainer .card {
+            min-width: 120px;
+        }
+        .fixed-size {
+            width:1600px;      /* diubah dari width:100%; max-width:1200px; */
+            height:300px;      /* tetap 300 */
+            margin-left:auto;
+            margin-right:auto;
+            position:relative;
+        }
+        .fixed-size canvas {
+            /* Hapus force width/height absolute supaya Chart.js hit detection akurat */
+            height:100%;
+            width:100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Container hanya untuk judul & tombol -->
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Outstanding Tanjung Perak</h1>
+        <button id="downloadExcel" class="btn btn-success mb-3">Download Excel</button>
+    </div>
+
+    <!-- Active filter info -->
+    <div class="container" id="activeFilterContainer" style="display:none;">
+        <div class="alert alert-info py-2 px-3 d-flex justify-content-between align-items-center">
+            <span id="activeFilterText"></span>
+            <button class="btn btn-sm btn-outline-secondary" id="clearFilterBtn">Clear Filter</button>
+        </div>
+    </div>
+
+    <!-- Container terpisah untuk cards -->
+    <div class="container mb-3" id="cardsContainer">
+        <div class="row card-container">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Total Outstanding</h5>
+                    <p class="card-text" id="totalOutstanding">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Surabaya</h5>
+                    <p class="card-text" id="totalSurabaya">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Gresik</h5>
+                    <p class="card-text" id="totalGresik">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Dalam Negeri Surabaya</h5>
+                    <p class="card-text" id="totalDalamNegeriSurabaya">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Dalam Negeri Gresik</h5>
+                    <p class="card-text" id="totalDalamNegeriGresik">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Luar Negeri Surabaya</h5>
+                    <p class="card-text" id="totalLuarNegeriSurabaya">0</p>
+                </div>
+            </div>
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h5 class="card-title">Total Kapal Luar Negeri Gresik</h5>
+                    <p class="card-text" id="totalLuarNegeriGresik">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Bar Chart keseluruhan -->
+    <div class="container chart-container fixed-size" id="overallChartContainer">
+        <h5>Bar Chart Keseluruhan</h5>
+        <canvas id="barChart" height="200"></canvas>
+    </div>
+
+    <!-- Container Bar Chart Surabaya -->
+    <div class="container chart-container fixed-size" id="surabayaChartContainer">
+        <h5>Bar Chart Surabaya</h5>
+        <canvas id="barChartSurabaya" height="200"></canvas>
+    </div>
+
+    <!-- Container Bar Chart Gresik -->
+    <div class="container chart-container fixed-size" id="gresikChartContainer">
+        <h5>Bar Chart Gresik</h5>
+        <canvas id="barChartGresik" height="200"></canvas>
+    </div>
+
+    <!-- Container untuk tabel & pencarian -->
+    <div class="container mb-5" id="tableContainer">
+        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search in table...">
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr id="table-header">
+                    <!-- Table headers will be dynamically inserted here -->
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Table rows will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        async function fetchCSV(filePath) {
+            try {
+                const response = await fetch(filePath);
+                const data = await response.text();
+                return data;
+            } catch (error) {
+                console.error("Failed to fetch CSV file:", error);
+                return null;
+            }
+        }
+
+        function parseCSV(csvText) {
+            const rows = csvText.split("\n").filter(row => row.trim() !== "");
+            const headers = rows[0].split(",");
+            const data = rows.slice(1).map(row => {
+                const values = [];
+                let current = "";
+                let insideQuotes = false;
+
+                for (let char of row) {
+                    if (char === '"' && insideQuotes) {
+                        insideQuotes = false;
+                    } else if (char === '"' && !insideQuotes) {
+                        insideQuotes = true;
+                    } else if (char === "," && !insideQuotes) {
+                        values.push(current.trim());
+                        current = "";
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current.trim());
+
+                return headers.reduce((acc, header, index) => {
+                    acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : ""; // Remove surrounding quotes
+                    return acc;
+                }, {});
+            });
+            return { headers, data };
+        }
+
+        function populateTable(headers, data) {
+            const tableHeader = document.getElementById("table-header");
+            const tableBody = document.getElementById("table-body");
+
+            // Clear existing table content
+            tableHeader.innerHTML = "";
+            tableBody.innerHTML = "";
+
+            // Add "NO" column to headers
+            const updatedHeaders = ["NO", ...headers.filter(header => header !== "name_branch"), "PELABUHAN", "PELAYARAN"];
+
+            // Populate table headers
+            updatedHeaders.forEach(header => {
+                const th = document.createElement("th");
+                th.textContent = header;
+                tableHeader.appendChild(th);
+            });
+
+            // Populate table rows
+            data.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                updatedHeaders.forEach(header => {
+                    const td = document.createElement("td");
+                    if (header === "NO") {
+                        td.textContent = index + 1; // Add row number
+                    } else if (header === "PELABUHAN") {
+                        // Add logic for "PELABUHAN" column
+                        if (row["no_pkk_inaportnet"]?.includes("IDSUB")) {
+                            td.textContent = "SURABAYA";
+                        } else if (row["no_pkk_inaportnet"]?.includes("IDGRE")) {
+                            td.textContent = "GRESIK";
+                        } else {
+                            td.textContent = ""; // Default empty value
+                        }
+                    } else if (header === "PELAYARAN") {
+                        // Add logic for "PELAYARAN" column
+                        if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) {
+                            td.textContent = "Dalam Negeri";
+                        } else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) {
+                            td.textContent = "Luar Negeri";
+                        } else {
+                            td.textContent = ""; // Default empty value
+                        }
+                    } else {
+                        td.textContent = row[header] || "";
+                    }
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function normalizeFilter(title) {
+            return {
+                "Total Kapal Surabaya": "SURABAYA",
+                "Total Kapal Gresik": "GRESIK",
+                "Total Kapal Dalam Negeri Surabaya": "DN_SUB",
+                "Total Kapal Dalam Negeri Gresik": "DN_GRE",
+                "Total Kapal Luar Negeri Surabaya": "LN_SUB",
+                "Total Kapal Luar Negeri Gresik": "LN_GRE",
+                "Total Outstanding": "ALL"
+            }[title] || "ALL";
+        }
+
+        function applyFilter(row, filterKey) {
+            switch (filterKey) {
+                case "SURABAYA": return row["no_pkk_inaportnet"]?.includes("IDSUB");
+                case "GRESIK": return row["no_pkk_inaportnet"]?.includes("IDGRE");
+                case "DN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
+                case "DN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
+                case "LN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
+                case "LN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
+                default: return true;
+            }
+        }
+
+        // === Tambahan: helper untuk ekstraksi bulan aman tanpa Date parsing ===
+        function getMonthKey(dateString) {
+            if (!dateString) return null;
+            // Format sumber: "YYYY-MM-DD ..." -> cukup ambil 7 karakter pertama
+            return dateString.length >= 7 ? dateString.slice(0, 7) : null;
+        }
+
+        function aggregateByMonth(data, filterKey = "ALL", port = null) {
+            const monthCounts = {};
+            data.forEach(row => {
+                if (!row["departure_date_convert"]) return;
+                if (!applyFilter(row, filterKey)) return;
+                if (port) {
+                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
+                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
+                    if (pel !== port) return;
+                }
+                const month = getMonthKey(row["departure_date_convert"]);
+                if (!month) return;
+                monthCounts[month] = (monthCounts[month] || 0) + 1;
+            });
+            const labels = Object.keys(monthCounts).sort();
+            const values = labels.map(m => monthCounts[m]);
+            return { labels, values };
+        }
+
+        let barChart, barChartSurabaya, barChartGresik;
+
+        function buildChart(ctx, labelText) {
+            return new Chart(ctx, {
+                type: "bar",
+                data: { labels: [], datasets: [{ label: labelText, data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Tambahan: agar ukuran mengikuti container tanpa distorsi koordinat
+                    plugins: {
+                        legend: { display: true, position: "top" },
+                        datalabels: {
+                            anchor: "end",
+                            align: "top",
+                            formatter: v => v,
+                            color: "black",
+                            font: { weight: "bold" }
+                        }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: "Month" } },
+                        y: { beginAtZero: true, title: { display: true, text: "Value" } }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        function randomColors(n) {
+            return Array.from({ length: n }, (_, i) => {
+                const h = (i * 360 / n);
+                return {
+                    bg: `hsl(${h},70%,60%)`,
+                    br: `hsl(${h},70%,40%)`
+                };
+            });
+        }
+
+        function updateChart(chart, labels, values, labelText) {
+            const cols = randomColors(labels.length);
+            chart.data.labels = labels;
+            chart.data.datasets[0].label = labelText;
+            chart.data.datasets[0].data = values;
+            chart.data.datasets[0].backgroundColor = cols.map(c => c.bg);
+            chart.data.datasets[0].borderColor = cols.map(c => c.br);
+            chart.update();
+        }
+
+        function updateAllCharts(filterKey = "ALL") {
+            const overall = aggregateByMonth(globalData, filterKey);
+            const sub = aggregateByMonth(globalData, filterKey, "SURABAYA");
+            const gre = aggregateByMonth(globalData, filterKey, "GRESIK");
+            updateChart(barChart, overall.labels, overall.values, "Departures per Month");
+            updateChart(barChartSurabaya, sub.labels, sub.values, "Surabaya per Month");
+            updateChart(barChartGresik, gre.labels, gre.values, "Gresik per Month");
+        }
+
+        function updateCardCounts(data) {
+            const totalSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
+            const totalGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
+            const totalDalamNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
+            const totalDalamNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
+            const totalLuarNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
+            const totalLuarNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
+            const totalOutstanding = data.length;
+
+            document.getElementById("totalSurabaya").textContent = totalSurabaya;
+            document.getElementById("totalGresik").textContent = totalGresik;
+            document.getElementById("totalDalamNegeriSurabaya").textContent = totalDalamNegeriSurabaya;
+            document.getElementById("totalDalamNegeriGresik").textContent = totalDalamNegeriGresik;
+            document.getElementById("totalLuarNegeriSurabaya").textContent = totalLuarNegeriSurabaya;
+            document.getElementById("totalLuarNegeriGresik").textContent = totalLuarNegeriGresik;
+            document.getElementById("totalOutstanding").textContent = totalOutstanding;
+        }
+
+        function downloadTableAsExcel(headers, data) {
+            const workbook = XLSX.utils.book_new();
+            const worksheetData = [headers, ...data.map(row => headers.map(header => row[header] || ""))];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Outstanding Data");
+            XLSX.writeFile(workbook, "outstanding_data.xlsx");
+        }
+
+        document.getElementById("downloadExcel").addEventListener("click", () => {
+            downloadTableAsExcel(globalHeaders, globalData);
+        });
+
+        function searchTable(query, headers, data) {
+            const filteredData = data.filter(row => {
+                return headers.some(header => {
+                    const cellValue = row[header] || "";
+                    return cellValue.toLowerCase().includes(query.toLowerCase());
+                });
+            });
+            populateTable(headers, filteredData);
+        }
+
+        document.getElementById("searchInput").addEventListener("input", (event) => {
+            const query = event.target.value;
+            searchTable(query, globalHeaders, globalData);
+        });
+
+        function filterTableByCardFilterKey(filterKey) {
+            const filtered = globalData.filter(row => applyFilter(row, filterKey));
+            populateTable(globalHeaders, filtered);
+        }
+
+        function initCardClicks() {
+            document.querySelectorAll(".card").forEach(card => {
+                card.addEventListener("click", () => {
+                    const title = card.querySelector(".card-title").textContent.trim();
+                    currentFilterKey = normalizeFilter(title);
+                    currentMonth = null;
+                    forcedPort = null;
+                    refreshTableOnly();
+                    updateAllCharts(currentFilterKey);
+                });
+            });
+        }
+
+        // Ganti logika klik: gunakan mode "index" + intersect:false agar area klik lebih luas
+        function addBarChartClickListener(chart, headers, data, port = null) {
+            chart.canvas.addEventListener("click", evt => {
+                const points = chart.getElementsAtEventForMode(
+                    evt,
+                    "index",
+                    { intersect: false },  // sebelumnya "nearest", {intersect:true}
+                    false
+                );
+                if (!points.length) {
+                    // Debug optional
+                    // console.log("Tidak ada bar terdeteksi pada posisi klik");
+                    return;
+                }
+                const idx = points[0].index;
+                const monthLabel = chart.data.labels[idx];
+                if (!monthLabel) return;
+                currentMonth = monthLabel;
+                forcedPort = port || null;
+                console.log("Filter bulan dipilih:", currentMonth, "Port paksa:", forcedPort);
+                refreshTableOnly();
+                // Opsional: scroll ke tabel supaya langsung terlihat
+                document.getElementById("tableContainer")?.scrollIntoView({ behavior: "smooth" });
+            });
+        }
+
+        function describeFilter() {
+            const keyMap = {
+                ALL: "Semua Data",
+                SURABAYA: "Pelabuhan Surabaya",
+                GRESIK: "Pelabuhan Gresik",
+                DN_SUB: "Dalam Negeri Surabaya",
+                DN_GRE: "Dalam Negeri Gresik",
+                LN_SUB: "Luar Negeri Surabaya",
+                LN_GRE: "Luar Negeri Gresik"
+            };
+            let parts = [];
+            if (currentFilterKey !== "ALL") parts.push(keyMap[currentFilterKey] || currentFilterKey);
+            if (forcedPort && !/SURABAYA|GRESIK/.test(currentFilterKey)) parts.push("Port: " + forcedPort);
+            if (currentMonth) parts.push("Bulan: " + currentMonth);
+            return parts.length ? parts.join(" | ") : "Tidak ada filter aktif";
+        }
+
+        function updateActiveFilterUI() {
+            const box = document.getElementById("activeFilterContainer");
+            const text = document.getElementById("activeFilterText");
+            if (currentFilterKey === "ALL" && !currentMonth && !forcedPort) {
+                box.style.display = "none";
+            } else {
+                text.textContent = describeFilter();
+                box.style.display = "block";
+            }
+        }
+
+        function computeFilteredData() {
+            return globalData.filter(row => {
+                if (!applyFilter(row, currentFilterKey)) return false;
+                if (forcedPort) {
+                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
+                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
+                    if (pel !== forcedPort) return false;
+                }
+                if (currentMonth) {
+                    const key = getMonthKey(row["departure_date_convert"]);
+                    if (key !== currentMonth) return false;
+                }
+                return true;
+            });
+        }
+
+        function refreshTableOnly() {
+            const filtered = computeFilteredData();
+            populateTable(globalHeaders, filtered);
+            updateActiveFilterUI();
+        }
+
+        document.addEventListener("click", e => {
+            if (e.target && e.target.id === "clearFilterBtn") {
+                currentFilterKey = "ALL";
+                currentMonth = null;
+                forcedPort = null;
+                refreshTableOnly();
+                updateAllCharts("ALL");
+            }
+        });
+
+        let globalData = [];
+        let globalHeaders = [];
+        let currentFilterKey = "ALL";
+        let currentMonth = null;
+        let forcedPort = null;
+
+        async function main() {
+            const csvText = await fetchCSV("gabung.csv");
+            if (!csvText) return;
+            const { headers, data } = parseCSV(csvText);
+            globalHeaders = headers;
+            globalData = data;
+
+            populateTable(headers, data);
+            updateCardCounts(data);
+            updateActiveFilterUI();
+
+            barChart = buildChart(document.getElementById("barChart").getContext("2d"), "Departures per Month");
+            barChartSurabaya = buildChart(document.getElementById("barChartSurabaya").getContext("2d"), "Surabaya per Month");
+            barChartGresik = buildChart(document.getElementById("barChartGresik").getContext("2d"), "Gresik per Month");
+
+            updateAllCharts("ALL");
+
+            addBarChartClickListener(barChart, headers, data);
+            addBarChartClickListener(barChartSurabaya, headers, data, "SURABAYA");
+            addBarChartClickListener(barChartGresik, headers, data, "GRESIK");
+
+            // Paksa resize setelah render untuk memastikan kalkulasi internal koordinat benar
+            setTimeout(() => {
+                barChart.resize();
+                barChartSurabaya.resize();
+                barChartGresik.resize();
+            }, 0);
+
+            initCardClicks();
+        }
+
+        main();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
