@@ -1,9 +1,6 @@
 # Mac system files
 .DS_Store
 
-# CSV hasil scraping
-*.csv
-
 # File Google Sheets shortcut
 *.gsheet
 

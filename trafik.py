@@ -83,3 +83,4 @@ if __name__ == "__main__":
     if (traffic_data):
         print("Fetched data:", traffic_data)  # Debugging line
         save_traffic_data_to_csv(traffic_data)
+
