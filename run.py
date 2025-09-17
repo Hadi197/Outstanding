@@ -12,13 +12,15 @@ def run_script(script_name):
         print(f"✅ {script_name} executed successfully.")
     except subprocess.CalledProcessError as e:
         print(f"❌ Failed to execute {script_name}: {e}")
+    except Exception as e:
+        print(f"Kesalahan tidak terduga: {e}")
 
 def main():
     # Define the scripts to run
     scripts = [
-        "pmh.py",
         "spb.py",
-        "lookup.py"
+        "pkk.py",  # Added the missing comma here
+        "lookup.py",
     ]
 
     # Base directory for the scripts
