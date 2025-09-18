@@ -19,7 +19,7 @@ def main():
     # Define the scripts to run
     scripts = [
         "spb.py",
-        "pkk.py",  # Added the missing comma here
+        "wasop.py",  # Added the missing comma here
         "lookup.py",
     ]
 

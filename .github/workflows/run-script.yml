@@ -1,9 +1,9 @@
 name: Run Python Script
 
 on:
-  workflow_dispatch:   # Trigger manually
+  workflow_dispatch:   # bisa dijalankan manual
   schedule:
-    - cron: "0 0 * * *"   # Automatically run daily at 00:00 UTC
+    - cron: "0 0 * * *"   # jalan otomatis tiap hari jam 00:00 UTC
 
 jobs:
   run-python:

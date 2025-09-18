@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Outstanding Tanjung Perak</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is included -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <style>
         table {
@@ -302,30 +302,43 @@
             }
         }
 
-        // === Tambahan: helper untuk ekstraksi bulan aman tanpa Date parsing ===
-        function getMonthKey(dateString) {
-            if (!dateString) return null;
-            // Format sumber: "YYYY-MM-DD ..." -> cukup ambil 7 karakter pertama
-            return dateString.length >= 7 ? dateString.slice(0, 7) : null;
-        }
-
+        // Agregasi data berdasarkan bulan (tanpa konversi Date, cukup ambil 7 karakter awal "YYYY-MM")
         function aggregateByMonth(data, filterKey = "ALL", port = null) {
             const monthCounts = {};
             data.forEach(row => {
-                if (!row["departure_date_convert"]) return;
+                if (!row["waktu_tolak"]) return;
                 if (!applyFilter(row, filterKey)) return;
+
                 if (port) {
                     const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
                                 row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
                     if (pel !== port) return;
                 }
-                const month = getMonthKey(row["departure_date_convert"]);
-                if (!month) return;
-                monthCounts[month] = (monthCounts[month] || 0) + 1;
+
+                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
+                if (!key) return;
+                monthCounts[key] = (monthCounts[key] || 0) + 1;
             });
+
             const labels = Object.keys(monthCounts).sort();
-            const values = labels.map(m => monthCounts[m]);
+            const values = labels.map(l => monthCounts[l]);
             return { labels, values };
+        }
+
+        // Filter data tabel berdasarkan bulan yang dipilih
+        function computeFilteredData(data, filterKey, currentMonth) {
+            return data.filter(row => {
+                if (!row["waktu_tolak"]) return false;
+                if (!applyFilter(row, filterKey)) return false;
+
+                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
+                if (!key) return false;
+
+                // hanya tampilkan data bulan yang sedang dipilih
+                if (currentMonth && key !== currentMonth) return false;
+
+                return true;
+            });
         }
 
         let barChart, barChartSurabaya, barChartGresik;
@@ -366,13 +379,43 @@
             });
         }
 
-        function updateChart(chart, labels, values, labelText) {
-            const cols = randomColors(labels.length);
+        // Palet warna Materialize (dibedakan per chart)
+        const MATERIAL_PALETTES = {
+            overall: [
+                "#e53935","#d81b60","#8e24aa","#5e35b1","#3949ab",
+                "#1e88e5","#039be5","#00acc1","#00897b","#43a047",
+                "#7cb342","#fdd835","#fb8c00","#f4511e"
+            ],
+            surabaya: [
+                "#1e88e5","#1976d2","#1565c0","#0d47a1",
+                "#0288d1","#0277bd","#01579b"
+            ],
+            gresik: [
+                "#43a047","#2e7d32","#1b5e20",
+                "#66bb6a","#9ccc65","#d4e157","#c0ca33"
+            ]
+        };
+
+        function pickColors(type, count) {
+            const base = MATERIAL_PALETTES[type] || MATERIAL_PALETTES.overall;
+            const bg = [];
+            const br = [];
+            for (let i = 0; i < count; i++) {
+                const c = base[i % base.length];
+                bg.push(c);
+                br.push(c);
+            }
+            return { bg, br };
+        }
+
+        // Ubah: tambah parameter colorKey
+        function updateChart(chart, labels, values, labelText, colorKey) {
             chart.data.labels = labels;
             chart.data.datasets[0].label = labelText;
             chart.data.datasets[0].data = values;
-            chart.data.datasets[0].backgroundColor = cols.map(c => c.bg);
-            chart.data.datasets[0].borderColor = cols.map(c => c.br);
+            const palette = pickColors(colorKey, labels.length);
+            chart.data.datasets[0].backgroundColor = palette.bg;
+            chart.data.datasets[0].borderColor = palette.br;
             chart.update();
         }
 
@@ -380,9 +423,9 @@
             const overall = aggregateByMonth(globalData, filterKey);
             const sub = aggregateByMonth(globalData, filterKey, "SURABAYA");
             const gre = aggregateByMonth(globalData, filterKey, "GRESIK");
-            updateChart(barChart, overall.labels, overall.values, "Departures per Month");
-            updateChart(barChartSurabaya, sub.labels, sub.values, "Surabaya per Month");
-            updateChart(barChartGresik, gre.labels, gre.values, "Gresik per Month");
+            updateChart(barChart, overall.labels, overall.values, "Departures per Month", "overall");
+            updateChart(barChartSurabaya, sub.labels, sub.values, "Surabaya per Month", "surabaya");
+            updateChart(barChartGresik, gre.labels, gre.values, "Gresik per Month", "gresik");
         }
 
         function updateCardCounts(data) {
@@ -512,7 +555,7 @@
                     if (pel !== forcedPort) return false;
                 }
                 if (currentMonth) {
-                    const key = getMonthKey(row["departure_date_convert"]);
+                    const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
                     if (key !== currentMonth) return false;
                 }
                 return true;
@@ -562,7 +605,6 @@
             addBarChartClickListener(barChartSurabaya, headers, data, "SURABAYA");
             addBarChartClickListener(barChartGresik, headers, data, "GRESIK");
 
-            // Paksa resize setelah render untuk memastikan kalkulasi internal koordinat benar
             setTimeout(() => {
                 barChart.resize();
                 barChartSurabaya.resize();
