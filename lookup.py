@@ -36,36 +36,28 @@ def save_to_csv(data, output_file):
     except Exception as e:
         print(f"❌ Failed to save data to CSV: {e}")
 
-def lookup_and_extract(pkk_data, spb_data):
+def lookup_and_merge(wasop_data, spb_data):
     """
-    Perform a lookup between PKK and SPB data using "no_pkk_inaportnet" and "nomor_pkk",
-    and extract specific columns.
+    Gabungkan data dari WASOP dan SPB berdasarkan kolom 'no_pkk_inaportnet' dan 'nomor_pkk'.
 
-    :param pkk_data: List of dictionaries from PKK data.
-    :param spb_data: List of dictionaries from SPB data.
-    :return: Extracted and merged list of dictionaries.
+    :param wasop_data: List of dictionaries dari WASOP.
+    :param spb_data: List of dictionaries dari SPB.
+    :return: List hasil penggabungan.
     """
     spb_lookup = {row["nomor_pkk"]: row for row in spb_data}
-    extracted_columns = [
-        "no_pkk",
-        "no_pkk_inaportnet",
-        "arrive_date_convert",
-        "departure_date_convert",
-        "vessel_name",
-        "name_process_code",
-        "company_name",
-        "name_branch",
-        "nomor_spb"
-    ]
     merged_data = []
 
-    for pkk_row in pkk_data:
-        no_pkk_inaportnet = pkk_row.get("no_pkk_inaportnet")
+    for wasop_row in wasop_data:
+        no_pkk_inaportnet = wasop_row.get("no_pkk_inaportnet")
         spb_row = spb_lookup.get(no_pkk_inaportnet)
 
         if spb_row:
-            # Merge the rows and extract specific columns
-            merged_row = {col: pkk_row.get(col, spb_row.get(col)) for col in extracted_columns}
+            # Gabungkan data dari kedua tabel
+            merged_row = {**wasop_row, **spb_row}
+            # Pastikan kolom 'waktu_tolak', 'gt', dan 'loa' masuk ke hasil gabungan
+            merged_row["waktu_tolak"] = spb_row.get("waktu_tolak")
+            merged_row["gt"] = wasop_row.get("gt")
+            merged_row["loa"] = wasop_row.get("loa")
             merged_data.append(merged_row)
 
     return merged_data
@@ -81,24 +73,54 @@ def clean_data(input_file, output_file):
     df.to_csv(output_file, index=False)
     print(f"Data cleaned and saved to {output_file}")
 
+def modify_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Modifikasi DataFrame: drop kolom tertentu dan tambah kolom baru tanpa konversi datetime.
+    """
+    # Buang kolom yang tidak diperlukan
+    columns_to_drop = ["arrive_date_convert", "departure_date_convert", "company_name", "name_branch"]
+    df = df.drop(columns=columns_to_drop, errors="ignore")
+
+    # Tambahkan kolom baru dengan nilai default (sesuaikan jika perlu)
+    df["waktu_tolak"] = None
+    df["gt"] = None
+    df["loa"] = None
+
+    return df
+
+def merge_csv_files(wasop_file, spb_file, output_file):
+    """
+    Gabungkan data tanpa mem-format ulang kolom waktu_tolak (biarkan asli).
+    """
+    try:
+        # Load kedua file CSV
+        wasop_df = pd.read_csv(wasop_file)
+        spb_df = pd.read_csv(spb_file)
+
+        # Gabungkan berdasarkan kolom 'no_pkk_inaportnet' dan 'nomor_pkk'
+        merged_df = pd.merge(wasop_df, spb_df, left_on="no_pkk_inaportnet", right_on="nomor_pkk", how="inner")
+
+        # Ambil hanya kolom yang diperlukan
+        selected_columns = [
+            "no_pkk", "no_pkk_inaportnet", "nomor_spb", "name_process_code",
+            "gt", "loa", "waktu_tolak", "vessel_name"
+        ]
+        merged_df = merged_df[selected_columns]
+
+        # Simpan hasil gabungan ke file output
+        merged_df.to_csv(output_file, index=False)
+        print(f"[OK] Data berhasil digabungkan dan disimpan ke: {output_file}")
+    except Exception as e:
+        print(f"[!] Terjadi kesalahan saat menggabungkan file: {e}")
+
 def main():
     # File paths
-    pkk_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/pkk.csv"
+    wasop_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/wasop.csv"
     spb_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/spb.csv"
     output_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/gabung.csv"
 
-    # Load data from CSV files
-    pkk_data = load_csv(pkk_file)
-    spb_data = load_csv(spb_file)
-
-    # Perform lookup and extract specific columns
-    merged_data = lookup_and_extract(pkk_data, spb_data)
-
-    # Save the merged data to a new CSV file
-    save_to_csv(merged_data, output_file)
-
-    # Clean the merged data
-    clean_data(output_file, output_file)
+    # Gabungkan file CSV
+    merge_csv_files(wasop_file, spb_file, output_file)
 
 if __name__ == "__main__":
     main()
