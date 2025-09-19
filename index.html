@@ -215,6 +215,13 @@
             background-position: center;
             background-attachment: fixed, fixed, fixed, fixed, fixed;
         } */
+
+        /* Center table header text */
+        #tableContainer thead th,
+        #table-header th {
+            text-align: center;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
@@ -359,6 +366,21 @@
             return { headers, data };
         }
 
+        // Mapping label header tampilan -> field asli
+        const HEADER_MAP = {
+            no_pkk: "PKK",
+            no_pkk_inaportnet: "PKK INAPORTNET",
+            nomor_spb: "SPB",
+            name_process_code: "STATUS",
+            gt: "GRT",
+            loa: "LOA",
+            waktu_tolak: "TGL/JAM",
+            vessel_name: "NAMA KAPAL",
+            NO: "NO",
+            PELABUHAN: "PELABUHAN",
+            PELAYARAN: "PELAYARAN"
+        };
+
         function populateTable(headers, data) {
             const tableHeader = document.getElementById("table-header");
             const tableBody = document.getElementById("table-body");
@@ -367,41 +389,31 @@
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
-            // Add "NO" column to headers
+            // Gunakan key asli, tampilkan label via HEADER_MAP
             const updatedHeaders = ["NO", ...headers.filter(header => header !== "name_branch"), "PELABUHAN", "PELAYARAN"];
 
-            // Populate table headers
+            // Populate table headers (pakai label tampilan)
             updatedHeaders.forEach(header => {
                 const th = document.createElement("th");
-                th.textContent = header;
+                th.textContent = HEADER_MAP[header] || header;
                 tableHeader.appendChild(th);
             });
 
-            // Populate table rows
+            // Populate table rows (tetap pakai key asli untuk ambil data)
             data.forEach((row, index) => {
                 const tr = document.createElement("tr");
                 updatedHeaders.forEach(header => {
                     const td = document.createElement("td");
                     if (header === "NO") {
-                        td.textContent = index + 1; // Add row number
+                        td.textContent = index + 1;
                     } else if (header === "PELABUHAN") {
-                        // Add logic for "PELABUHAN" column
-                        if (row["no_pkk_inaportnet"]?.includes("IDSUB")) {
-                            td.textContent = "SURABAYA";
-                        } else if (row["no_pkk_inaportnet"]?.includes("IDGRE")) {
-                            td.textContent = "GRESIK";
-                        } else {
-                            td.textContent = ""; // Default empty value
-                        }
+                        if (row["no_pkk_inaportnet"]?.includes("IDSUB")) td.textContent = "SURABAYA";
+                        else if (row["no_pkk_inaportnet"]?.includes("IDGRE")) td.textContent = "GRESIK";
+                        else td.textContent = "";
                     } else if (header === "PELAYARAN") {
-                        // Add logic for "PELAYARAN" column
-                        if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) {
-                            td.textContent = "Dalam Negeri";
-                        } else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) {
-                            td.textContent = "Luar Negeri";
-                        } else {
-                            td.textContent = ""; // Default empty value
-                        }
+                        if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
+                        else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
+                        else td.textContent = "";
                     } else {
                         td.textContent = row[header] || "";
                     }
