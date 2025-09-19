@@ -6,29 +6,26 @@ import json
 def fetch_data(base_url, headers, params):
     """
     Fetch data from the API.
-
-    :param base_url: The API base URL.
-    :param headers: The request headers.
-    :param params: The request parameters.
-    :return: Parsed JSON data or None if an error occurs.
     """
     try:
-        response = requests.get(base_url, headers=headers, params=params)
+        response = requests.get(base_url, headers=headers, params=params, stream=True)
         print(f"HTTP Status Code: {response.status_code}")
         response.raise_for_status()
 
-        # Handle Brotli compression if Content-Encoding is 'br'
-        if response.headers.get("Content-Encoding") == "br":
-            try:
-                decompressed_content = brotli.decompress(response.content)
-            except brotli.error as e:
-                print(f"⚠️ Brotli decompression failed: {e}. Falling back to raw content.")
-                decompressed_content = response.content
-        else:
-            decompressed_content = response.content
+        # Requests biasanya sudah handle gzip/deflate/br
+        # Tapi kita siapkan fallback kalau brotli native dipakai
+        try:
+            return response.json()
+        except Exception:
+            # fallback ke manual decode
+            content = response.content
+            if response.headers.get("Content-Encoding") == "br":
+                try:
+                    content = brotli.decompress(content)
+                except Exception as e:
+                    print(f"⚠️ Brotli decode gagal: {e}, fallback pakai raw content")
+            return json.loads(content.decode("utf-8", errors="ignore"))
 
-        # Parse JSON data
-        return json.loads(decompressed_content.decode("utf-8"))
     except Exception as e:
         print(f"❌ Failed to fetch data: {e}")
         return None
