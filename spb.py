@@ -2,6 +2,8 @@ import requests
 import csv
 import brotli
 import json
+import os
+import pandas as pd
 
 def fetch_data(base_url, headers, params):
     """
@@ -30,25 +32,18 @@ def fetch_data(base_url, headers, params):
         print(f"❌ Failed to fetch data: {e}")
         return None
 
-def save_to_csv(data, output_file):
-    """
-    Save the given data to a CSV file.
-
-    :param data: List of dictionaries to save.
-    :param output_file: Path to the output CSV file.
-    """
-    if not data:
-        print("⚠️ No data to save.")
-        return
-
+def save_to_csv(data, filename="spb.csv"):
     try:
-        with open(output_file, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=data[0].keys())
-            writer.writeheader()
-            writer.writerows(data)
-        print(f"✅ Data successfully saved to {output_file}")
+        # cari folder tempat script berada (repo root)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(base_dir, filename)
+
+        df = pd.DataFrame(data)
+        df.to_csv(file_path, index=False)
+
+        print(f"[i] Data saved to {file_path}")
     except Exception as e:
-        print(f"❌ Failed to save data to CSV: {e}")
+        print(f"[!] Error saving to CSV: {e}")
 
 def main():
     """
@@ -74,7 +69,8 @@ def main():
     response = fetch_data(base_url, headers, params)
     if response and "data" in response and "dataRec" in response["data"]:
         records = response["data"]["dataRec"]
-        output_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/spb.csv"
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        output_file = os.path.join(base_dir, "spb.csv")
         save_to_csv(records, output_file)
     else:
         print("⚠️ No data found in the API response.")
