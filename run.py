@@ -1,34 +1,32 @@
 import subprocess
+import os
 
-def run_script(script_name):
+def run_script(script_path):
     """
     Run a Python script using subprocess.
-
-    :param script_name: The name of the script to run.
     """
     try:
-        print(f"🚀 Running {script_name}...")
-        subprocess.run(["python3", script_name], check=True)
-        print(f"✅ {script_name} executed successfully.")
+        print(f"🚀 Running {script_path}...")
+        subprocess.run(["python3", script_path], check=True)
+        print(f"✅ {os.path.basename(script_path)} executed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to execute {script_name}: {e}")
+        print(f"❌ Failed to execute {script_path}: {e}")
     except Exception as e:
-        print(f"Kesalahan tidak terduga: {e}")
+        print(f"⚠️ Kesalahan tidak terduga: {e}")
 
 def main():
-    # Define the scripts to run
+    # cari path folder tempat run.py berada
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Define the scripts to run (pakai relative, otomatis cari di folder yg sama dengan run.py)
     scripts = [
         "spb.py",
-        "wasop.py",  # Added the missing comma here
+        "wasop.py",
         "lookup.py",
     ]
 
-    # Base directory for the scripts
-    base_dir = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP"
-
-    # Run each script
     for script in scripts:
-        script_path = f"{base_dir}/{script}"
+        script_path = os.path.join(base_dir, script)
         run_script(script_path)
 
 if __name__ == "__main__":
