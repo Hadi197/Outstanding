@@ -37,7 +37,7 @@ def save_to_csv(data, filename="wasop.csv"):
         # Extract only the required columns
         df = pd.DataFrame(data["data"]["dataRec"])
         # Filter rows based on name_process_code
-        filtered_df = df[df["name_process_code"].isin(["New", "Request PPKB", "Realization"])]
+        filtered_df = df[df["name_process_code"].isin(["Request PPKB", "Realization"])]
         filtered_df = filtered_df[["no_pkk", "no_pkk_inaportnet", "name_process_code", "gt", "loa"]]
         filtered_df.to_csv(filename, index=False)
         print(f"[i] Filtered data saved to {filename}")
