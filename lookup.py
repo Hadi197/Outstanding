@@ -89,7 +89,7 @@ def modify_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
-def merge_csv_files(wasop_file, spb_file, output_file):
+def merge_csv_files(wasop_file, spb_file, output_file, abai_file="abai.csv"):
     """
     Gabungkan data tanpa mem-format ulang kolom waktu_tolak (biarkan asli).
     """
@@ -108,11 +108,28 @@ def merge_csv_files(wasop_file, spb_file, output_file):
         ]
         merged_df = merged_df[selected_columns]
 
+        # 🔥 Terapkan filter abai.csv
+        merged_df = apply_abai_filter(merged_df, abai_file)
+
         # Simpan hasil gabungan ke file output
         merged_df.to_csv(output_file, index=False)
         print(f"[OK] Data berhasil digabungkan dan disimpan ke: {output_file}")
     except Exception as e:
         print(f"[!] Terjadi kesalahan saat menggabungkan file: {e}")
+
+def apply_abai_filter(df: pd.DataFrame, abai_file: str) -> pd.DataFrame:
+    """
+    Hapus baris dari df jika no_pkk_inaportnet ada di abai.csv
+    """
+    try:
+        abai_df = pd.read_csv(abai_file)
+        if "no_pkk_inaportnet" in abai_df.columns:
+            abai_list = abai_df["no_pkk_inaportnet"].dropna().unique()
+            df = df[~df["no_pkk_inaportnet"].isin(abai_list)]
+            print(f"⚠️ {len(abai_list)} PKK diabaikan dari hasil akhir")
+    except Exception as e:
+        print(f"⚠️ Gagal membaca abai.csv: {e}")
+    return df
 
 def main():
     # cari path folder tempat file ini berada
