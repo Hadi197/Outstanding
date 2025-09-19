@@ -49,7 +49,6 @@
             border-radius: 6px;
             box-shadow: 0 10px 10px rgba(0,0,0,0.15); /* added */
             transition: box-shadow .25s ease, transform .25s ease; /* added */
-            overflow: hidden; /* pastikan apapun tidak keluar container */
         }
         .chart-container:hover { /* added */
             box-shadow: 0 6px 18px rgba(0,0,0,0.28);
@@ -65,17 +64,16 @@
             min-width: 120px;
         }
         .fixed-size {
-            width: 100%;      /* ubah agar responsif dan tidak melebar keluar parent */
-            max-width: 1600px;
-            height: 300px;
-            margin-left: auto;
-            margin-right: auto;
-            position: relative;
+            width:1600px;      /* diubah dari width:100%; max-width:1200px; */
+            height:300px;      /* tetap 300 */
+            margin-left:auto;
+            margin-right:auto;
+            position:relative;
         }
         .fixed-size canvas {
-            height: 100%;
-            width: 100%;
-            display: block; /* hilangkan whitespace bawaan inline-canvas */
+            /* Hapus force width/height absolute supaya Chart.js hit detection akurat */
+            height:100%;
+            width:100%;
         }
         /* Tambahan efek shadow pada card */
         .card {
@@ -510,31 +508,15 @@
         function buildChart(ctx, labelText) {
             return new Chart(ctx, {
                 type: "bar",
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: labelText,
-                        data: [],
-                        backgroundColor: [],
-                        borderColor: [],
-                        borderWidth: 1,
-                        clip: 0 // paksa semua gambar dataset tetap di dalam chartArea
-                    }]
-                },
+                data: { labels: [], datasets: [{ label: labelText, data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false, // Tambahan: agar ukuran mengikuti container tanpa distorsi koordinat
-                    layout: {
-                        padding: { top: 8, right: 8, bottom: 8, left: 8 } // beri jarak aman dari tepi
-                    },
                     plugins: {
                         legend: { display: false }, // hide legends on all charts
                         datalabels: {
                             anchor: "end",
-                            align: "end",          // posisi di ujung bar (lebih aman)
-                            offset: 2,
-                            clip: true,            // jangan gambar di luar chartArea
-                            clamp: true,           // paksa tetap di tepi bila mepet
+                            align: "top",
                             formatter: v => v,
                             color: "black",
                             font: { weight: "bold" }
@@ -547,15 +529,8 @@
                         }
                     },
                     scales: {
-                        x: {
-                            title: { display: false },
-                            grid: { display: false } // hide vertical gridlines
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: { display: false }, // Y-Axis title already hidden
-                            grid: { display: false }
-                        }
+                        x: { title: { display: true, text: "Month" } },
+                        y: { beginAtZero: true, title: { display: true, text: "Value" } }
                     }
                 },
                 plugins: [ChartDataLabels, barShadowPlugin]
