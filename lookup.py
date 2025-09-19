@@ -1,5 +1,6 @@
 import csv
 import pandas as pd
+import os
 
 def load_csv(file_path):
     """
@@ -114,10 +115,13 @@ def merge_csv_files(wasop_file, spb_file, output_file):
         print(f"[!] Terjadi kesalahan saat menggabungkan file: {e}")
 
 def main():
-    # File paths
-    wasop_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/wasop.csv"
-    spb_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/spb.csv"
-    output_file = "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/gabung.csv"
+    # cari path folder tempat file ini berada
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # pakai path relatif, otomatis ke root repo (tempat script disimpan)
+    wasop_file = os.path.join(base_dir, "wasop.csv")
+    spb_file = os.path.join(base_dir, "spb.csv")
+    output_file = os.path.join(base_dir, "gabung.csv")
 
     # Gabungkan file CSV
     merge_csv_files(wasop_file, spb_file, output_file)
