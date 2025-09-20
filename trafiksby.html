@@ -132,6 +132,9 @@
 			display: none !important;
 		}
 
+		 /* Hide all revenue KPI cards (Tambat, Pandu, Tunda) */
+		.kpi-card--revenue { display: none !important; }
+
 		/* Soft Blue theme for Pivot */
 		:root {
 			--pivot-bg: #f3f7ff;
@@ -274,6 +277,83 @@
 					0 0 24px rgba(255,157,240,.42);
 			}
 		}
+
+		/* Theme for PivotTable.js (.pvtTable) to match screenshot */
+		.pvtTable {
+			border-collapse: separate;
+			border-spacing: 0;
+			width: 100%;
+			font-family: system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+			font-size: 14px;
+			border: 1px solid #cfe3f4;
+			box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+			background: #ffffff;
+		}
+
+		.pvtTable th {
+			background: #4a86b8;             /* header biru */
+			color: #ffffff;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .4px;
+			border: 1px solid #3f78a7;
+			padding: 10px 12px;
+			vertical-align: middle;
+		}
+
+		.pvtTable td {
+			border: 1px solid #d7e7f7;        /* garis antar sel */
+			padding: 10px 12px;
+			color: #2b2b2b;
+			vertical-align: middle;
+			background: #f5fbff;              /* biru sangat muda */
+		}
+
+		/* Zebra rows */
+		.pvtTable tbody tr:nth-child(odd) td {
+			background: #eef6ff;
+		}
+		.pvtTable tbody tr:nth-child(even) td {
+			background: #f9fdff;
+		}
+
+		/* Hover row */
+		.pvtTable tbody tr:hover td {
+			background: #e8f3ff;
+		}
+
+		/* Angka rata kanan */
+		.pvtTable td.pvtVal,
+		.pvtTable td.pvtTotal,
+		.pvtTable td.pvtGrandTotal {
+			text-align: right;
+			font-variant-numeric: tabular-nums;
+		}
+
+		/* Total baris/kolom */
+		.pvtTable td.pvtTotal {
+			background: #e6f2ff;             /* total mirip footer biru muda */
+			font-weight: 700;
+		}
+
+		/* Grand total lebih tegas */
+		.pvtTable td.pvtGrandTotal,
+		.pvtTable th.pvtGrandTotal {
+			background: #d9ecff;
+			font-weight: 800;
+			color: #1d3d5a;
+		}
+
+		/* Sel kosong/invalid ditandai merah muda (seperti gambar) */
+		.pvtTable td.is-missing,
+		.pvtTable td:empty {
+			background: #ffd9d9 !important;
+		}
+
+		/* Kepala kolom kiri (NO/row header) tetap selaras tengah */
+		.pvtTable th:first-child {
+			text-align: center;
+		}
 	</style>
 </head>
 <body>
@@ -334,7 +414,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Tambat Surabaya -->
-			<div class="card kpi-card kpi-azure">
+			<div class="card kpi-card kpi-azure kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tambat Surabaya</div>
 					<div id="totalTambatSub" class="card-text">Rp 0</div>
@@ -342,7 +422,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Tambat Gresik -->
-			<div class="card kpi-card kpi-indigo">
+			<div class="card kpi-card kpi-indigo kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tambat Gresik</div>
 					<div id="totalTambatGre" class="card-text">Rp 0</div>
@@ -350,7 +430,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Pandu Surabaya -->
-			<div class="card kpi-card kpi-azure">
+			<div class="card kpi-card kpi-azure kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Pandu Surabaya</div>
 					<div id="totalPanduSub" class="card-text">Rp 0</div>
@@ -358,7 +438,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Pandu Gresik -->
-			<div class="card kpi-card kpi-indigo">
+			<div class="card kpi-card kpi-indigo kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Pandu Gresik</div>
 					<div id="totalPanduGre" class="card-text">Rp 0</div>
@@ -366,7 +446,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Tunda Surabaya -->
-			<div class="card kpi-card kpi-blue">
+			<div class="card kpi-card kpi-blue kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tunda Surabaya</div>
 					<div id="totalTundaSub" class="card-text">Rp 0</div>
@@ -374,7 +454,7 @@
 			</div>
 
 			<!-- Card: Pendapatan Tunda Gresik -->
-			<div class="card kpi-card kpi-green">
+			<div class="card kpi-card kpi-green kpi-card--revenue">
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tunda Gresik</div>
 					<div id="totalTundaGre" class="card-text">Rp 0</div>
@@ -1005,6 +1085,22 @@
 	window.addEventListener("resize", fitRevenueCards);
 
 	main();
+
+	// Opsional: tandai sel kosong sebagai 'is-missing' untuk memberi warna merah muda
+	// Jalan setelah pivot/table selesai dirender.
+	(function markMissingAfterRender(){
+		const mark = () => {
+			document.querySelectorAll('.pvtTable td').forEach(td => {
+				const txt = (td.textContent || '').trim();
+				if (txt === '' || txt === '-' || txt === 'NaN') td.classList.add('is-missing');
+			});
+		};
+		// coba langsung, lalu ulangi sekali lagi setelah event loop (untuk kasus render async)
+		window.addEventListener('load', () => {
+			setTimeout(mark, 0);
+			setTimeout(mark, 300);
+		});
+	})();
 	</script>
 </body>
 </html>
