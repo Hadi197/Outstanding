@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Trafik SBY - Total Kunjungan</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+	<style>
+		body { background:#f6fafc; }
+		.card { box-shadow:0 6px 12px rgba(0,0,0,.08); }
+		.card .card-title { font-size:.9rem; text-align:center; }
+		.card .card-text { font-size:2rem; font-weight:700; text-align:center; }
+
+		/* KPI Card: gradient, rounded, shadow */
+		.kpi-card {
+			position: relative;
+			color: #fff;
+			border: 0;
+			border-radius: 14px;
+			overflow: hidden;
+			min-width: 200px;   /* was 240px */
+			width: 220px;       /* was 260px */
+			height: 96px;       /* was 110px */
+			box-shadow: 0 10px 20px rgba(0,0,0,.12);
+		}
+		.kpi-card .card-body {
+			position: relative;
+			padding: 12px 14px; /* was 14px 16px */
+		}
+		.kpi-card .card-title {
+			font-size: .8rem;   /* was .9rem */
+			font-weight: 600;
+			letter-spacing: .2px;
+			margin: 0;
+			text-align: left;
+			opacity: .95;
+			white-space: nowrap;       /* no wrap */
+			overflow: hidden;
+			text-overflow: ellipsis;
+			line-height: 1.2;
+		}
+		.kpi-card .card-text {
+			font-size: 1.6rem;  /* was 2.2rem */
+			font-weight: 800;
+			line-height: 1.05;
+			position: absolute;
+			left: 14px;          /* stretch to full inner width for correct ellipsis/fitting */
+			right: 14px;
+			bottom: 10px;        /* sit at bottom */
+			margin: 0;           /* remove previous top margin */
+			text-align: right;   /* align to right edge */
+			white-space: nowrap;       /* no wrap */
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		/* decorative soft circles */
+		.kpi-card::before,
+		.kpi-card::after {
+			content: "";
+			position: absolute;
+			border-radius: 50%;
+			pointer-events: none;
+			background: rgba(255,255,255,.18);
+			filter: blur(0.5px);
+		}
+		.kpi-card::before { width: 140px; height: 140px; right: -30px; top: -30px; }
+		.kpi-card::after  { width: 200px; height: 200px; right: -80px; bottom: -80px; background: rgba(255,255,255,.12); }
+
+		/* optional currency label shown when data-unit is set on .card-body */
+		.kpi-card .card-body[data-unit]::after {
+			/* remove currency tag */
+			content: none;
+			display: none;
+		}
+
+		/* Gradient variants */
+		.kpi-orange { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); }
+		.kpi-blue   { background: linear-gradient(135deg, #396afc 0%, #2948ff 100%); }
+		.kpi-green  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+		.kpi-teal   { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%); }
+		.kpi-purple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
+		.kpi-azure  { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%); }
+		.kpi-indigo { background: linear-gradient(135deg, #7928CA 0%, #FF0080 100%); }
+
+		/* responsive tweak */
+		@media (max-width: 576px) {
+			.kpi-card { width: 180px; height: 86px; } /* was 220x100 */
+			.kpi-card .card-title { font-size: .74rem; }
+			.kpi-card .card-text { font-size: 1.4rem; bottom: 8px; } /* was 1.9rem */
+		}
+
+		/* Revenue value text slightly smaller; enforce single line + ellipsis */
+		#totalPanduSub,
+		#totalPanduGre,
+		#totalTundaSub,
+		#totalTundaGre,
+		#totalTambatSub,
+		#totalTambatGre {
+			font-size: 1.4rem;           /* smaller than default 1.6rem */
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		@media (max-width: 576px) {
+			#totalPanduSub,
+			#totalPanduGre,
+			#totalTundaSub,
+			#totalTundaGre,
+			#totalTambatSub,
+			#totalTambatGre {
+				font-size: 1.25rem;      /* slightly smaller on mobile */
+			}
+		}
+
+		/* Wrapper untuk semua KPI cards */
+		.kpi-container {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			align-items: stretch;
+		}
+		@media (max-width: 576px) {
+			.kpi-container { gap: 10px; }
+		}
+
+		/* Hide Lokasi table and status text */
+		#pivotWrap,
+		#status {
+			display: none !important;
+		}
+
+		/* Soft Blue theme for Pivot */
+		:root {
+			--pivot-bg: #f3f7ff;
+			--pivot-border: #d9e5ff;
+			--pivot-head-start: #f7faff;
+			--pivot-head-end: #e9f1ff;
+			--pivot-head-text: #124191;
+			--pivot-accent: #2f6fed;
+			--pivot-row-alt: rgba(47,111,237,0.03);
+			--pivot-row-hover: rgba(47,111,237,0.06);
+			--pivot-total-bg: #eaf2ff;
+			--pivot-total-text: #1849a9;
+		}
+
+		/* Card wrapper for pivot */
+		.pivot-card {
+			background: var(--pivot-bg);
+			border: 1px solid var(--pivot-border);
+			border-radius: 14px;
+			padding: 14px 16px;
+			box-shadow: 0 10px 18px rgba(20,54,120,0.10);
+		}
+		.pivot-card h5 {
+			color: var(--pivot-accent);
+			font-weight: 700;
+			margin-bottom: 10px;
+			letter-spacing: .2px;
+		}
+		/* contour the table area */
+		.pivot-card .table-responsive {
+			border: 1px solid var(--pivot-border);
+			border-radius: 10px;
+			/* was overflow: hidden; to round corners, but it blocks scroll */
+			overflow-x: auto;
+			overflow-y: hidden;
+			-webkit-overflow-scrolling: touch; /* smooth on iOS */
+			background: white;
+		}
+		/* give table a baseline min width; JS will adjust for monthly mode */
+		.pivot-card .table {
+			min-width: 720px;
+		}
+		/* header: soft gradient + sticky */
+		.pivot-card thead th {
+			background: linear-gradient(180deg, var(--pivot-head-start), var(--pivot-head-end));
+			color: var(--pivot-head-text);
+			font-weight: 700;
+			position: sticky;
+			top: 0;
+			z-index: 1;
+		}
+		/* cells */
+		.pivot-card td, .pivot-card th {
+			border-color: var(--pivot-border) !important;
+			vertical-align: middle;
+		}
+		/* zebra + hover */
+		.pivot-card tbody tr:nth-child(even) td {
+			background: var(--pivot-row-alt);
+		}
+		.pivot-card tbody tr:hover td {
+			background: var(--pivot-row-hover);
+			transition: background .15s ease-in-out;
+		}
+		/* emphasize Total row */
+		.pivot-card tbody tr:last-child td {
+			background: var(--pivot-total-bg);
+			color: var(--pivot-total-text);
+			font-weight: 700;
+			border-top: 2px solid var(--pivot-border) !important;
+		}
+
+		/* Futuristic gradient title (same as index.html) */
+		.futuristic-title {
+			display:flex;
+			justify-content:center;
+			align-items:center;
+			gap:.8rem;
+			width:100%;
+			margin:0 auto;
+			font-family:'Orbitron', Arial, sans-serif;
+			font-size:clamp(2rem,3.6vw,3.4rem);
+			font-weight:700;
+			text-transform:uppercase;
+			letter-spacing:.08rem;
+			background:linear-gradient(90deg,#9ffbff 0%,#65ffd9 25%,#ffe580 50%,#ffb3f5 75%,#ffffff 100%);
+			background-clip:text;
+			-webkit-background-clip:text;
+			color:transparent;
+			-webkit-text-fill-color: transparent;
+			position:relative;
+			padding:.2rem .4rem;
+			border-radius:0;
+			filter:none;
+			text-shadow:
+				0 0 2px rgba(244, 200, 200, 0.85),
+				0 0 4px rgba(241, 199, 199, 0.75),
+				0 2px 6px rgba(0,0,0,0.6),
+				0 0 10px rgba(125,249,255,.8),
+				0 0 18px rgba(84,255,228,.55),
+				0 0 28px rgba(255,157,240,.45);
+		}
+		.futuristic-title::before,
+		.futuristic-title::after {
+			content:none !important;
+			display:none !important;
+		}
+		.futuristic-title span {
+			display:inline-block;
+			animation:glowPulse 3.8s ease-in-out infinite;
+			text-shadow:
+				0 0 2px rgba(61, 26, 26, 0.85),
+				0 0 4px rgba(56, 26, 26, 0.7),
+				0 1px 5px rgba(0,0,0,0.55),
+				0 0 8px rgba(125,249,255,.85),
+				0 0 16px rgba(84,255,228,.6),
+				0 0 24px rgba(255,157,240,.5);
+		}
+		.futuristic-title .fx-accent { animation-delay:.5s; }
+		.futuristic-title .fx-highlight { animation-delay:1s; }
+		@keyframes glowPulse {
+			0%,100% {
+				opacity:1;
+				text-shadow:
+					0 0 2px rgba(9, 9, 9, 0.9),
+					0 0 4px rgba(55, 55, 57, 0.7),
+					0 1px 6px rgba(0,0,0,0.55),
+					0 0 10px rgba(125,249,255,.9),
+					0 0 20px rgba(84,255,228,.7),
+					0 0 32px rgba(255,157,240,.55);
+			}
+			50% {
+				opacity:.95;
+				text-shadow:
+					0 0 2px rgba(174, 177, 240, 0.85),
+					0 0 3px rgba(0,0,0,0.65),
+					0 1px 5px rgba(0,0,0,0.55),
+					0 0 6px rgba(125,249,255,.65),
+					0 0 14px rgba(84,255,228,.5),
+					0 0 24px rgba(255,157,240,.42);
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="container py-5">
+		<h1 class="text-center mb-4 futuristic-title">
+			<span class="fx-primary">Trafik</span>
+			<span class="fx-accent">Surabaya</span>
+		</h1>
+
+			<!-- Button: Dashboard (left-aligned) -->
+		<div class="d-flex justify-content-start mb-3">
+			<a href="index.html" class="btn btn-secondary">Dashboard</a>
+		</div>
+
+		<!-- ganti 2 row menjadi 1 container -->
+		<div class="kpi-container">
+			<!-- Card: Total Kunjungan -->
+			<div class="card kpi-card kpi-orange">
+				<div class="card-body">
+					<div class="card-title">Total Kunjungan</div>
+					<div id="totalKunjungan" class="card-text">0</div>
+				</div>
+			</div>
+
+			<!-- Card: Surabaya -->
+			<div class="card kpi-card kpi-blue">
+				<div class="card-body">
+					<div class="card-title">Surabaya</div>
+					<div id="totalSurabaya" class="card-text">0</div>
+				</div>
+			</div>
+
+			<!-- Card: Gresik -->
+			<div class="card kpi-card kpi-green">
+				<div class="card-body">
+					<div class="card-title">Gresik</div>
+					<div id="totalGresik" class="card-text">0</div>
+				</div>
+			</div>
+
+			<!-- Card: Dalam Negeri -->
+			<div class="card kpi-card kpi-teal">
+				<div class="card-body">
+					<div class="card-title">Dalam Negeri</div>
+					<div id="totalDN" class="card-text">0</div>
+				</div>
+			</div>
+
+			<!-- Card: Luar Negeri -->
+			<div class="card kpi-card kpi-purple">
+				<div class="card-body">
+					<div class="card-title">Luar Negeri</div>
+					<div id="totalLN" class="card-text">0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Tambat Surabaya -->
+			<div class="card kpi-card kpi-azure">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Tambat Surabaya</div>
+					<div id="totalTambatSub" class="card-text">Rp 0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Tambat Gresik -->
+			<div class="card kpi-card kpi-indigo">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Tambat Gresik</div>
+					<div id="totalTambatGre" class="card-text">Rp 0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Pandu Surabaya -->
+			<div class="card kpi-card kpi-azure">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Pandu Surabaya</div>
+					<div id="totalPanduSub" class="card-text">Rp 0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Pandu Gresik -->
+			<div class="card kpi-card kpi-indigo">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Pandu Gresik</div>
+					<div id="totalPanduGre" class="card-text">Rp 0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Tunda Surabaya -->
+			<div class="card kpi-card kpi-blue">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Tunda Surabaya</div>
+					<div id="totalTundaSub" class="card-text">Rp 0</div>
+				</div>
+			</div>
+
+			<!-- Card: Pendapatan Tunda Gresik -->
+			<div class="card kpi-card kpi-green">
+				<div class="card-body">
+					<div class="card-title">Pendapatan Tunda Gresik</div>
+					<div id="totalTundaGre" class="card-text">Rp 0</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="status" class="mt-3 text-muted small"></div>
+
+		<!-- Pivot: kolom dari 'location', baris: Surabaya & Gresik -->
+		<div id="pivotWrap" class="mt-4">
+			<h5 class="mb-2">Berdasarkan Lokasi</h5>
+			<div class="table-responsive">
+				<table class="table table-sm table-bordered">
+					<thead id="pivotHead"></thead>
+					<tbody id="pivotBody"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- Pivot ringkas: Total Kunjungan (no_pkk) dan Grt (grt/gt) -->
+		<div id="pivotSumWrap" class="mt-3 pivot-card">
+			<h5 class="mb-2">Total Call dan GRT</h5>
+			<div class="table-responsive">
+				<table class="table table-sm table-bordered table-hover align-middle">
+					<thead id="pivotSumHead"></thead>
+					<tbody id="pivotSumBody"></tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script>
+	async function fetchCSV(path) {
+		try {
+			const res = await fetch(path);
+			if (!res.ok) throw new Error(res.status + " " + res.statusText);
+			return await res.text();
+		} catch (e) {
+			console.error("Fetch CSV error:", e);
+			document.getElementById("status").textContent = "Gagal memuat trafik.csv";
+			return null;
+		}
+	}
+
+	// Simple CSV parser with quote handling
+	function parseCSV(text) {
+		if (!text) return { headers: [], rows: [] };
+		text = text.replace(/^\uFEFF/, ""); // strip BOM
+		const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+		if (!lines.length) return { headers: [], rows: [] };
+
+		const parseLine = (line) => {
+			const out = [];
+			let cur = "", inQ = false;
+			for (let i = 0; i < line.length; i++) {
+				const ch = line[i];
+				if (ch === '"') {
+					// handle escaped double quotes ""
+					if (inQ && line[i+1] === '"') { cur += '"'; i++; continue; }
+					inQ = !inQ;
+					continue;
+				}
+				if (ch === "," && !inQ) { out.push(cur); cur = ""; continue; }
+				cur += ch;
+			}
+			out.push(cur);
+			return out;
+		};
+
+		const headers = parseLine(lines[0]).map(h => h.trim());
+		const rows = lines.slice(1).map(l => {
+			const vals = parseLine(l);
+			const o = {};
+			headers.forEach((h, i) => { o[h] = (vals[i] ?? "").trim(); });
+			return o;
+		});
+		return { headers, rows };
+	}
+
+	function countByNoPkkInaportnet(headers, rows) {
+		// locate header (case-insensitive)
+		const targetIdx = headers.findIndex(h => h.toLowerCase() === "no_pkk_inaportnet");
+		if (targetIdx === -1) return { count: 0, found: false };
+
+		const name = headers[targetIdx];
+		let count = 0;
+		for (const r of rows) {
+			const v = (r[name] || "").trim();
+			if (v !== "") count++;
+		}
+		return { count, found: true };
+	}
+
+	// Klasifikasi port baris: SUB (Surabaya), GRE (Gresik), atau null.
+	// Jika no_pkk_inaportnet kosong namun no_pkk ada, paksa SUB (Surabaya).
+	function classifyPort(headers, row) {
+		const idxPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk_inaportnet");
+		const idxNoPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk");
+
+		const pkk = idxPkk !== -1 ? String(row[headers[idxPkk]] || "").toUpperCase() : "";
+		if (pkk.includes("IDSUB")) return "SUB";
+		if (pkk.includes("IDGRE")) return "GRE";
+
+		// fallback: no_pkk_inaportnet kosong tapi no_pkk ada -> Surabaya
+		const alt = idxNoPkk !== -1 ? String(row[headers[idxNoPkk]] || "").trim() : "";
+		if (!pkk && alt) return "SUB";
+
+		return null;
+	}
+
+	// Ganti: hitung total, SUB, GRE menggunakan classifyPort dan fallback no_pkk
+	function computeCountsByPort(headers, rows) {
+		const idxPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk_inaportnet");
+		const idxNoPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk");
+		const found = (idxPkk !== -1 || idxNoPkk !== -1);
+
+		let total = 0, sub = 0, gre = 0;
+		for (const r of rows) {
+			const pkk = idxPkk !== -1 ? String(r[headers[idxPkk]] || "").trim() : "";
+			const alt = idxNoPkk !== -1 ? String(r[headers[idxNoPkk]] || "").trim() : "";
+			// total: hitung jika ada salah satu (pkk atau alt)
+			if (pkk || alt) total++;
+
+			const cls = classifyPort(headers, r);
+			if (cls === "SUB") sub++;
+			else if (cls === "GRE") gre++;
+		}
+		return { found, total, sub, gre, colName: idxPkk !== -1 ? headers[idxPkk] : (idxNoPkk !== -1 ? headers[idxNoPkk] : null) };
+	}
+
+	function normalizeShippingType(val) {
+		const v = (val || "").toString().toUpperCase();
+		if (!v) return null;
+		if (v === "DN" || v.includes("DALAM NEGERI") || v.includes("DOMESTIC")) return "DN";
+		if (v === "LN" || v.includes("LUAR NEGERI") || v.includes("INTERNATIONAL")) return "LN";
+		// sometimes values like PKK.DN / PKK.LN
+		if (v.includes("PKK.DN")) return "DN";
+		if (v.includes("PKK.LN")) return "LN";
+		return null;
+	}
+
+	function computeCountsByShippingType(headers, rows) {
+		// prefer explicit shipping_type column
+		const idxShip = headers.findIndex(h => h.toLowerCase() === "shipping_type");
+		const idxPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk_inaportnet");
+
+		let dn = 0, ln = 0, found = false;
+
+		if (idxShip !== -1) {
+			found = true;
+			const col = headers[idxShip];
+			for (const r of rows) {
+				const t = normalizeShippingType(r[col]);
+				if (t === "DN") dn++;
+				else if (t === "LN") ln++;
+			}
+		} else if (idxPkk !== -1) {
+			// fallback infer from PKK
+			const col = headers[idxPkk];
+			for (const r of rows) {
+				const v = (r[col] || "").toUpperCase();
+				if (!v) continue;
+				if (v.includes("PKK.DN")) dn++;
+				else if (v.includes("PKK.LN")) ln++;
+			}
+		}
+
+		return { dn, ln, found };
+	}
+
+	// Parse berbagai format angka/currency menjadi number
+	function parseMoney(val) {
+		if (val == null) return 0;
+		let s = String(val).trim();
+		if (!s) return 0;
+		s = s.replace(/[^\d,.\-]/g, "");
+		const sign = s.startsWith("-") ? -1 : 1;
+		s = s.replace(/^-/, "");
+		const lastComma = s.lastIndexOf(",");
+		const lastDot = s.lastIndexOf(".");
+		const lastSepPos = Math.max(lastComma, lastDot);
+		if (lastSepPos === -1) {
+			const n = Number(s.replace(/[,.]/g, ""));
+			return isNaN(n) ? 0 : sign * n;
+		}
+		const intPart = s.slice(0, lastSepPos).replace(/[,.]/g, "");
+		const fracPart = s.slice(lastSepPos + 1).replace(/[,.]/g, "");
+		const n = Number(intPart + "." + fracPart);
+		return isNaN(n) ? 0 : sign * n;
+	}
+
+	// Ubah revenue per port untuk gunakan classifyPort (ikutkan fallback no_pkk sebagai SUB)
+	function computeMoorageRevenueByPort(headers, rows) {
+		const idxRev = headers.findIndex(h => h.toLowerCase() === "moorage_revenue");
+		const ok = (idxRev !== -1);
+		if (!ok) return { found: false, sub: 0, gre: 0, total: 0 };
+
+		const colRev = headers[idxRev];
+		let sub = 0, gre = 0, total = 0;
+		for (const r of rows) {
+			const rev = parseMoney(r[colRev]);
+			if (!isFinite(rev) || rev === 0) continue;
+			total += rev;
+			const cls = classifyPort(headers, r);
+			if (cls === "SUB") sub += rev;
+			else if (cls === "GRE") gre += rev;
+		}
+		return { found: true, sub, gre, total };
+	}
+
+	function computePilotageRevenueByPort(headers, rows) {
+		const idxRev = headers.findIndex(h => h.toLowerCase() === "pilotage_revenue");
+		const ok = (idxRev !== -1);
+		if (!ok) return { found: false, sub: 0, gre: 0, total: 0 };
+
+		const colRev = headers[idxRev];
+		let sub = 0, gre = 0, total = 0;
+		for (const r of rows) {
+			const rev = parseMoney(r[colRev]);
+			if (!isFinite(rev) || rev === 0) continue;
+			total += rev;
+			const cls = classifyPort(headers, r);
+			if (cls === "SUB") sub += rev;
+			else if (cls === "GRE") gre += rev;
+		}
+		return { found: true, sub, gre, total };
+	}
+
+	function computeTowageRevenueByPort(headers, rows) {
+		const idxRev = headers.findIndex(h => h.toLowerCase() === "towage_revenue");
+		const ok = (idxRev !== -1);
+		if (!ok) return { found: false, sub: 0, gre: 0, total: 0 };
+
+		const colRev = headers[idxRev];
+		let sub = 0, gre = 0, total = 0;
+		for (const r of rows) {
+			const rev = parseMoney(r[colRev]);
+			if (!isFinite(rev) || rev === 0) continue;
+			total += rev;
+			const cls = classifyPort(headers, r);
+			if (cls === "SUB") sub += rev;
+			else if (cls === "GRE") gre += rev;
+		}
+		return { found: true, sub, gre, total };
+	}
+
+	// Formatter integer dengan pemisah ribuan (id-ID)
+	function formatInt(n) {
+		const x = Number(n) || 0;
+		return new Intl.NumberFormat('id-ID').format(Math.round(x));
+	}
+
+	// Perbaiki pivot: gunakan classifyPort (fallback no_pkk -> Surabaya)
+	function renderPivotByLocation(headers, rows) {
+		const idxLoc = headers.findIndex(h => h.toLowerCase() === "location");
+
+		if (idxLoc === -1) {
+			const wrap = document.getElementById("pivotWrap");
+			if (wrap) wrap.classList.add("d-none");
+			return;
+		}
+
+		const colLoc = headers[idxLoc];
+
+		const locations = Array.from(new Set(
+			rows.map(r => (r[colLoc] || "").trim()).filter(Boolean)
+		)).sort();
+
+		const initRow = Object.fromEntries(locations.map(l => [l, 0]));
+		const data = {
+			Surabaya: { ...initRow },
+			Gresik: { ...initRow }
+		};
+
+		for (const r of rows) {
+			const loc = (r[colLoc] || "").trim();
+			if (!loc) continue;
+			const cls = classifyPort(headers, r);
+			if (cls === "SUB") data.Surabaya[loc] += 1;
+			else if (cls === "GRE") data.Gresik[loc] += 1;
+		}
+
+		const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		const thead = document.getElementById("pivotHead");
+		const tbody = document.getElementById("pivotBody");
+
+		thead.innerHTML = `
+			<tr>
+				<th class="text-center">Row</th>
+				${locations.map(l => `<th class="text-center">${esc(l)}</th>`).join("")}
+			</tr>
+		`;
+
+		// Render body dengan format ribuan
+		const renderRow = (label, obj) => `
+			<tr>
+				<td class="fw-semibold">${label}</td>
+				${locations.map(l => `<td class="text-end">${formatInt(obj[l])}</td>`).join("")}
+			</tr>
+		`;
+		tbody.innerHTML = renderRow("Surabaya", data.Surabaya) + renderRow("Gresik", data.Gresik);
+	}
+
+	// Pivot ringkas bulanan: kolom bulan (colspan=2), subkolom Call & Grt
+	function renderPivotSummary(headers, rows) {
+		const idxNoPkk = headers.findIndex(h => h.toLowerCase() === "no_pkk");
+		const idxPkk   = headers.findIndex(h => h.toLowerCase() === "no_pkk_inaportnet");
+		const idxGrt   = headers.findIndex(h => h.toLowerCase() === "grt");
+		const idxGt    = headers.findIndex(h => h.toLowerCase() === "gt");
+		const idxBln   = headers.findIndex(h => h.toLowerCase() === "bulan");
+
+		const head = document.getElementById("pivotSumHead");
+		const body = document.getElementById("pivotSumBody");
+		const tableEl = document.querySelector("#pivotSumWrap table");
+
+		// jika tidak ada sumber data sama sekali, sembunyikan
+		if (idxNoPkk === -1 && idxPkk === -1 && idxGrt === -1 && idxGt === -1) {
+			const wrap = document.getElementById("pivotSumWrap");
+			if (wrap) wrap.classList.add("d-none");
+			return;
+		}
+
+		// Helper: fallback total sederhana (tanpa dimensi bulan)
+		const renderTotalsFallback = () => {
+			const totals = { Surabaya:{visit:0,grt:0}, Gresik:{visit:0,grt:0} };
+			for (const r of rows) {
+				const cls = classifyPort(headers, r);
+				const key = cls === "SUB" ? "Surabaya" : cls === "GRE" ? "Gresik" : null;
+				if (!key) continue;
+
+				let hasVisit = false;
+				if (idxNoPkk !== -1) hasVisit = String(r[headers[idxNoPkk]] || "").trim() !== "";
+				else if (idxPkk !== -1) hasVisit = String(r[headers[idxPkk]] || "").trim() !== "";
+				if (hasVisit) totals[key].visit++;
+
+				let grtVal = 0;
+				if (idxGrt !== -1) grtVal = parseMoney(r[headers[idxGrt]]);
+				else if (idxGt !== -1) grtVal = parseMoney(r[headers[idxGt]]);
+				if (isFinite(grtVal) && grtVal > 0) totals[key].grt += grtVal;
+			}
+
+			head.innerHTML = `
+				<tr>
+					<th class="text-center">Row</th>
+					<th class="text-center">Call</th>
+					<th class="text-center">Grt</th>
+				</tr>
+			`;
+			body.innerHTML = `
+				<tr>
+					<td class="fw-semibold">Surabaya</td>
+					<td class="text-end">${formatInt(totals.Surabaya.visit)}</td>
+					<td class="text-end">${formatInt(totals.Surabaya.grt)}</td>
+				</tr>
+				<tr>
+					<td class="fw-semibold">Gresik</td>
+					<td class="text-end">${formatInt(totals.Gresik.visit)}</td>
+					<td class="text-end">${formatInt(totals.Gresik.grt)}</td>
+				</tr>
+				<tr>
+					<td class="fw-bold">Total</td>
+					<td class="text-end fw-semibold">${formatInt(totals.Surabaya.visit + totals.Gresik.visit)}</td>
+					<td class="text-end fw-semibold">${formatInt(totals.Surabaya.grt + totals.Gresik.grt)}</td>
+				</tr>
+			`;
+
+			// set default min-width for non-monthly table so wrapper can scroll if needed
+			if (tableEl) tableEl.style.minWidth = "560px";
+		};
+
+		// Jika kolom 'bulan' tidak ada -> fallback total
+		if (idxBln === -1) {
+			renderTotalsFallback();
+			return;
+		}
+
+		const colBulan = headers[idxBln];
+
+			// Parser bulan kuat: dukung id/en, short/long, angka, YYYY-MM, dan typo ringan seperti "pril"
+		function parseMonthYear(raw) {
+			const s0 = String(raw || "").trim();
+			if (!s0) return null;
+			const s = s0.toLowerCase();
+
+			// YYYY[-/]MM
+			let m = s.match(/(19|20)\d{2}[-\/](\d{1,2})/);
+			if (m) {
+				const y = parseInt(m[1] + m[2].slice(0,0), 10) ? parseInt(m[0].slice(0,4),10) : parseInt(m[1],10); // keep y from first group
+				const mo = parseInt(m[2], 10);
+				if (mo >= 1 && mo <= 12) {
+					const label = new Date(y, mo - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' });
+					return { key: y * 100 + mo, label, sort: y * 100 + mo };
+				}
+			}
+
+			// Angka 1-12 saja
+			const onlyNum = s.match(/^\d{1,2}$/);
+			if (onlyNum) {
+				const mo = parseInt(onlyNum[0], 10);
+				if (mo >= 1 && mo <= 12) {
+					const label = new Date(2000, mo - 1, 1).toLocaleString('en-US', { month: 'long' });
+					return { key: mo, label, sort: mo };
+				}
+			}
+
+			// Nama bulan (id/en), short/long + typo ringan
+			const mapTokens = {
+				jan:1, januari:1, january:1,
+				feb:2, februari:2, february:2,
+				mar:3, maret:3, march:3,
+				apr:4, april:4, pril:4,
+				mei:5, may:5,
+				jun:6, juni:6, june:6,
+				jul:7, juli:7, july:7,
+				agu:8, agustus:8, aug:8, august:8,
+				sep:9, sept:9, september:9,
+				okt:10, oktober:10, oct:10, october:10,
+				nov:11, november:11,
+				des:12, desember:12, dec:12, december:12
+			};
+			let mo = null;
+			for (const [tok, num] of Object.entries(mapTokens)) {
+				if (s.includes(tok)) { mo = num; break; }
+			}
+			// tangkap tahun (opsional)
+			let y = null;
+			const ym = s.match(/(19|20)\d{2}/);
+			if (ym) y = parseInt(ym[0], 10);
+
+			if (mo) {
+				const label =
+					y != null
+						? new Date(y, mo - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' })
+						: new Date(2000, mo - 1, 1).toLocaleString('en-US', { month: 'long' });
+				const key = y != null ? y * 100 + mo : mo;
+				const sort = y != null ? y * 100 + mo : mo; // pastikan urut Jan..Dec
+				return { key, label, sort };
+			}
+
+			// Fallback Date parse
+			const d = new Date(s0);
+			if (!isNaN(d)) {
+				const key = d.getFullYear() * 100 + (d.getMonth() + 1);
+				const label = d.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+				return { key, label, sort: key };
+			}
+
+			// Unknown -> taruh di akhir
+			return { key: s0, label: s0, sort: 999999 };
+		}
+
+		// Kumpulkan daftar bulan unik dan urutkan dari January
+		const monthMap = new Map();
+		for (const r of rows) {
+			const info = parseMonthYear(r[colBulan]);
+			if (!info) continue;
+			if (!monthMap.has(info.key)) monthMap.set(info.key, info);
+		}
+		const months = Array.from(monthMap.values()).sort((a, b) => a.sort - b.sort);
+
+		// Jika tidak ada bulan valid -> fallback
+		if (!months.length) {
+			renderTotalsFallback();
+			return;
+		}
+
+		// Inisialisasi bucket per bulan
+		const init = () => Object.fromEntries(months.map(m => [m.key, { visit: 0, grt: 0 }]));
+		const data = { Surabaya: init(), Gresik: init() };
+
+		// Agregasi per bulan
+		for (const r of rows) {
+			const info = parseMonthYear(r[colBulan]);
+			if (!info) continue;
+
+			const cls = classifyPort(headers, r);
+			const keyPort = cls === "SUB" ? "Surabaya" : cls === "GRE" ? "Gresik" : null;
+			if (!keyPort) continue;
+
+			// Total Kunjungan: ambil dari no_pkk (fallback ke no_pkk_inaportnet jika no_pkk tidak ada)
+			let hasVisit = false;
+			if (idxNoPkk !== -1) hasVisit = String(r[headers[idxNoPkk]] || "").trim() !== "";
+			else if (idxPkk !== -1) hasVisit = String(r[headers[idxPkk]] || "").trim() !== "";
+			if (hasVisit && data[keyPort][info.key]) data[keyPort][info.key].visit++;
+
+			// Grt: dari grt (fallback gt)
+			let grtVal = 0;
+			if (idxGrt !== -1) grtVal = parseMoney(r[headers[idxGrt]]);
+			else if (idxGt !== -1) grtVal = parseMoney(r[headers[idxGt]]);
+			if (isFinite(grtVal) && grtVal > 0 && data[keyPort][info.key]) {
+				data[keyPort][info.key].grt += grtVal;
+			}
+		}
+
+		// Render header: baris 1 = bulan (colspan=2), baris 2 = Call/Grt
+		const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+		head.innerHTML = `
+			<tr>
+				<th class="text-center" rowspan="2">Row</th>
+				${months.map(m => `<th class="text-center" colspan="2">${esc(m.label)}</th>`).join("")}
+			</tr>
+			<tr>
+				${months.map(() => `<th class="text-center">Call</th><th class="text-center">Grt</th>`).join("")}
+			</tr>
+		`;
+
+		// Render body: Surabaya & Gresik
+		const renderLine = (label, bucket) => `
+			<tr>
+				<td class="fw-semibold">${label}</td>
+				${months.map(m => {
+					const x = bucket[m.key] || { visit: 0, grt: 0 };
+					return `<td class="text-end">${formatInt(x.visit)}</td><td class="text-end">${formatInt(x.grt)}</td>`;
+				}).join("")}
+			</tr>
+		`;
+
+		// Tambahkan baris Grand Total per bulan (Total dan Grt dijumlahkan SUB+GRE)
+		const totalCellsHtml = months.map(m => {
+			const s = data.Surabaya[m.key] || { visit: 0, grt: 0 };
+			const g = data.Gresik[m.key]   || { visit: 0, grt: 0 };
+			const v = (s.visit || 0) + (g.visit || 0);
+			const gr = (s.grt || 0) + (g.grt || 0);
+			return `<td class="text-end fw-semibold">${formatInt(v)}</td><td class="text-end fw-semibold">${formatInt(gr)}</td>`;
+		}).join("");
+
+		body.innerHTML =
+			renderLine("Surabaya", data.Surabaya) +
+			renderLine("Gresik", data.Gresik) +
+			`<tr><td class="fw-bold">Total</td>${totalCellsHtml}</tr>`;
+
+		// Dynamically size table min-width based on month count (2 cols per month)
+		if (tableEl) {
+			const basePx = 160;      // "Row" + padding
+			const perMonthPx = 120;  // approx 2 cols x 60px each
+			tableEl.style.minWidth = (basePx + months.length * perMonthPx) + "px";
+		}
+	}
+
+	// Auto-fit long currency text so it never overflows its card
+	function fitTextToWidth(el, options = {}) {
+		if (!el) return;
+		const minPx = options.minPx ?? 12;   // don't go below this
+		// Reset to stylesheet size before measuring
+		el.style.fontSize = "";
+		// Guard against zero width containers
+		const maxLoops = 20;
+		let loops = 0;
+		let size = parseFloat(getComputedStyle(el).fontSize) || 16;
+
+		// If it overflows, shrink proportionally first
+		if (el.scrollWidth > el.clientWidth && el.clientWidth > 0) {
+			const ratio = el.clientWidth / el.scrollWidth;
+			size = Math.max(minPx, Math.floor(size * ratio * 0.98));
+			el.style.fontSize = size + "px";
+		}
+
+		// Fine-tune step-down if still overflowing
+		while (el.scrollWidth > el.clientWidth && size > minPx && loops < maxLoops) {
+			size -= 1;
+			el.style.fontSize = size + "px";
+			loops++;
+		}
+	}
+
+	function fitRevenueCards() {
+		const ids = [
+			"totalPanduSub",
+			"totalPanduGre",
+			"totalTundaSub",
+			"totalTundaGre",
+			"totalTambatSub",
+			"totalTambatGre"
+		];
+		ids.forEach(id => fitTextToWidth(document.getElementById(id), { minPx: 12 }));
+	}
+
+	async function main() {
+		document.getElementById("status").textContent = "Memuat data...";
+		const csv = await fetchCSV("trafik.csv");
+		if (!csv) return;
+
+		const { headers, rows } = parseCSV(csv);
+		const { found, total, sub, gre } = computeCountsByPort(headers, rows);
+
+		if (!found) {
+			document.getElementById("status").textContent = "Kolom no_pkk_inaportnet tidak ditemukan.";
+			document.getElementById("totalKunjungan").textContent = "0";
+			document.getElementById("totalSurabaya").textContent = "0";
+			document.getElementById("totalGresik").textContent = "0";
+			return;
+		}
+
+		// Set nilai kartu (format ribuan)
+		document.getElementById("totalKunjungan").textContent = formatInt(total);
+		document.getElementById("totalSurabaya").textContent = formatInt(sub);
+		document.getElementById("totalGresik").textContent = formatInt(gre);
+
+		const ship = computeCountsByShippingType(headers, rows);
+		document.getElementById("totalDN").textContent = formatInt(ship.dn);
+		document.getElementById("totalLN").textContent = formatInt(ship.ln);
+
+		// Hitung pendapatan tambat per port
+		const mo = computeMoorageRevenueByPort(headers, rows);
+		const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+		document.getElementById("totalTambatSub").textContent = fmt.format(mo.sub || 0);
+		document.getElementById("totalTambatGre").textContent = fmt.format(mo.gre || 0);
+
+		// Pilotage revenue
+		const pd = computePilotageRevenueByPort(headers, rows);
+		document.getElementById("totalPanduSub").textContent = fmt.format(pd.sub || 0);
+		document.getElementById("totalPanduGre").textContent = fmt.format(pd.gre || 0);
+
+		// Towage revenue
+		const tw = computeTowageRevenueByPort(headers, rows);
+		document.getElementById("totalTundaSub").textContent = fmt.format(tw.sub || 0);
+		document.getElementById("totalTundaGre").textContent = fmt.format(tw.gre || 0);
+
+		// After values are set, fit revenue texts to avoid overflow
+		fitRevenueCards();
+
+		// Render Pivot ringkas Total & Grt
+		renderPivotSummary(headers, rows);
+	}
+
+	// Refit on resize to keep things within cards
+	window.addEventListener("resize", fitRevenueCards);
+
+	main();
+	</script>
+</body>
+</html>

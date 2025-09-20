@@ -37,7 +37,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 1️⃣ Jalankan semua script Python lain
-    scripts = ["spb.py", "wasop.py", "lookup.py"]
+    scripts = ["spb.py", "wasop.py", "trafik.py", "lookup.py"]
     for script in scripts:
         script_path = os.path.join(base_dir, script)
         if os.path.exists(script_path):
