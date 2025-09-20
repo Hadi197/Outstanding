@@ -548,25 +548,137 @@
             }
         };
 
+        // Helper warna & gradient
+        function hexToRgb(hex) {
+            const m = hex.replace('#','').match(/.{1,2}/g);
+            if (!m) return { r: 0, g: 0, b: 0 };
+            const [r,g,b] = m.map(x => parseInt(x, 16));
+            return { r, g, b };
+        }
+        function rgba(rgb, a) {
+            return `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
+        }
+        function getBarGradient(ctx, baseHex) {
+            const { chart } = ctx;
+            const { ctx: c, chartArea } = chart;
+            if (!chartArea) return baseHex; // first pass
+            const rgb = hexToRgb(baseHex || '#2b7cff');
+            const grad = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+            grad.addColorStop(0.0, rgba(rgb, 0.85));
+            grad.addColorStop(0.5, rgba(rgb, 0.9));
+            grad.addColorStop(1.0, rgba(rgb, 0.95));
+            return grad;
+        }
+
+        // Gambar "track" lembut di belakang bar (capsule tinggi)
+        const barTrackPlugin = {
+            id: "barTrack",
+            beforeDatasetsDraw(chart, args, opts) {
+                const { ctx, chartArea } = chart;
+                const dataset = chart.data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+                if (!meta?.data?.length) return;
+                meta.data.forEach((bar, i) => {
+                    const props = bar.getProps(["x","y","base","width"], true);
+                    const x = props.x;
+                    const w = Math.max(10, props.width * 0.72);
+                    const h = chartArea.bottom - chartArea.top - 10; // sedikit margin atas
+                    const left = x - w/2;
+                    const top = chartArea.top + 5;
+                    const radius = w/2; // capsule penuh
+                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
+
+                    ctx.save();
+                    ctx.fillStyle = rgba(rgb, 0.10);
+                    // rounded-rect vertical (capsule)
+                    ctx.beginPath();
+                    const r = Math.min(radius, w/2, h/2);
+                    ctx.moveTo(left + r, top);
+                    ctx.arcTo(left + w, top, left + w, top + r, r);
+                    ctx.lineTo(left + w, top + h - r);
+                    ctx.arcTo(left + w, top + h, left + w - r, top + h, r);
+                    ctx.lineTo(left + r, top + h);
+                    ctx.arcTo(left, top + h, left, top + h - r, r);
+                    ctx.lineTo(left, top + r);
+                    ctx.arcTo(left, top, left + r, top, r);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+        };
+
+        // Bubble nilai di puncak bar (dengan halo)
+        const valueBubblePlugin = {
+            id: "valueBubble",
+            afterDatasetsDraw(chart, args, opts) {
+                const { ctx } = chart;
+                const dataset = chart.data.datasets[0];
+                const meta = chart.getDatasetMeta(0);
+                if (!meta?.data?.length) return;
+
+                ctx.save();
+                meta.data.forEach((bar, i) => {
+                    const val = dataset.data[i];
+                    if (val == null || isNaN(val)) return;
+
+                    const props = bar.getProps(["x","y","base"], true);
+                    const x = props.x;
+                    const yTop = Math.min(props.y, props.base);
+                    const cy = yTop + 2; // sedikit overlap
+                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
+
+                    // halo
+                    ctx.beginPath();
+                    ctx.fillStyle = rgba(rgb, 0.18);
+                    ctx.arc(x, cy, 20, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // bubble putih
+                    ctx.beginPath();
+                    ctx.fillStyle = "#fff";
+                    ctx.arc(x, cy, 14, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // nilai
+                    ctx.fillStyle = rgba(rgb, 0.9);
+                    ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Arial";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(String(val), x, cy);
+                });
+                ctx.restore();
+            }
+        };
+
         let barChart, barChartSurabaya, barChartGresik;
 
         function buildChart(ctx, labelText) {
             return new Chart(ctx, {
                 type: "bar",
-                data: { labels: [], datasets: [{ label: labelText, data: [], backgroundColor: [], borderColor: [], borderWidth: 1 }] },
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: labelText,
+                        data: [],
+                        // Gradient per bar via scriptable
+                        backgroundColor: (c) => getBarGradient(c, (c.dataset.baseColors && c.dataset.baseColors[c.dataIndex]) || "#2b7cff"),
+                        borderColor: "transparent",
+                        borderWidth: 0,
+                        // Capsule look
+                        borderRadius: 30,
+                        borderSkipped: false,
+                        // Ketebalan & jarak bar
+                        barPercentage: 0.55,
+                        categoryPercentage: 0.6
+                    }]
+                },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Tambahan: agar ukuran mengikuti container tanpa distorsi koordinat
+                    maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false }, // hide legends on all charts
-                        datalabels: {
-                            anchor: "end",
-                            align: "top",
-                            formatter: v => v,
-                            color: "black",
-                            font: { weight: "bold" }
-                        },
-                        // Konfigurasi plugin shadow
+                        legend: { display: false },
+                        datalabels: { display: false }, // gunakan valueBubblePlugin
                         barShadow: {
                             shadowColor: "rgba(0,0,0,0.22)",
                             blur: 8,
@@ -574,11 +686,19 @@
                         }
                     },
                     scales: {
-                        x: { title: { display: true, text: "Month" } },
-                        y: { beginAtZero: true, title: { display: true, text: "Value" } }
+                        x: {
+                            title: { display: true, text: "Month" },
+                            ticks: { maxRotation: 90, minRotation: 90 } // vertikal
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: "Value" },
+                            grid: { color: "rgba(0,0,0,0.06)" }
+                        }
                     }
                 },
-                plugins: [ChartDataLabels, barShadowPlugin]
+                // Tambah plugin baru
+                plugins: [ChartDataLabels, barTrackPlugin, barShadowPlugin, valueBubblePlugin]
             });
         }
 
@@ -626,9 +746,12 @@
             chart.data.labels = labels;
             chart.data.datasets[0].label = labelText;
             chart.data.datasets[0].data = values;
+
             const palette = pickColors(colorKey, labels.length);
-            chart.data.datasets[0].backgroundColor = palette.bg;
-            chart.data.datasets[0].borderColor = palette.br;
+            // simpan base colors untuk gradient & bubble
+            chart.data.datasets[0].baseColors = palette.bg;
+
+            // borderColor sudah transparent; backgroundColor ditangani oleh scriptable
             chart.update();
         }
 
