@@ -72,5 +72,11 @@ def main():
     else:
         print("\n❌ Salah satu file CSV untuk gabung tidak ditemukan.")
 
+    # 4️⃣ Simpan ulang trafik.csv agar selalu ter-update
+    if "trafik.csv" in dataframes:
+        output_file = os.path.join(base_dir, "trafik.csv")
+        dataframes["trafik.csv"].to_csv(output_file, index=False)
+        print(f"✅ File trafik.csv berhasil di-overwrite: {output_file}")
+
 if __name__ == "__main__":
     main()
