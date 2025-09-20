@@ -2,7 +2,7 @@ name: Update gabung.csv and trafik.csv
 
 on:
   schedule:
-    - cron: "0 */2 * * *"   # jalan otomatis tiap jam 00:00 UTC
+    - cron: "0 */2 * * *"   # jalan otomatis tiap 2 jam UTC
   workflow_dispatch:       # bisa manual jalanin workflow
 
 jobs:
@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,10 +28,13 @@ jobs:
       - name: Run pipeline
         run: python run.py
 
+      - name: Debug changed files
+        run: git status
+
       - name: Commit and push gabung.csv and trafik.csv
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add gabung.csv trafik.csv
           git commit -m "Update gabung.csv and trafik.csv" || echo "No changes to commit"
-          git push
+          git push origin HEAD:main
