@@ -1,4 +1,4 @@
-name: Update gabung.csv
+name: Update gabung.csv and trafik.csv
 
 on:
   schedule:
@@ -26,10 +26,10 @@ jobs:
       - name: Run pipeline
         run: python run.py
 
-      - name: Commit and push gabung.csv
+      - name: Commit and push gabung.csv and trafik.csv
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add gabung.csv
-          git commit -m "Update gabung.csv" || echo "No changes to commit"
+          git add gabung.csv trafik.csv
+          git commit -m "Update gabung.csv and trafik.csv" || echo "No changes to commit"
           git push
