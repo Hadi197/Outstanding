@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is included -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/neo-buttons.css">
     <style>
         table {
             width: 100%; /* Match table width to card width */
@@ -266,8 +267,14 @@
             <span class="fx-highlight">Perak</span>
         </h1>
         <div class="d-flex justify-content-center gap-2 mb-3">
-            <button id="downloadExcel" class="btn btn-success">Download Excel</button>
-            <a href="trafiksby.html" class="btn btn-primary" id="openTrafik">Trafik</a>
+            <button id="downloadExcel" class="neo-btn neo-btn--blue">
+                <span class="neo-btn__label">Download Excel</span>
+                <span class="neo-btn__icon">⬇</span>
+            </button>
+            <a href="trafiksby.html" class="neo-btn neo-btn--purple" id="openTrafik">
+                <span class="neo-btn__label">Trafik</span>
+                <span class="neo-btn__icon">➜</span>
+            </a>
         </div>
     </div>
 
