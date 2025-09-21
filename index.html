@@ -87,8 +87,8 @@
             box-shadow: 0 6px 18px rgba(0,0,0,0.28);
             transform: translateY(-3px);
         }
-        /* (Opsional) Jika card punya background putih transparan, perjelas */
-        .card:not([class*="bg-"]) {
+        /* JANGAN override background KPI cards */
+        .card:not([class*="bg-"]):not(.kpi-card) {
             background: rgba(255,255,255,0.75);
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
@@ -256,6 +256,89 @@
         #cardsContainer .card .card-text {
             text-shadow: 0 1px 2px rgba(0,0,0,.25);
         }
+
+        /* KPI Card: gradient, rounded, shadow (match trafiksby.html) */
+        .kpi-card {
+            position: relative;
+            color: #fff;
+            border: 0;
+            border-radius: 14px;
+            overflow: hidden;
+            min-width: 200px;
+            width: 220px;
+            height: auto;           /* biarkan tinggi mengikuti konten */
+            min-height: 96px;       /* tetap minimal seperti sebelumnya */
+            box-shadow: 0 10px 20px rgba(0,0,0,.12);
+        }
+        .kpi-card .card-body {
+            position: relative;
+            padding: 12px 14px 46px; /* sisakan ruang untuk nilai di bawah */
+        }
+        .kpi-card .card-title {
+            font-size: .8rem;
+            font-weight: 600;
+            letter-spacing: .2px;
+            margin: 0;
+            text-align: left;
+            opacity: .95;
+            /* Ganti ellipsis => wrap penuh */
+            white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
+            overflow-wrap: anywhere; /* pecah kata panjang jika perlu */
+            word-break: break-word;
+            hyphens: auto;
+            line-height: 1.25;
+        }
+        .kpi-card .card-text {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.05;
+            position: absolute;
+            left: 14px;
+            right: 14px;
+            bottom: 10px;
+            margin: 0;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .kpi-card::before,
+        .kpi-card::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            background: rgba(255,255,255,.18);
+            filter: blur(0.5px);
+        }
+        .kpi-card::before { width: 140px; height: 140px; right: -30px; top: -30px; }
+        .kpi-card::after  { width: 200px; height: 200px; right: -80px; bottom: -80px; background: rgba(255,255,255,.12); }
+
+        /* Gradient variants (match trafiksby.html) - pakai !important agar menang */
+        .kpi-orange { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%) !important; }
+        .kpi-blue   { background: linear-gradient(135deg, #396afc 0%, #2948ff 100%) !important; }
+        .kpi-green  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
+        .kpi-teal   { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%) !important; }
+        .kpi-purple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%) !important; }
+        .kpi-azure  { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; }
+        .kpi-indigo { background: linear-gradient(135deg, #7928CA 0%, #FF0080 100%) !important; }
+
+        /* Wrapper untuk semua KPI cards */
+        .kpi-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: stretch;
+        }
+        @media (max-width: 576px) {
+            .kpi-card { width: 180px; height: auto; min-height: 86px; }
+            .kpi-card .card-title { font-size: .74rem; }
+            .kpi-card .card-text { font-size: 1.4rem; bottom: 8px; }
+            .kpi-card .card-body { padding-bottom: 40px; } /* ruang nilai pada layar kecil */
+            .kpi-container { gap: 10px; }
+        }
     </style>
 </head>
 <body>
@@ -266,12 +349,12 @@
             <span class="fx-accent">Tanjung</span>
             <span class="fx-highlight">Perak</span>
         </h1>
-        <div class="d-flex justify-content-center gap-2 mb-3">
-            <button id="downloadExcel" class="neo-btn neo-btn--blue">
+        <div class="d-flex justify-content-start gap-2 mb-3">
+            <button id="downloadExcel" class="neo-btn neo-btn--blue neo-btn--sm">
                 <span class="neo-btn__label">Download Excel</span>
                 <span class="neo-btn__icon">⬇</span>
             </button>
-            <a href="trafiksby.html" class="neo-btn neo-btn--purple" id="openTrafik">
+            <a href="trafiksby.html" class="neo-btn neo-btn--purple neo-btn--sm" id="openTrafik">
                 <span class="neo-btn__label">Trafik</span>
                 <span class="neo-btn__icon">➜</span>
             </a>
@@ -288,47 +371,61 @@
 
     <!-- Container terpisah untuk cards -->
     <div class="container mb-3" id="cardsContainer">
-        <div class="row card-container">
-            <div class="card text-white bg-danger">
+        <!-- Replace the row/card-container with KPI cards -->
+        <div class="kpi-container">
+            <!-- Total Outstanding -->
+            <div class="card kpi-card kpi-orange">
                 <div class="card-body">
-                    <h5 class="card-title">Total Outstanding</h5>
-                    <p class="card-text" id="totalOutstanding">0</p>
+                    <div class="card-title">Total Outstanding</div>
+                    <div class="card-text" id="totalOutstanding">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-primary">
+
+            <!-- Total Kapal Surabaya -->
+            <div class="card kpi-card kpi-blue">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Surabaya</h5>
-                    <p class="card-text" id="totalSurabaya">0</p>
+                    <div class="card-title">Total Kapal Surabaya</div>
+                    <div class="card-text" id="totalSurabaya">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-success">
+
+            <!-- Total Kapal Gresik -->
+            <div class="card kpi-card kpi-green">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Gresik</h5>
-                    <p class="card-text" id="totalGresik">0</p>
+                    <div class="card-title">Total Kapal Gresik</div>
+                    <div class="card-text" id="totalGresik">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-warning">
+
+            <!-- Total Kapal Dalam Negeri Surabaya -->
+            <div class="card kpi-card kpi-teal">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Dalam Negeri Surabaya</h5>
-                    <p class="card-text" id="totalDalamNegeriSurabaya">0</p>
+                    <div class="card-title">Total Kapal Dalam Negeri Surabaya</div>
+                    <div class="card-text" id="totalDalamNegeriSurabaya">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-warning">
+
+            <!-- Total Kapal Dalam Negeri Gresik -->
+            <div class="card kpi-card kpi-azure">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Dalam Negeri Gresik</h5>
-                    <p class="card-text" id="totalDalamNegeriGresik">0</p>
+                    <div class="card-title">Total Kapal Dalam Negeri Gresik</div>
+                    <div class="card-text" id="totalDalamNegeriGresik">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-secondary">
+
+            <!-- Total Kapal Luar Negeri Surabaya -->
+            <div class="card kpi-card kpi-purple">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Luar Negeri Surabaya</h5>
-                    <p class="card-text" id="totalLuarNegeriSurabaya">0</p>
+                    <div class="card-title">Total Kapal Luar Negeri Surabaya</div>
+                    <div class="card-text" id="totalLuarNegeriSurabaya">0</div>
                 </div>
             </div>
-            <div class="card text-white bg-secondary">
+
+            <!-- Total Kapal Luar Negeri Gresik -->
+            <div class="card kpi-card kpi-indigo">
                 <div class="card-body">
-                    <h5 class="card-title">Total Kapal Luar Negeri Gresik</h5>
-                    <p class="card-text" id="totalLuarNegeriGresik">0</p>
+                    <div class="card-title">Total Kapal Luar Negeri Gresik</div>
+                    <div class="card-text" id="totalLuarNegeriGresik">0</div>
                 </div>
             </div>
         </div>

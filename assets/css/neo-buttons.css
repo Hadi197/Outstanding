@@ -88,3 +88,17 @@
 .neo-btn--teal .neo-btn__icon { color: #0096D1; }
 .neo-btn--orange .neo-btn__icon { color: #FF5F6D; }
 .neo-btn--green .neo-btn__icon { color: #3b8d2a; }
+
+/* Small size variant */
+.neo-btn--sm {
+  --pad-y: 8px;
+  --pad-x: 16px;
+  --icon-size: 28px;
+  gap: 10px;
+  font-size: 0.85rem;
+  letter-spacing: 0.4px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.1);
+}
+.neo-btn--sm .neo-btn__icon {
+  font-size: 16px;
+}
