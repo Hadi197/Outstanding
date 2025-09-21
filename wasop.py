@@ -39,8 +39,11 @@ def save_to_csv(data, filename="wasop.csv"):
         # Filter rows based on name_process_code
         filtered_df = df[df["name_process_code"].isin(["Request PPKB", "Realization"])]
         filtered_df = filtered_df[["no_pkk", "no_pkk_inaportnet", "name_process_code", "gt", "loa"]]
+        # Coerce 'gt' to numeric and keep only rows where gt > 500
+        filtered_df = filtered_df.assign(gt=pd.to_numeric(filtered_df["gt"], errors="coerce"))
+        filtered_df = filtered_df[filtered_df["gt"] > 500]
         filtered_df.to_csv(filename, index=False)
-        print(f"[i] Filtered data saved to {filename}")
+        print(f"[i] Filtered data saved to {filename} (GT > 500 only)")
     except Exception as e:
         print(f"[!] Error saving to CSV: {e}")
 
