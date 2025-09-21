@@ -747,12 +747,12 @@
                     ctx.arc(x, cy, 14, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // nilai
+                    // nilai (format ribuan)
                     ctx.fillStyle = rgba(rgb, 0.9);
                     ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Arial";
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
-                    ctx.fillText(String(val), x, cy);
+                    ctx.fillText(nfID.format(val), x, cy);
                 });
                 ctx.restore();
             }
@@ -790,6 +790,14 @@
                             shadowColor: "rgba(0,0,0,0.22)",
                             blur: 8,
                             offsetY: 5
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ttx) => {
+                                    const v = ttx.parsed.y;
+                                    return nfID.format(v);
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -1056,6 +1064,9 @@
 
             initCardClicks();
         }
+
+        // Formatter ribuan (id-ID)
+        const nfID = new Intl.NumberFormat('id-ID');
 
         main();
     </script>
