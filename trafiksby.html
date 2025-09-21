@@ -360,6 +360,11 @@
 		@media (max-width: 576px) {
 			.donut-row .chart-box { height: 260px; }
 		}
+		/* Bar row under donuts */
+		.bar-row .chart-box { height: 320px; position: relative; }
+		@media (max-width: 576px) {
+			.bar-row .chart-box { height: 300px; }
+		}
 	</style>
 </head>
 <body>
@@ -488,6 +493,18 @@
 					<h5 class="text-center">Jenis Kemasan</h5>
 					<div class="chart-box">
 						<canvas id="barPackageType"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Row baru: Bar chart Tipe Kapal (vessel_type) -->
+		<div class="container my-3">
+			<div class="row bar-row g-3 align-items-stretch">
+				<div class="col-12">
+					<h5 class="text-center">Jenis Kapal</h5>
+					<div class="chart-box">
+						<canvas id="barVesselType"></canvas>
 					</div>
 				</div>
 			</div>
@@ -1133,6 +1150,108 @@
 		});
 	})();
 
+	// Shadow plugins
+	const donutShadowPlugin = {
+		id: "donutShadow",
+		afterDatasetsDraw(chart, args, opts) {
+			const type = chart.config.type;
+			if (type !== "doughnut" && type !== "pie") return;
+			const { ctx } = chart;
+			const blur = opts?.blur ?? 18;
+			const width = opts?.width ?? 6;
+			const alpha = opts?.alpha ?? 0.45;
+			const spread = opts?.spread ?? 2;
+			const offsetX = opts?.offsetX ?? 0;
+			const offsetY = opts?.offsetY ?? 0;
+
+			ctx.save();
+			ctx.globalCompositeOperation = "lighter";
+			chart.data.datasets.forEach((ds, di) => {
+				const meta = chart.getDatasetMeta(di);
+				meta.data.forEach((arc, i) => {
+					const { x, y, startAngle, endAngle, outerRadius } = arc.getProps(
+						["x", "y", "startAngle", "endAngle", "outerRadius"], true
+					);
+					const col = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : (ds.backgroundColor || "#2948ff");
+					ctx.save();
+					ctx.shadowColor = col;
+					ctx.shadowBlur = blur;
+					ctx.shadowOffsetX = offsetX;
+					ctx.shadowOffsetY = offsetY;
+					ctx.globalAlpha = alpha;
+					ctx.lineWidth = width;
+					ctx.strokeStyle = col;
+					ctx.beginPath();
+					ctx.arc(x, y, outerRadius + spread, startAngle, endAngle);
+					ctx.stroke();
+					ctx.restore();
+				});
+			});
+			ctx.restore();
+		}
+	};
+
+	const barShadowPlugin = {
+		id: "barShadow",
+		afterDatasetsDraw(chart, args, opts) {
+			if (chart.config.type !== "bar") return;
+			const { ctx } = chart;
+			const blur = opts?.blur ?? 10;
+			const offsetX = opts?.offsetX ?? 0;
+			const offsetY = opts?.offsetY ?? 4;
+			const alpha = opts?.alpha ?? 0.25;
+			const isHorizontal = (chart.options.indexAxis === "y");
+
+			chart.data.datasets.forEach((ds, di) => {
+				const meta = chart.getDatasetMeta(di);
+				if (!meta?.data) return;
+				meta.data.forEach((bar, i) => {
+					const { x, y, base, width, height } = bar.getProps(["x","y","base","width","height"], true);
+					let left, top, w, h, radius;
+					if (isHorizontal) {
+						left = Math.min(base, x);
+						top = y - height / 2;
+						w = Math.abs(x - base);
+						h = height;
+						radius = Math.min(8, h / 2, w / 2);
+					} else {
+						left = x - width / 2;
+						top = Math.min(y, base);
+						w = width;
+						h = Math.abs(base - y);
+						radius = Math.min(8, w / 2, h / 2);
+					}
+					if (w <= 0 || h <= 0) return;
+
+					// soft rounded shadow capsule behind bar
+					ctx.save();
+					ctx.fillStyle = "rgba(0,0,0,1)";
+					ctx.globalAlpha = alpha;
+					ctx.shadowColor = "rgba(0,0,0,0.65)";
+					ctx.shadowBlur = blur;
+					ctx.shadowOffsetX = offsetX;
+					ctx.shadowOffsetY = offsetY;
+
+					ctx.beginPath();
+					// rounded rect path
+					const r = Math.max(0, radius);
+					ctx.moveTo(left + r, top);
+					ctx.lineTo(left + w - r, top);
+					ctx.quadraticCurveTo(left + w, top, left + w, top + r);
+					ctx.lineTo(left + w, top + h - r);
+					ctx.quadraticCurveTo(left + w, top + h, left + w - r, top + h);
+					ctx.lineTo(left + r, top + h);
+					ctx.quadraticCurveTo(left, top + h, left, top + h - r);
+					ctx.lineTo(left, top + r);
+					ctx.quadraticCurveTo(left, top, left + r, top);
+					ctx.closePath();
+					ctx.fill();
+					ctx.restore();
+				});
+			});
+		}
+	};
+
 	// Inisialisasi Donut Chart berdasarkan kolom 'location' dari trafik.csv
 	(function () {
 		const CSV_PATH = "trafik.csv";
@@ -1196,12 +1315,8 @@
 		}
 
 		function pickColors(n) {
-			const colors = [];
-			for (let i = 0; i < n; i++) {
-				const h = Math.round((360 / n) * i);
-				colors.push(`hsl(${h} 70% 55%)`);
-			}
-			return colors;
+			// use KPI palette instead of HSL wheel
+			return cycleColors(n);
 		}
 
 		async function initDonut() {
@@ -1241,7 +1356,7 @@
 									label: (ttx) => {
 										const v = ttx.parsed;
 										const pct = total ? (v / total * 100) : 0;
-										return `${ttx.label}: ${v} (${pct.toFixed(1)}%)`;
+										return `${ttx.label}: ${formatInt(v)} (${pct.toFixed(1)}%)`;
 									}
 								}
 							},
@@ -1252,9 +1367,11 @@
 									const pct = total ? (v / total * 100) : 0;
 									return pct >= 4 ? `${pct.toFixed(0)}%` : "";
 								}
-							}
+							},
+							donutShadow: { blur: 22, width: 6, alpha: 0.5, spread: 2 }
 						}
-					}
+					},
+					plugins: [donutShadowPlugin]
 				});
 			} catch (e) {
 				console.error("Gagal memuat/parse trafik.csv:", e);
@@ -1328,12 +1445,13 @@
 				const values = entries.map(([,v]) => v);
 				const total = values.reduce((a,b)=>a+b,0);
 
+				// Map to card palette
 				const colors = {
-					"Dalam Negeri": "#43a047",
-					"Luar Negeri": "#1e88e5",
-					"Lainnya": "#9ca3af"
+					"Dalam Negeri": CARD_COLORS.green,
+					"Luar Negeri": CARD_COLORS.blue,
+					"Lainnya": CARD_COLORS.orange
 				};
-				const bg = labels.map(l => colors[l] || "#9ca3af");
+				const bg = labels.map(l => colors[l] || CARD_COLORS.purple);
 
 				const ctx = document.getElementById("donutShippingType")?.getContext("2d");
 				if (!ctx) return;
@@ -1353,7 +1471,7 @@
 									label: (ttx) => {
 										const v = ttx.parsed;
 										const pct = total ? (v/total*100) : 0;
-										return `${ttx.label}: ${v} (${pct.toFixed(1)}%)`;
+										return `${ttx.label}: ${formatInt(v)} (${pct.toFixed(1)}%)`;
 									}
 								}
 							},
@@ -1364,8 +1482,10 @@
 									const pct = total ? (v/total*100) : 0;
 									return pct >= 4 ? `${pct.toFixed(0)}%` : "";
 								}
-							}
-						}
+							},
+							donutShadow: { blur: 22, width: 6, alpha: 0.5, spread: 2 }
+						},
+						plugins: [donutShadowPlugin]
 					}
 				});
 			} catch (e) {
@@ -1420,12 +1540,8 @@
 		}
 
 		function pickColors(n) {
-			const colors = [];
-			for (let i = 0; i < n; i++) {
-				const h = Math.round((360 / Math.max(n,1)) * i);
-				colors.push(`hsl(${h} 70% 55%)`);
-			}
-			return colors;
+			// use KPI palette instead of HSL wheel
+			return cycleColors(n);
 		}
 
 		async function initBarPackageType() {
@@ -1476,7 +1592,7 @@
 									label: (ttx) => {
 										const v = ttx.parsed.x;
 										const pct = total ? (v/total*100) : 0;
-										return `${v} (${pct.toFixed(1)}%)`;
+										return `${formatInt(v)} (${pct.toFixed(1)}%)`;
 									}
 								}
 							},
@@ -1486,11 +1602,12 @@
 								color: "#111",
 								formatter: (v) => {
 									const pct = total ? (v/total*100) : 0;
-									return `${v} (${pct.toFixed(0)}%)`;
+									return `${formatInt(v)} (${pct.toFixed(0)}%)`;
 								},
 								font: { weight: "bold" },
 								clip: false
-							}
+							},
+							barShadow: { blur: 12, offsetY: 5, offsetX: 0, alpha: 0.28 }
 						},
 						scales: {
 							x: {
@@ -1502,7 +1619,8 @@
 								ticks: { color: "#111", autoSkip: false }
 							}
 						}
-					}
+					},
+					plugins: [barShadowPlugin]
 				});
 			} catch (e) {
 				console.error("Gagal memuat/parse trafik.csv (package_type):", e);
@@ -1515,10 +1633,174 @@
 			initBarPackageType();
 		}
 	})();
+
+	// Bar chart: Distribusi Vessel Type (horizontal)
+	(function () {
+		const CSV_PATH = "trafik.csv";
+
+		function parseCSVText(csvText) {
+			const rows = [];
+			const lines = csvText.split(/\r?\n/).filter(l => l.trim().length);
+			if (!lines.length) return { headers: [], rows: [] };
+			const headers = splitCSVLine(lines[0]);
+			for (let i = 1; i < lines.length; i++) {
+				const vals = splitCSVLine(lines[i]);
+				const obj = {};
+				headers.forEach((h, idx) => { obj[h] = (vals[idx] || "").replace(/^"|"$/g, ""); });
+				rows.push(obj);
+			}
+			return { headers, rows };
+		}
+		function splitCSVLine(line) {
+			const out = []; let cur = "", inQ = false;
+			for (let i = 0; i < line.length; i++) {
+				const ch = line[i];
+				if (ch === '"') inQ = !inQ;
+				else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ""; }
+				else cur += ch;
+			}
+			out.push(cur.trim());
+			return out;
+		}
+
+		function aggregateByVesselType(headers, rows) {
+			const col = headers.find(h => h.toLowerCase() === "vessel_type") || "vessel_type";
+			const map = new Map();
+			rows.forEach(r => {
+				const t = (r[col] || "").trim() || "Tidak Tercatat";
+				map.set(t, (map.get(t) || 0) + 1);
+			});
+			return map;
+		}
+
+		function topN(map, n = 10) {
+			const arr = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+			const top = arr.slice(0, n);
+			const rest = arr.slice(n);
+			const otherSum = rest.reduce((s, [, v]) => s + v, 0);
+			if (otherSum > 0) top.push(["Lainnya", otherSum]);
+			return {
+				labels: top.map(([k]) => k),
+				values: top.map(([, v]) => v)
+			};
+		}
+
+		function pickColors(n) {
+			// use KPI palette instead of HSL wheel
+			return cycleColors(n, 2); // slight offset to vary from above charts
+		}
+
+		async function initBarVesselType() {
+			try {
+				const resp = await fetch(CSV_PATH);
+				const text = await resp.text();
+				const { headers, rows } = parseCSVText(text);
+
+				const map = aggregateByVesselType(headers, rows);
+				const { labels, values } = topN(map, 10);
+				const total = values.reduce((a,b)=>a+b,0);
+
+				const ctx = document.getElementById("barVesselType")?.getContext("2d");
+				if (!ctx) return;
+
+				Chart.register(ChartDataLabels);
+				new Chart(ctx, {
+					type: "bar",
+					data: {
+						labels,
+						datasets: [{
+							label: "Vessel Type",
+							data: values,
+							backgroundColor: pickColors(labels.length),
+							borderColor: "transparent",
+							borderWidth: 0,
+							borderRadius: 8,
+							barPercentage: 0.7,
+							categoryPercentage: 0.8
+						}]
+					},
+					options: {
+						indexAxis: "y",
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { display: false },
+							tooltip: {
+								callbacks: {
+									label: (ttx) => {
+										const v = ttx.parsed.x;
+										const pct = total ? (v/total*100) : 0;
+										return `${formatInt(v)} (${pct.toFixed(1)}%)`;
+									}
+								}
+							},
+							datalabels: {
+								anchor: "end",
+								align: "right",
+								color: "#111",
+								formatter: (v) => {
+									const pct = total ? (v/total*100) : 0;
+									return `${formatInt(v)} (${pct.toFixed(0)}%)`;
+								},
+								font: { weight: "bold" },
+								clip: false
+							},
+							barShadow: { blur: 12, offsetY: 5, offsetX: 0, alpha: 0.28 }
+						},
+						scales: {
+							x: {
+								beginAtZero: true,
+								grid: { color: "rgba(0,0,0,0.06)" }
+							},
+							y: {
+								grid: { display: false },
+								ticks: { color: "#111", autoSkip: false }
+							}
+						}
+					},
+					plugins: [barShadowPlugin]
+				});
+			} catch (e) {
+				console.error("Gagal memuat/parse trafik.csv (vessel_type):", e);
+			}
+		}
+
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initBarVesselType);
+		} else {
+			initBarVesselType();
+		}
+	})();
 	</script>
 
 	<!-- Ensure Chart.js and plugin are available -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+	<script>
+	// Palette: match KPI card gradients (use solid tones)
+	const CARD_COLORS = {
+		orange: '#ff6a00', // kpi-orange
+		blue:   '#2948ff', // kpi-blue
+		green:  '#38ef7d', // kpi-green
+		teal:   '#48b1bf', // kpi-teal
+		purple: '#a18cd1', // kpi-purple
+		azure:  '#0072ff', // kpi-azure
+		indigo: '#7928CA'  // kpi-indigo
+	};
+	const PALETTE = [
+		CARD_COLORS.orange,
+		CARD_COLORS.blue,
+		CARD_COLORS.green,
+		CARD_COLORS.teal,
+		CARD_COLORS.purple,
+		CARD_COLORS.azure,
+		CARD_COLORS.indigo
+	];
+	function cycleColors(n, offset = 0) {
+		const out = [];
+		for (let i = 0; i < n; i++) out.push(PALETTE[(i + offset) % PALETTE.length]);
+		return out;
+	}
+	</script>
 </body>
 </html>
