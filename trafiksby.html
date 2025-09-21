@@ -354,6 +354,12 @@
 		.pvtTable th:first-child {
 			text-align: center;
 		}
+
+		/* Donut charts side-by-side */
+		.donut-row .chart-box { height: 280px; position: relative; }
+		@media (max-width: 576px) {
+			.donut-row .chart-box { height: 260px; }
+		}
 	</style>
 </head>
 <body>
@@ -458,6 +464,31 @@
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tunda Gresik</div>
 					<div id="totalTundaGre" class="card-text">Rp 0</div>
+				</div>
+			</div>
+		</div>
+
+		 <!-- ganti 2 container donut menjadi 1 row 2 kolom -->
+		<div class="container my-3">
+			<div class="row donut-row g-3 align-items-stretch">
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Berdasarkan Lokasi</h5>
+					<div class="chart-box">
+						<canvas id="donutLocation"></canvas>
+					</div>
+				</div>
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Jenis Pelayaran</h5>
+					<div class="chart-box">
+						<canvas id="donutShippingType"></canvas>
+					</div>
+				</div>
+				<!-- Baru: Bar chart Package Type -->
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Jenis Kemasan</h5>
+					<div class="chart-box">
+						<canvas id="barPackageType"></canvas>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -1101,6 +1132,393 @@
 			setTimeout(mark, 300);
 		});
 	})();
+
+	// Inisialisasi Donut Chart berdasarkan kolom 'location' dari trafik.csv
+	(function () {
+		const CSV_PATH = "trafik.csv";
+
+		function parseCSVText(csvText) {
+			const rows = [];
+			const lines = csvText.split(/\r?\n/).filter(l => l.trim().length);
+			if (!lines.length) return { headers: [], rows: [] };
+			const headers = splitCSVLine(lines[0]);
+			for (let i = 1; i < lines.length; i++) {
+				const vals = splitCSVLine(lines[i]);
+				const obj = {};
+				headers.forEach((h, idx) => {
+					obj[h] = (vals[idx] || "").replace(/^"|"$/g, "");
+				});
+				rows.push(obj);
+			}
+			return { headers, rows };
+		}
+
+		// Parser CSV sederhana yang dukung tanda kutip
+		function splitCSVLine(line) {
+			const out = [];
+			let cur = "", inQ = false;
+			for (let i = 0; i < line.length; i++) {
+				const ch = line[i];
+				if (ch === '"' ) {
+					inQ = !inQ;
+				} else if (ch === ',' && !inQ) {
+					out.push(cur.trim());
+					cur = "";
+				} else {
+					cur += ch;
+				}
+			}
+			out.push(cur.trim());
+			return out;
+		}
+
+		function aggregateByLocation(rows) {
+			const map = new Map();
+			rows.forEach(r => {
+				const loc = (r.location || "").trim();
+				if (!loc) return;
+				map.set(loc, (map.get(loc) || 0) + 1);
+			});
+			return map;
+		}
+
+		// Ambil top N kategori, sisanya dijadikan "Lainnya"
+		function topN(map, n = 8) {
+			const arr = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+			const top = arr.slice(0, n);
+			const rest = arr.slice(n);
+			const otherSum = rest.reduce((s, [, v]) => s + v, 0);
+			if (otherSum > 0) top.push(["Lainnya", otherSum]);
+			return {
+				labels: top.map(([k]) => k),
+				values: top.map(([, v]) => v)
+			};
+		}
+
+		function pickColors(n) {
+			const colors = [];
+			for (let i = 0; i < n; i++) {
+				const h = Math.round((360 / n) * i);
+				colors.push(`hsl(${h} 70% 55%)`);
+			}
+			return colors;
+		}
+
+		async function initDonut() {
+			try {
+				const resp = await fetch(CSV_PATH);
+				const text = await resp.text();
+				const { rows } = parseCSVText(text);
+				const map = aggregateByLocation(rows);
+				const { labels, values } = topN(map, 8);
+
+				const total = values.reduce((a, b) => a + b, 0);
+				const ctx = document.getElementById("donutLocation")?.getContext("2d");
+				if (!ctx) return;
+
+				Chart.register(ChartDataLabels);
+
+				new Chart(ctx, {
+					type: "doughnut",
+					data: {
+						labels,
+						datasets: [{
+							data: values,
+							backgroundColor: pickColors(labels.length),
+							borderColor: "#fff",
+							borderWidth: 2,
+							hoverOffset: 6
+						}]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						cutout: "60%",
+						plugins: {
+							legend: { position: "bottom" },
+							tooltip: {
+								callbacks: {
+									label: (ttx) => {
+										const v = ttx.parsed;
+										const pct = total ? (v / total * 100) : 0;
+										return `${ttx.label}: ${v} (${pct.toFixed(1)}%)`;
+									}
+								}
+							},
+							datalabels: {
+								color: "#111",
+								font: { weight: "bold" },
+								format: (v) => {
+									const pct = total ? (v / total * 100) : 0;
+									return pct >= 4 ? `${pct.toFixed(0)}%` : "";
+								}
+							}
+						}
+					}
+				});
+			} catch (e) {
+				console.error("Gagal memuat/parse trafik.csv:", e);
+			}
+		}
+
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initDonut);
+		} else {
+			initDonut();
+		}
+	})();
+
+	// Donut untuk shipping_type dengan fallback PKK.DN/LN
+	(function () {
+		const CSV_PATH = "trafik.csv";
+
+		function parseCSVText(csvText) {
+			const rows = [];
+			const lines = csvText.split(/\r?\n/).filter(l => l.trim().length);
+			if (!lines.length) return { headers: [], rows: [] };
+			const headers = splitCSVLine(lines[0]);
+			for (let i = 1; i < lines.length; i++) {
+				const vals = splitCSVLine(lines[i]);
+				const obj = {};
+				headers.forEach((h, idx) => { obj[h] = (vals[idx] || "").replace(/^"|"$/g, ""); });
+				rows.push(obj);
+			}
+			return { headers, rows };
+		}
+		function splitCSVLine(line) {
+			const out = []; let cur = "", inQ = false;
+			for (let i = 0; i < line.length; i++) {
+				const ch = line[i];
+				if (ch === '"') inQ = !inQ;
+				else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ""; }
+				else cur += ch;
+			}
+			out.push(cur.trim());
+			return out;
+		}
+
+		function normalizeType(typeVal, pkkVal) {
+			const v = (typeVal || "").toString().toUpperCase();
+			if (v.includes("DALAM NEGERI") || v === "DN" || v.includes("DOMESTIC")) return "Dalam Negeri";
+			if (v.includes("LUAR NEGERI") || v === "LN" || v.includes("INTERNATIONAL")) return "Luar Negeri";
+			const p = (pkkVal || "").toString().toUpperCase();
+			if (p.includes("PKK.DN")) return "Dalam Negeri";
+			if (p.includes("PKK.LN")) return "Luar Negeri";
+			return "Lainnya";
+		}
+
+		async function initDonutShipping() {
+			try {
+				const resp = await fetch(CSV_PATH);
+				const text = await resp.text();
+				const { headers, rows } = parseCSVText(text);
+				const hShip = headers.find(h => h.toLowerCase() === "shipping_type");
+				const hPkk = headers.find(h => h.toLowerCase() === "no_pkk_inaportnet");
+
+				const counts = new Map();
+				rows.forEach(r => {
+					const t = normalizeType(hShip ? r[hShip] : "", hPkk ? r[hPkk] : "");
+					if (!t) return;
+					counts.set(t, (counts.get(t) || 0) + 1);
+				});
+
+				// Urutkan dan siapkan dataset
+				const entries = Array.from(counts.entries()).sort((a,b) => b[1]-a[1]);
+				const labels = entries.map(([k]) => k);
+				const values = entries.map(([,v]) => v);
+				const total = values.reduce((a,b)=>a+b,0);
+
+				const colors = {
+					"Dalam Negeri": "#43a047",
+					"Luar Negeri": "#1e88e5",
+					"Lainnya": "#9ca3af"
+				};
+				const bg = labels.map(l => colors[l] || "#9ca3af");
+
+				const ctx = document.getElementById("donutShippingType")?.getContext("2d");
+				if (!ctx) return;
+
+				Chart.register(ChartDataLabels);
+				new Chart(ctx, {
+					type: "doughnut",
+					data: { labels, datasets: [{ data: values, backgroundColor: bg, borderColor: "#fff", borderWidth: 2, hoverOffset: 6 }] },
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						cutout: "60%",
+						plugins: {
+							legend: { position: "bottom" },
+							tooltip: {
+								callbacks: {
+									label: (ttx) => {
+										const v = ttx.parsed;
+										const pct = total ? (v/total*100) : 0;
+										return `${ttx.label}: ${v} (${pct.toFixed(1)}%)`;
+									}
+								}
+							},
+							datalabels: {
+								color: "#111",
+								font: { weight: "bold" },
+								formatter: (v) => {
+									const pct = total ? (v/total*100) : 0;
+									return pct >= 4 ? `${pct.toFixed(0)}%` : "";
+								}
+							}
+						}
+					}
+				});
+			} catch (e) {
+				console.error("Gagal memuat/parse trafik.csv (shipping_type):", e);
+			}
+		}
+
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initDonutShipping);
+		} else {
+			initDonutShipping();
+		}
+	})();
+
+	// Bar chart: Distribusi Package Type (horizontal)
+	(function () {
+		const CSV_PATH = "trafik.csv";
+
+		function parseCSVText(csvText) {
+			const rows = [];
+			const lines = csvText.split(/\r?\n/).filter(l => l.trim().length);
+			if (!lines.length) return { headers: [], rows: [] };
+			const headers = splitCSVLine(lines[0]);
+			for (let i = 1; i < lines.length; i++) {
+				const vals = splitCSVLine(lines[i]);
+				const obj = {};
+				headers.forEach((h, idx) => { obj[h] = (vals[idx] || "").replace(/^"|"$/g, ""); });
+				rows.push(obj);
+			}
+			return { headers, rows };
+		}
+		function splitCSVLine(line) {
+			const out = []; let cur = "", inQ = false;
+			for (let i = 0; i < line.length; i++) {
+				const ch = line[i];
+				if (ch === '"') inQ = !inQ;
+				else if (ch === ',' && !inQ) { out.push(cur.trim()); cur = ""; }
+				else cur += ch;
+			}
+			out.push(cur.trim());
+			return out;
+		}
+
+		function aggregateByPackageType(headers, rows) {
+			const col = headers.find(h => h.toLowerCase() === "package_type") || "package_type";
+			const map = new Map();
+			rows.forEach(r => {
+				const pkg = (r[col] || "").trim() || "Tidak Tercatat";
+				map.set(pkg, (map.get(pkg) || 0) + 1);
+			});
+			return map;
+		}
+
+		function pickColors(n) {
+			const colors = [];
+			for (let i = 0; i < n; i++) {
+				const h = Math.round((360 / Math.max(n,1)) * i);
+				colors.push(`hsl(${h} 70% 55%)`);
+			}
+			return colors;
+		}
+
+		async function initBarPackageType() {
+			try {
+				const resp = await fetch(CSV_PATH);
+				const text = await resp.text();
+				const { headers, rows } = parseCSVText(text);
+
+				const map = aggregateByPackageType(headers, rows);
+				// Ambil Top 8 kategori
+				const sorted = Array.from(map.entries()).sort((a,b)=>b[1]-a[1]);
+				const top = sorted.slice(0, 8);
+				const other = sorted.slice(8);
+				const otherSum = other.reduce((s,[,v])=>s+v,0);
+				if (otherSum > 0) top.push(["Lainnya", otherSum]);
+
+				const labels = top.map(([k]) => k);
+				const values = top.map(([,v]) => v);
+				const total = values.reduce((a,b)=>a+b,0);
+
+				const ctx = document.getElementById("barPackageType")?.getContext("2d");
+				if (!ctx) return;
+
+				Chart.register(ChartDataLabels);
+				new Chart(ctx, {
+					type: "bar",
+					data: {
+						labels,
+						datasets: [{
+							label: "Package Type",
+							data: values,
+							backgroundColor: pickColors(labels.length),
+							borderColor: "transparent",
+							borderWidth: 0,
+							borderRadius: 8,
+							barPercentage: 0.7,
+							categoryPercentage: 0.8
+						}]
+					},
+					options: {
+						indexAxis: "y",
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { display: false },
+							tooltip: {
+								callbacks: {
+									label: (ttx) => {
+										const v = ttx.parsed.x;
+										const pct = total ? (v/total*100) : 0;
+										return `${v} (${pct.toFixed(1)}%)`;
+									}
+								}
+							},
+							datalabels: {
+								anchor: "end",
+								align: "right",
+								color: "#111",
+								formatter: (v) => {
+									const pct = total ? (v/total*100) : 0;
+									return `${v} (${pct.toFixed(0)}%)`;
+								},
+								font: { weight: "bold" },
+								clip: false
+							}
+						},
+						scales: {
+							x: {
+								beginAtZero: true,
+								grid: { color: "rgba(0,0,0,0.06)" }
+							},
+							y: {
+								grid: { display: false },
+								ticks: { color: "#111", autoSkip: false }
+							}
+						}
+					}
+				});
+			} catch (e) {
+				console.error("Gagal memuat/parse trafik.csv (package_type):", e);
+			}
+		}
+
+		if (document.readyState === "loading") {
+			document.addEventListener("DOMContentLoaded", initBarPackageType);
+		} else {
+			initBarPackageType();
+		}
+	})();
 	</script>
+
+	<!-- Ensure Chart.js and plugin are available -->
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 </body>
 </html>
