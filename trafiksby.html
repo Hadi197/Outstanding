@@ -365,6 +365,13 @@
 		@media (max-width: 576px) {
 			.bar-row .chart-box { height: 300px; }
 		}
+
+		/* Override khusus header tabel "Total Call dan GRT" */
+		#pivotSumWrap thead th {
+			background: #0b3a82 !important;   /* biru gelap */
+			color: #ffffff !important;         /* teks putih */
+			border-color: #083067 !important;  /* garis senada */
+		}
 	</style>
 </head>
 <body>
@@ -1645,6 +1652,7 @@
 							}
 						}
 					},
+					
 					plugins: [barShadowPlugin]
 				});
 			} catch (e) {
