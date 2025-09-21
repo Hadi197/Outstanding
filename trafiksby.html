@@ -1372,9 +1372,10 @@
 							datalabels: {
 								color: "#111",
 								font: { weight: "bold" },
-								format: (v) => {
+								formatter: (v) => {
 									const pct = total ? (v / total * 100) : 0;
-									return pct >= 4 ? `${pct.toFixed(0)}%` : "";
+									// Tampilkan label hanya untuk irisan >= 4% agar tidak berdesakan
+									return pct >= 4 ? `${formatInt(v)}` : "";
 								}
 							},
 							donutShadow: { blur: 22, width: 6, alpha: 0.5, spread: 2 }
