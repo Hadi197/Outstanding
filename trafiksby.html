@@ -185,6 +185,40 @@
 			transform: translateY(-3px);
 		}
 
+		/* Revenue row: single line, no scroll, compact sizing */
+		.kpi-revenue {
+			flex-wrap: nowrap;             /* force one row */
+			justify-content: space-between; /* distribute across width */
+			gap: 8px;
+			padding: 10px;
+			overflow: hidden;              /* no scroll */
+		}
+		.kpi-revenue .kpi-card {
+			flex: 1 1 calc(100% / 6);
+			max-width: calc(100% / 6);
+			width: auto;                  /* override base fixed width */
+			min-width: 0;                 /* allow shrink */
+			height: 84px;                 /* compact height */
+		}
+		.kpi-revenue .kpi-card .card-body { padding: 8px 10px; }
+		.kpi-revenue .kpi-card .card-title {
+			font-size: clamp(0.68rem, 1.3vw, 0.9rem);
+			line-height: 1.1;
+		}
+		.kpi-revenue .kpi-card .card-text {
+			font-size: clamp(1.0rem, 1.9vw, 1.25rem);
+			bottom: 8px;
+		}
+		/* Tighter cap for the six revenue value IDs */
+		.kpi-revenue #totalPanduSub,
+		.kpi-revenue #totalPanduGre,
+		.kpi-revenue #totalTundaSub,
+		.kpi-revenue #totalTundaGre,
+		.kpi-revenue #totalTambatSub,
+		.kpi-revenue #totalTambatGre {
+			font-size: clamp(0.95rem, 1.8vw, 1.2rem);
+		}
+
 		/* Hide Lokasi table and status text */
 		#pivotWrap,
 		#status {
@@ -548,8 +582,8 @@
 			</div>
 		</div>
 
-		<!-- Container: KPI Pendapatan (di bawah chart) -->
-		<div class="kpi-container my-3">
+		<!-- Container: KPI Pendapatan (di bawah chart, satu row tanpa scroll) -->
+		<div class="kpi-container kpi-revenue my-3">
 			<!-- Card: Pendapatan Tambat Surabaya -->
 			<div class="card kpi-card kpi-azure kpi-card--revenue">
 				<div class="card-body">
