@@ -1,1075 +1,184 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outstanding Tanjung Perak</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is included -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/neo-buttons.css">
-    <style>
-        table {
-            width: 100%; /* Match table width to card width */
-        }
-        table td, table th {
-            font-size: 0.7rem; /* Make table text smaller */
-        }
-        .pagination {
-            display: none; /* Hide pagination */
-        }
-        .card {
-            flex: 1; /* Make cards equal width */
-            margin: 5px; /* Add spacing between cards */
-            cursor: pointer; /* Make cards clickable */
-        }
-        .card-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between; /* Align cards in a single row */
-        }
-        .card-title {
-            font-size: 0.8rem; /* Make card titles smaller */
-            text-align: center; /* Center-align text and values */
-        }
-        .card-text {
-            font-size: 1.5rem; /* Make card values larger */
-            font-weight: bold; /* Make card values bold */
-            text-align: center; /* Center-align text and values */
-        }
-        .chart-container {
-            margin-top: 15px;
-            margin-bottom: 25px;
-            background: rgba(255,255,255,0.65);            /* was solid white */
-            backdrop-filter: blur(8px) saturate(110%);
-            -webkit-backdrop-filter: blur(8px) saturate(110%);
-            border: 1px solid rgba(255,255,255,0.45);
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-shadow: 0 10px 10px rgba(0,0,0,0.15); /* added */
-            transition: box-shadow .25s ease, transform .25s ease; /* added */
-        }
-        .chart-container:hover { /* added */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-            transform: translateY(-3px);
-        }
-        .chart-container h5 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-        #cardsContainer .card {
-            min-width: 120px;
-        }
-        .fixed-size {
-            width:1600px;      /* diubah dari width:100%; max-width:1200px; */
-            height:300px;      /* tetap 300 */
-            margin-left:auto;
-            margin-right:auto;
-            position:relative;
-        }
-        .fixed-size canvas {
-            /* Hapus force width/height absolute supaya Chart.js hit detection akurat */
-            height:100%;
-            width:100%;
-        }
-        /* Tambahan efek shadow pada card */
-        .card {
-            /* Shadow dasar */
-            box-shadow: 0 8px 6px rgba(0,0,0,0.15);
-            transition: box-shadow .25s ease, transform .25s ease;
-        }
-        .card:hover {
-            /* Shadow saat hover */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-            transform: translateY(-3px);
-        }
-        /* JANGAN override background KPI cards */
-        .card:not([class*="bg-"]):not(.kpi-card) {
-            background: rgba(255,255,255,0.75);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .futuristic-title {
-            display:flex;                /* pusatkan isi */
-            justify-content:center;
-            align-items:center;
-            gap:.8rem;
-            width:100%;
-            margin:0 auto;
-            font-family:'Orbitron', Arial, sans-serif;
-            font-size:clamp(2rem,3.6vw,3.4rem);
-            font-weight:700;
-            text-transform:uppercase;
-            letter-spacing:.08rem;       /* dikurangi agar lebih rapih */
-            background:linear-gradient(90deg,#9ffbff 0%,#65ffd9 25%,#ffe580 50%,#ffb3f5 75%,#ffffff 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color:transparent;
-            -webkit-text-fill-color: transparent;
-            position:relative;
-            padding:.2rem .4rem;
-            border-radius:0;
-            filter:none;
-            text-shadow:
-                0 0 2px rgba(244, 200, 200, 0.85),
-                0 0 4px rgba(241, 199, 199, 0.75),
-                0 2px 6px rgba(0,0,0,0.6),
-                0 0 10px rgba(125,249,255,.8),
-                0 0 18px rgba(84,255,228,.55),
-                0 0 28px rgba(255,157,240,.45);
-        }
-        .futuristic-title::before,
-        .futuristic-title::after {
-            content:none !important;
-            display:none !important;
-        }
-        .futuristic-title span {
-            display:inline-block;
-            animation:glowPulse 3.8s ease-in-out infinite;
-            text-shadow:
-                0 0 2px rgba(61, 26, 26, 0.85),
-                0 0 4px rgba(56, 26, 26, 0.7),
-                0 1px 5px rgba(0,0,0,0.55),
-                0 0 8px rgba(125,249,255,.85),
-                0 0 16px rgba(84,255,228,.6),
-                0 0 24px rgba(255,157,240,.5);
-        }
-        .futuristic-title .fx-accent { animation-delay:.5s; }
-        .futuristic-title .fx-highlight { animation-delay:1s; }
-        @keyframes glowPulse {
-            0%,100% {
-                opacity:1;
-                text-shadow:
-                    0 0 2px rgba(9, 9, 9, 0.9),
-                    0 0 4px rgba(55, 55, 57, 0.7),
-                    0 1px 6px rgba(0,0,0,0.55),
-                    0 0 10px rgba(125,249,255,.9),
-                    0 0 20px rgba(84,255,228,.7),
-                    0 0 32px rgba(255,157,240,.55);
-            }
-            50% {
-                opacity:.95;
-                text-shadow:
-                    0 0 2px rgba(174, 177, 240, 0.85),
-                    0 0 3px rgba(0,0,0,0.65),
-                    0 1px 5px rgba(0,0,0,0.55),
-                    0 0 6px rgba(125,249,255,.65),
-                    0 0 14px rgba(84,255,228,.5),
-                    0 0 24px rgba(255,157,240,.42);
-            }
-        }
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Login</title>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet" />
+	<link rel="stylesheet" href="assets/css/neo-buttons.css" />
+	<style>
+		/* Futuristic soft blue background (match index.html) */
+		html, body { height: 100%; }
+		body {
+			background-color: #eaf6ff;
+			background-image:
+				radial-gradient(1000px 800px at 20% 10%, rgba(173,216,230,.35) 0%, rgba(173,216,230,0) 60%),
+				radial-gradient(800px 600px at 80% 20%, rgba(125,249,255,.22) 0%, rgba(125,249,255,0) 55%),
+				radial-gradient(900px 700px at 30% 80%, rgba(84,255,228,.16) 0%, rgba(84,255,228,0) 55%),
+				linear-gradient(180deg, #f4fbff 0%, #e7f6ff 50%, #ecfaff 100%);
+			background-attachment: fixed, fixed, fixed, fixed;
+			background-size: auto, auto, auto, 100% 100%;
+			background-repeat: no-repeat;
+		}
+		body::after {
+			content: "";
+			position: fixed;
+			inset: 0;
+			pointer-events: none;
+			background: linear-gradient(120deg,
+				rgba(145,194,255,.18),
+				rgba(125,249,255,.12),
+				rgba(173,216,230,.18)
+			);
+			background-size: 300% 300%;
+			animation: gradientShift 18s ease-in-out infinite;
+			mix-blend-mode: screen;
+		}
+		@keyframes gradientShift {
+			0% { background-position: 0% 50%; }
+			50% { background-position: 100% 50%; }
+			100% { background-position: 0% 50%; }
+		}
+		@media (prefers-reduced-motion: reduce) { body::after { animation: none; } }
 
-        /* Futuristic soft blue background */
-        html, body { height: 100%; }
-        body {
-            background-color: #eaf6ff;
-            background-image:
-                /* soft glows */
-                radial-gradient(1000px 800px at 20% 10%, rgba(173,216,230,.35) 0%, rgba(173,216,230,0) 60%),
-                radial-gradient(800px 600px at 80% 20%, rgba(125,249,255,.22) 0%, rgba(125,249,255,0) 55%),
-                radial-gradient(900px 700px at 30% 80%, rgba(84,255,228,.16) 0%, rgba(84,255,228,0) 55%),
-                /* base gradient */
-                linear-gradient(180deg, #f4fbff 0%, #e7f6ff 50%, #ecfaff 100%);
-            background-attachment: fixed, fixed, fixed, fixed;
-            background-size: auto, auto, auto, 100% 100%;
-            background-repeat: no-repeat;
-        }
-
-        /* Subtle animated sheen overlay */
-        body::after {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background: linear-gradient(120deg,
-                rgba(145,194,255,.18),
-                rgba(125,249,255,.12),
-                rgba(173,216,230,.18)
-            );
-            background-size: 300% 300%;
-            animation: gradientShift 18s ease-in-out infinite;
-            mix-blend-mode: screen;
-        }
-        @keyframes gradientShift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            body::after { animation: none; }
-        }
-
-        /* Optional: enable this image layer for added texture (Uncomment to use) */
-        /* body {
-            background-image:
-                radial-gradient(1000px 800px at 20% 10%, rgba(173,216,230,.35) 0%, rgba(173,216,230,0) 60%),
-                radial-gradient(800px 600px at 80% 20%, rgba(125,249,255,.22) 0%, rgba(125,249,255,0) 55%),
-                radial-gradient(900px 700px at 30% 80%, rgba(84,255,228,.16) 0%, rgba(84,255,228,0) 55%),
-                linear-gradient(180deg, #f4fbff 0%, #e7f6ff 50%, #ecfaff 100%),
-                url('https://images.unsplash.com/photo-1549880338-65ddcdfd017b?auto=format&fit=crop&w=1920&q=80');
-            background-size: auto, auto, auto, 100% 100%, cover;
-            background-position: center;
-            background-attachment: fixed, fixed, fixed, fixed, fixed;
-        } */
-
-        /* Center table header text */
-        #tableContainer thead th,
-        #table-header th {
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        /* Gradient backgrounds for dashboard cards */
-        #cardsContainer .card.bg-danger {
-            background: linear-gradient(135deg, #ff6a88 0%, #ff3d3d 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-primary {
-            background: linear-gradient(135deg, #2b7cff 0%, #0047ff 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-success {
-            background: linear-gradient(135deg, #42e695 0%, #3bb2b8 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-warning {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-secondary {
-            background: linear-gradient(135deg, #a1a1aa 0%, #6b7280 100%) !important;
-            border: 0;
-        }
-
-        /* Subtle hover lift + brighten */
-        #cardsContainer .card[class*="bg-"]:hover {
-            filter: brightness(1.05);
-        }
-
-        /* Improve legibility on gradients */
-        #cardsContainer .card .card-title,
-        #cardsContainer .card .card-text {
-            text-shadow: 0 1px 2px rgba(0,0,0,.25);
-        }
-
-        /* KPI Card: gradient, rounded, shadow (match trafiksby.html) */
-        .kpi-card {
-            position: relative;
-            color: #fff;
-            border: 0;
-            border-radius: 14px;
-            overflow: hidden;
-            min-width: 200px;
-            width: 220px;
-            height: auto;           /* biarkan tinggi mengikuti konten */
-            min-height: 96px;       /* tetap minimal seperti sebelumnya */
-            box-shadow: 0 10px 20px rgba(0,0,0,.12);
-        }
-        .kpi-card .card-body {
-            position: relative;
-            padding: 12px 14px 46px; /* sisakan ruang untuk nilai di bawah */
-        }
-        .kpi-card .card-title {
-            font-size: .8rem;
-            font-weight: 600;
-            letter-spacing: .2px;
-            margin: 0;
-            text-align: left;
-            opacity: .95;
-            /* Ganti ellipsis => wrap penuh */
-            white-space: normal;
-            overflow: visible;
-            text-overflow: unset;
-            overflow-wrap: anywhere; /* pecah kata panjang jika perlu */
-            word-break: break-word;
-            hyphens: auto;
-            line-height: 1.25;
-        }
-        .kpi-card .card-text {
-            font-size: 1.6rem;
-            font-weight: 800;
-            line-height: 1.05;
-            position: absolute;
-            left: 14px;
-            right: 14px;
-            bottom: 10px;
-            margin: 0;
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .kpi-card::before,
-        .kpi-card::after {
-            content: "";
-            position: absolute;
-            border-radius: 50%;
-            pointer-events: none;
-            background: rgba(255,255,255,.18);
-            filter: blur(0.5px);
-        }
-        .kpi-card::before { width: 140px; height: 140px; right: -30px; top: -30px; }
-        .kpi-card::after  { width: 200px; height: 200px; right: -80px; bottom: -80px; background: rgba(255,255,255,.12); }
-
-        /* Gradient variants (match trafiksby.html) - pakai !important agar menang */
-        .kpi-orange { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%) !important; }
-        .kpi-blue   { background: linear-gradient(135deg, #396afc 0%, #2948ff 100%) !important; }
-        .kpi-green  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
-        .kpi-teal   { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%) !important; }
-        .kpi-purple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%) !important; }
-        .kpi-azure  { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; }
-        .kpi-indigo { background: linear-gradient(135deg, #7928CA 0%, #FF0080 100%) !important; }
-
-        /* Wrapper untuk semua KPI cards */
-        .kpi-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: stretch;
-        }
-        @media (max-width: 576px) {
-            .kpi-card { width: 180px; height: auto; min-height: 86px; }
-            .kpi-card .card-title { font-size: .74rem; }
-            .kpi-card .card-text { font-size: 1.4rem; bottom: 8px; }
-            .kpi-card .card-body { padding-bottom: 40px; } /* ruang nilai pada layar kecil */
-            .kpi-container { gap: 10px; }
-        }
-    </style>
+		.login-card {
+			width: 100%; max-width: 420px;
+			background: rgba(255,255,255,0.75);
+			backdrop-filter: blur(10px) saturate(110%);
+			-webkit-backdrop-filter: blur(10px) saturate(110%);
+			border: 1px solid rgba(255,255,255,0.45);
+			border-radius: 14px;
+			box-shadow: 0 10px 20px rgba(0,0,0,.12);
+			padding: 22px 20px;
+		}
+		.login-title {
+			font-family:'Orbitron', Arial, sans-serif;
+			font-weight:700; letter-spacing:.04rem; text-align:center;
+			background:linear-gradient(90deg,#9ffbff 0%,#65ffd9 25%,#ffe580 50%,#ffb3f5 75%,#ffffff 100%);
+			-webkit-background-clip:text; background-clip:text; color:transparent;
+			-webkit-text-fill-color: transparent;
+			text-shadow: 0 1px 2px rgba(0,0,0,.15);
+		}
+		.form-control { border-radius: 10px; }
+		.form-check-label { user-select:none; }
+		.error-text { color:#c0392b; font-size:.9rem; min-height: 1.2em; }
+	</style>
 </head>
 <body>
-    <!-- Container hanya untuk judul & tombol -->
-    <div class="container mt-5">
-        <h1 class="text-center mb-4 futuristic-title">
-            <span class="fx-primary">Outstanding</span>
-            <span class="fx-accent">Tanjung</span>
-            <span class="fx-highlight">Perak</span>
-        </h1>
-        <div class="d-flex justify-content-start gap-2 mb-3">
-            <button id="downloadExcel" class="neo-btn neo-btn--blue neo-btn--sm">
-                <span class="neo-btn__label">Download Excel</span>
-                <span class="neo-btn__icon">⬇</span>
-            </button>
-            <a href="trafiksby.html" class="neo-btn neo-btn--purple neo-btn--sm" id="openTrafik">
-                <span class="neo-btn__label">Trafik</span>
-                <span class="neo-btn__icon">➜</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Active filter info -->
-    <div class="container" id="activeFilterContainer" style="display:none;">
-        <div class="alert alert-info py-2 px-3 d-flex justify-content-between align-items-center">
-            <span id="activeFilterText"></span>
-            <button class="btn btn-sm btn-outline-secondary" id="clearFilterBtn">Clear Filter</button>
-        </div>
-    </div>
-
-    <!-- Container terpisah untuk cards -->
-    <div class="container mb-3" id="cardsContainer">
-        <!-- Replace the row/card-container with KPI cards -->
-        <div class="kpi-container">
-            <!-- Total Outstanding -->
-            <div class="card kpi-card kpi-orange">
-                <div class="card-body">
-                    <div class="card-title">Total Outstanding</div>
-                    <div class="card-text" id="totalOutstanding">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Surabaya -->
-            <div class="card kpi-card kpi-blue">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Surabaya</div>
-                    <div class="card-text" id="totalSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Gresik -->
-            <div class="card kpi-card kpi-green">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Gresik</div>
-                    <div class="card-text" id="totalGresik">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Dalam Negeri Surabaya -->
-            <div class="card kpi-card kpi-teal">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Dalam Negeri Surabaya</div>
-                    <div class="card-text" id="totalDalamNegeriSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Dalam Negeri Gresik -->
-            <div class="card kpi-card kpi-azure">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Dalam Negeri Gresik</div>
-                    <div class="card-text" id="totalDalamNegeriGresik">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Luar Negeri Surabaya -->
-            <div class="card kpi-card kpi-purple">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Luar Negeri Surabaya</div>
-                    <div class="card-text" id="totalLuarNegeriSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Luar Negeri Gresik -->
-            <div class="card kpi-card kpi-indigo">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Luar Negeri Gresik</div>
-                    <div class="card-text" id="totalLuarNegeriGresik">0</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Container Bar Chart keseluruhan -->
-    <div class="container chart-container fixed-size" id="overallChartContainer">
-        <h5>Bar Chart Keseluruhan</h5>
-        <canvas id="barChart" height="200"></canvas>
-    </div>
-
-    <!-- Container Bar Chart Surabaya -->
-    <div class="container chart-container fixed-size" id="surabayaChartContainer">
-        <h5>Bar Chart Surabaya</h5>
-        <canvas id="barChartSurabaya" height="200"></canvas>
-    </div>
-
-    <!-- Container Bar Chart Gresik -->
-    <div class="container chart-container fixed-size" id="gresikChartContainer">
-        <h5>Bar Chart Gresik</h5>
-        <canvas id="barChartGresik" height="200"></canvas>
-    </div>
-
-    <!-- Container untuk tabel & pencarian -->
-    <div class="container mb-5" id="tableContainer">
-        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search in table...">
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr id="table-header">
-                    <!-- Table headers will be dynamically inserted here -->
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- Table rows will be dynamically inserted here -->
-            </tbody>
-        </table>
-    </div>
-
-    <script>
-        async function fetchCSV(filePath) {
-            try {
-                const response = await fetch(filePath);
-                const data = await response.text();
-                return data;
-            } catch (error) {
-                console.error("Failed to fetch CSV file:", error);
-                return null;
-            }
-        }
-
-        function parseCSV(csvText) {
-            const rows = csvText.split("\n").filter(row => row.trim() !== "");
-            const headers = rows[0].split(",");
-            const data = rows.slice(1).map(row => {
-                const values = [];
-                let current = "";
-                let insideQuotes = false;
-
-                for (let char of row) {
-                    if (char === '"' && insideQuotes) {
-                        insideQuotes = false;
-                    } else if (char === '"' && !insideQuotes) {
-                        insideQuotes = true;
-                    } else if (char === "," && !insideQuotes) {
-                        values.push(current.trim());
-                        current = "";
-                    } else {
-                        current += char;
-                    }
-                }
-                values.push(current.trim());
-
-                return headers.reduce((acc, header, index) => {
-                    acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : ""; // Remove surrounding quotes
-                    return acc;
-                }, {});
-            });
-            return { headers, data };
-        }
-
-        // Mapping label header tampilan -> field asli
-        const HEADER_MAP = {
-            no_pkk: "PKK",
-            no_pkk_inaportnet: "PKK INAPORTNET",
-            nomor_spb: "SPB",
-            name_process_code: "STATUS",
-            gt: "GRT",
-            loa: "LOA",
-            waktu_tolak: "TGL/JAM",
-            vessel_name: "NAMA KAPAL",
-            NO: "NO",
-            PELABUHAN: "PELABUHAN",
-            PELAYARAN: "PELAYARAN"
-        };
-
-        function populateTable(headers, data) {
-            const tableHeader = document.getElementById("table-header");
-            const tableBody = document.getElementById("table-body");
-
-            // Clear existing table content
-            tableHeader.innerHTML = "";
-            tableBody.innerHTML = "";
-
-            // Gunakan key asli, tampilkan label via HEADER_MAP
-            const updatedHeaders = ["NO", ...headers.filter(header => header !== "name_branch"), "PELABUHAN", "PELAYARAN"];
-
-            // Populate table headers (pakai label tampilan)
-            updatedHeaders.forEach(header => {
-                const th = document.createElement("th");
-                th.textContent = HEADER_MAP[header] || header;
-                tableHeader.appendChild(th);
-            });
-
-            // Populate table rows (tetap pakai key asli untuk ambil data)
-            data.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                updatedHeaders.forEach(header => {
-                    const td = document.createElement("td");
-                    if (header === "NO") {
-                        td.textContent = index + 1;
-                    } else if (header === "PELABUHAN") {
-                        if (row["no_pkk_inaportnet"]?.includes("IDSUB")) td.textContent = "SURABAYA";
-                        else if (row["no_pkk_inaportnet"]?.includes("IDGRE")) td.textContent = "GRESIK";
-                        else td.textContent = "";
-                    } else if (header === "PELAYARAN") {
-                        if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
-                        else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
-                        else td.textContent = "";
-                    } else {
-                        td.textContent = row[header] || "";
-                    }
-                    tr.appendChild(td);
-                });
-                tableBody.appendChild(tr);
-            });
-        }
-
-        function normalizeFilter(title) {
-            return {
-                "Total Kapal Surabaya": "SURABAYA",
-                "Total Kapal Gresik": "GRESIK",
-                "Total Kapal Dalam Negeri Surabaya": "DN_SUB",
-                "Total Kapal Dalam Negeri Gresik": "DN_GRE",
-                "Total Kapal Luar Negeri Surabaya": "LN_SUB",
-                "Total Kapal Luar Negeri Gresik": "LN_GRE",
-                "Total Outstanding": "ALL"
-            }[title] || "ALL";
-        }
-
-        function applyFilter(row, filterKey) {
-            switch (filterKey) {
-                case "SURABAYA": return row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "GRESIK": return row["no_pkk_inaportnet"]?.includes("IDGRE");
-                case "DN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "DN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
-                case "LN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "LN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
-                default: return true;
-            }
-        }
-
-        // Agregasi data berdasarkan bulan (tanpa konversi Date, cukup ambil 7 karakter awal "YYYY-MM")
-        function aggregateByMonth(data, filterKey = "ALL", port = null) {
-            const monthCounts = {};
-            data.forEach(row => {
-                if (!row["waktu_tolak"]) return;
-                if (!applyFilter(row, filterKey)) return;
-
-                if (port) {
-                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
-                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
-                    if (pel !== port) return;
-                }
-
-                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                if (!key) return;
-                monthCounts[key] = (monthCounts[key] || 0) + 1;
-            });
-
-            const labels = Object.keys(monthCounts).sort();
-            const values = labels.map(l => monthCounts[l]);
-            return { labels, values };
-        }
-
-        // Filter data tabel berdasarkan bulan yang dipilih
-        function computeFilteredData(data, filterKey, currentMonth) {
-            return data.filter(row => {
-                if (!row["waktu_tolak"]) return false;
-                if (!applyFilter(row, filterKey)) return false;
-
-                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                if (!key) return false;
-
-                // hanya tampilkan data bulan yang sedang dipilih
-                if (currentMonth && key !== currentMonth) return false;
-
-                return true;
-            });
-        }
-
-        // Plugin shadow untuk batang bar chart
-        const barShadowPlugin = {
-            id: "barShadow",
-            afterDatasetsDraw(chart, args, opts) {
-                const { ctx } = chart;
-                const {
-                    shadowColor = "rgba(0,0,0,0.28)",
-                    blur = 6,
-                    offsetY = 4,
-                    offsetX = 0
-                } = opts || {};
-                chart.data.datasets.forEach((ds, di) => {
-                    const meta = chart.getDatasetMeta(di);
-                    if (!meta.visible) return;
-                    meta.data.forEach(bar => {
-                        const props = bar.getProps(["x","y","base","width","height"], true);
-                        const x = props.x - props.width / 2;
-                        const y = Math.min(props.y, props.base);
-                        const h = Math.abs(props.base - props.y);
-                        ctx.save();
-                        ctx.fillStyle = shadowColor;
-                        ctx.filter = `blur(${blur}px)`;
-                        ctx.fillRect(x + offsetX, y + offsetY, props.width, h);
-                        ctx.restore();
-                    });
-                });
-            }
-        };
-
-        // Helper warna & gradient
-        function hexToRgb(hex) {
-            const m = hex.replace('#','').match(/.{1,2}/g);
-            if (!m) return { r: 0, g: 0, b: 0 };
-            const [r,g,b] = m.map(x => parseInt(x, 16));
-            return { r, g, b };
-        }
-        function rgba(rgb, a) {
-            return `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
-        }
-        function getBarGradient(ctx, baseHex) {
-            const { chart } = ctx;
-            const { ctx: c, chartArea } = chart;
-            if (!chartArea) return baseHex; // first pass
-            const rgb = hexToRgb(baseHex || '#2b7cff');
-            const grad = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-            grad.addColorStop(0.0, rgba(rgb, 0.85));
-            grad.addColorStop(0.5, rgba(rgb, 0.9));
-            grad.addColorStop(1.0, rgba(rgb, 0.95));
-            return grad;
-        }
-
-        // Gambar "track" lembut di belakang bar (capsule tinggi)
-        const barTrackPlugin = {
-            id: "barTrack",
-            beforeDatasetsDraw(chart, args, opts) {
-                const { ctx, chartArea } = chart;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-                if (!meta?.data?.length) return;
-                meta.data.forEach((bar, i) => {
-                    const props = bar.getProps(["x","y","base","width"], true);
-                    const x = props.x;
-                    const w = Math.max(10, props.width * 0.72);
-                    const h = chartArea.bottom - chartArea.top - 10; // sedikit margin atas
-                    const left = x - w/2;
-                    const top = chartArea.top + 5;
-                    const radius = w/2; // capsule penuh
-                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
-
-                    ctx.save();
-                    ctx.fillStyle = rgba(rgb, 0.10);
-                    // rounded-rect vertical (capsule)
-                    ctx.beginPath();
-                    const r = Math.min(radius, w/2, h/2);
-                    ctx.moveTo(left + r, top);
-                    ctx.arcTo(left + w, top, left + w, top + r, r);
-                    ctx.lineTo(left + w, top + h - r);
-                    ctx.arcTo(left + w, top + h, left + w - r, top + h, r);
-                    ctx.lineTo(left + r, top + h);
-                    ctx.arcTo(left, top + h, left, top + h - r, r);
-                    ctx.lineTo(left, top + r);
-                    ctx.arcTo(left, top, left + r, top, r);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-                });
-            }
-        };
-
-        // Bubble nilai di puncak bar (dengan halo)
-        const valueBubblePlugin = {
-            id: "valueBubble",
-            afterDatasetsDraw(chart, args, opts) {
-                const { ctx } = chart;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-                if (!meta?.data?.length) return;
-
-                ctx.save();
-                meta.data.forEach((bar, i) => {
-                    const val = dataset.data[i];
-                    if (val == null || isNaN(val)) return;
-
-                    const props = bar.getProps(["x","y","base"], true);
-                    const x = props.x;
-                    const yTop = Math.min(props.y, props.base);
-                    const cy = yTop + 2; // sedikit overlap
-                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
-
-                    // halo
-                    ctx.beginPath();
-                    ctx.fillStyle = rgba(rgb, 0.18);
-                    ctx.arc(x, cy, 20, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // bubble putih
-                    ctx.beginPath();
-                    ctx.fillStyle = "#fff";
-                    ctx.arc(x, cy, 14, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // nilai (format ribuan)
-                    ctx.fillStyle = rgba(rgb, 0.9);
-                    ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Arial";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(nfID.format(val), x, cy);
-                });
-                ctx.restore();
-            }
-        };
-
-        let barChart, barChartSurabaya, barChartGresik;
-
-        function buildChart(ctx, labelText) {
-            return new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: labelText,
-                        data: [],
-                        // Gradient per bar via scriptable
-                        backgroundColor: (c) => getBarGradient(c, (c.dataset.baseColors && c.dataset.baseColors[c.dataIndex]) || "#2b7cff"),
-                        borderColor: "transparent",
-                        borderWidth: 0,
-                        // Capsule look
-                        borderRadius: 30,
-                        borderSkipped: false,
-                        // Ketebalan & jarak bar
-                        barPercentage: 0.55,
-                        categoryPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: { display: false }, // gunakan valueBubblePlugin
-                        barShadow: {
-                            shadowColor: "rgba(0,0,0,0.22)",
-                            blur: 8,
-                            offsetY: 5
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ttx) => {
-                                    const v = ttx.parsed.y;
-                                    return nfID.format(v);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: { display: true, text: "Month" },
-                            ticks: { maxRotation: 90, minRotation: 90 } // vertikal
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: "Value" },
-                            grid: { color: "rgba(0,0,0,0.06)" }
-                        }
-                    }
-                },
-                // Tambah plugin baru
-                plugins: [ChartDataLabels, barTrackPlugin, barShadowPlugin, valueBubblePlugin]
-            });
-        }
-
-        function randomColors(n) {
-            return Array.from({ length: n }, (_, i) => {
-                const h = (i * 360 / n);
-                return {
-                    bg: `hsl(${h},70%,60%)`,
-                    br: `hsl(${h},70%,40%)`
-                };
-            });
-        }
-
-        // Palet warna Materialize (dibedakan per chart)
-        const MATERIAL_PALETTES = {
-            overall: [
-                "#e53935","#d81b60","#8e24aa","#5e35b1","#3949ab",
-                "#1e88e5","#1976d2","#1565c0","#0d47a1",
-                "#0288d1","#0277bd","#01579b"
-            ],
-            surabaya: [
-                "#1e88e5","#1976d2","#1565c0","#0d47a1",
-                "#0288d1","#0277bd","#01579b"
-            ],
-            gresik: [
-                "#43a047","#2e7d32","#1b5e20",
-                "#66bb6a","#9ccc65","#d4e157","#c0ca33"
-            ]
-        };
-
-        function pickColors(type, count) {
-            const base = MATERIAL_PALETTES[type] || MATERIAL_PALETTES.overall;
-            const bg = [];
-            const br = [];
-            for (let i = 0; i < count; i++) {
-                const c = base[i % base.length];
-                bg.push(c);
-                br.push(c);
-            }
-            return { bg, br };
-        }
-
-        // Ubah: tambah parameter colorKey
-        function updateChart(chart, labels, values, labelText, colorKey) {
-            chart.data.labels = labels;
-            chart.data.datasets[0].label = labelText;
-            chart.data.datasets[0].data = values;
-
-            const palette = pickColors(colorKey, labels.length);
-            // simpan base colors untuk gradient & bubble
-            chart.data.datasets[0].baseColors = palette.bg;
-
-            // borderColor sudah transparent; backgroundColor ditangani oleh scriptable
-            chart.update();
-        }
-
-        function updateAllCharts(filterKey = "ALL") {
-            const overall = aggregateByMonth(globalData, filterKey);
-            const sub = aggregateByMonth(globalData, filterKey, "SURABAYA");
-            const gre = aggregateByMonth(globalData, filterKey, "GRESIK");
-            updateChart(barChart, overall.labels, overall.values, "Departures per Month", "overall");
-            updateChart(barChartSurabaya, sub.labels, sub.values, "Surabaya per Month", "surabaya");
-            updateChart(barChartGresik, gre.labels, gre.values, "Gresik per Month", "gresik");
-        }
-
-        function updateCardCounts(data) {
-            const totalSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalDalamNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalDalamNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalLuarNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalLuarNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalOutstanding = data.length;
-
-            document.getElementById("totalSurabaya").textContent = totalSurabaya;
-            document.getElementById("totalGresik").textContent = totalGresik;
-            document.getElementById("totalDalamNegeriSurabaya").textContent = totalDalamNegeriSurabaya;
-            document.getElementById("totalDalamNegeriGresik").textContent = totalDalamNegeriGresik;
-            document.getElementById("totalLuarNegeriSurabaya").textContent = totalLuarNegeriSurabaya;
-            document.getElementById("totalLuarNegeriGresik").textContent = totalLuarNegeriGresik;
-            document.getElementById("totalOutstanding").textContent = totalOutstanding;
-        }
-
-        function downloadTableAsExcel(headers, data) {
-            const workbook = XLSX.utils.book_new();
-            const worksheetData = [headers, ...data.map(row => headers.map(header => row[header] || ""))];
-            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Outstanding Data");
-            XLSX.writeFile(workbook, "outstanding_data.xlsx");
-        }
-
-        document.getElementById("downloadExcel").addEventListener("click", () => {
-            downloadTableAsExcel(globalHeaders, globalData);
-        });
-
-        function searchTable(query, headers, data) {
-            const filteredData = data.filter(row => {
-                return headers.some(header => {
-                    const cellValue = row[header] || "";
-                    return cellValue.toLowerCase().includes(query.toLowerCase());
-                });
-            });
-            populateTable(headers, filteredData);
-        }
-
-        document.getElementById("searchInput").addEventListener("input", (event) => {
-            const query = event.target.value;
-            searchTable(query, globalHeaders, globalData);
-        });
-
-        function filterTableByCardFilterKey(filterKey) {
-            const filtered = globalData.filter(row => applyFilter(row, filterKey));
-            populateTable(globalHeaders, filtered);
-        }
-
-        function initCardClicks() {
-            document.querySelectorAll(".card").forEach(card => {
-                card.addEventListener("click", () => {
-                    const title = card.querySelector(".card-title").textContent.trim();
-                    currentFilterKey = normalizeFilter(title);
-                    currentMonth = null;
-                    forcedPort = null;
-                    refreshTableOnly();
-                    updateAllCharts(currentFilterKey);
-                });
-            });
-        }
-
-        // Ganti logika klik: gunakan mode "index" + intersect:false agar area klik lebih luas
-        function addBarChartClickListener(chart, headers, data, port = null) {
-            chart.canvas.addEventListener("click", evt => {
-                const points = chart.getElementsAtEventForMode(
-                    evt,
-                    "index",
-                    { intersect: false },  // sebelumnya "nearest", {intersect:true}
-                    false
-                );
-                if (!points.length) {
-                    // Debug optional
-                    // console.log("Tidak ada bar terdeteksi pada posisi klik");
-                    return;
-                }
-                const idx = points[0].index;
-                const monthLabel = chart.data.labels[idx];
-                if (!monthLabel) return;
-                currentMonth = monthLabel;
-                forcedPort = port || null;
-                console.log("Filter bulan dipilih:", currentMonth, "Port paksa:", forcedPort);
-                refreshTableOnly();
-                // Opsional: scroll ke tabel supaya langsung terlihat
-                document.getElementById("tableContainer")?.scrollIntoView({ behavior: "smooth" });
-            });
-        }
-
-        function describeFilter() {
-            const keyMap = {
-                ALL: "Semua Data",
-                SURABAYA: "Pelabuhan Surabaya",
-                GRESIK: "Pelabuhan Gresik",
-                DN_SUB: "Dalam Negeri Surabaya",
-                DN_GRE: "Dalam Negeri Gresik",
-                LN_SUB: "Luar Negeri Surabaya",
-                LN_GRE: "Luar Negeri Gresik"
-            };
-            let parts = [];
-            if (currentFilterKey !== "ALL") parts.push(keyMap[currentFilterKey] || currentFilterKey);
-            if (forcedPort && !/SURABAYA|GRESIK/.test(currentFilterKey)) parts.push("Port: " + forcedPort);
-            if (currentMonth) parts.push("Bulan: " + currentMonth);
-            return parts.length ? parts.join(" | ") : "Tidak ada filter aktif";
-        }
-
-        function updateActiveFilterUI() {
-            const box = document.getElementById("activeFilterContainer");
-            const text = document.getElementById("activeFilterText");
-            if (currentFilterKey === "ALL" && !currentMonth && !forcedPort) {
-                box.style.display = "none";
-            } else {
-                text.textContent = describeFilter();
-                box.style.display = "block";
-            }
-        }
-
-        function computeFilteredData() {
-            return globalData.filter(row => {
-                if (!applyFilter(row, currentFilterKey)) return false;
-                if (forcedPort) {
-                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
-                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
-                    if (pel !== forcedPort) return false;
-                }
-                if (currentMonth) {
-                    const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                    if (key !== currentMonth) return false;
-                }
-                return true;
-            });
-        }
-
-        function refreshTableOnly() {
-            const filtered = computeFilteredData();
-            populateTable(globalHeaders, filtered);
-            updateActiveFilterUI();
-        }
-
-        document.addEventListener("click", e => {
-            if (e.target && e.target.id === "clearFilterBtn") {
-                currentFilterKey = "ALL";
-                currentMonth = null;
-                forcedPort = null;
-                refreshTableOnly();
-                updateAllCharts("ALL");
-            }
-        });
-
-        let globalData = [];
-        let globalHeaders = [];
-        let currentFilterKey = "ALL";
-        let currentMonth = null;
-        let forcedPort = null;
-
-        async function main() {
-            const csvText = await fetchCSV("gabung.csv");
-            if (!csvText) return;
-            const { headers, data } = parseCSV(csvText);
-            globalHeaders = headers;
-            globalData = data;
-
-            populateTable(headers, data);
-            updateCardCounts(data);
-            updateActiveFilterUI();
-
-            barChart = buildChart(document.getElementById("barChart").getContext("2d"), "Departures per Month");
-            barChartSurabaya = buildChart(document.getElementById("barChartSurabaya").getContext("2d"), "Surabaya per Month");
-            barChartGresik = buildChart(document.getElementById("barChartGresik").getContext("2d"), "Gresik per Month");
-
-            updateAllCharts("ALL");
-
-            addBarChartClickListener(barChart, headers, data);
-            addBarChartClickListener(barChartSurabaya, headers, data, "SURABAYA");
-            addBarChartClickListener(barChartGresik, headers, data, "GRESIK");
-
-            setTimeout(() => {
-                barChart.resize();
-                barChartSurabaya.resize();
-                barChartGresik.resize();
-            }, 0);
-
-            initCardClicks();
-        }
-
-        // Formatter ribuan (id-ID)
-        const nfID = new Intl.NumberFormat('id-ID');
-
-        main();
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+	<div class="container min-vh-100 d-flex align-items-center justify-content-center py-5">
+		<div class="login-card">
+			<h2 class="login-title mb-3">Masuk</h2>
+			<form id="loginForm" novalidate>
+				<div class="mb-3">
+					<label for="username" class="form-label">Username</label>
+					<input type="text" id="username" class="form-control" autocomplete="username" required />
+				</div>
+				<div class="mb-2">
+					<label for="password" class="form-label">Password</label>
+					<div class="input-group">
+						<input type="password" id="password" class="form-control" autocomplete="current-password" required />
+						<button type="button" class="btn btn-outline-secondary" id="togglePass" aria-label="Tampilkan/Sembunyikan Password">👁</button>
+					</div>
+				</div>
+				<div class="d-flex justify-content-between align-items-center mb-3">
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="rememberMe" />
+						<label class="form-check-label" for="rememberMe">Ingat saya</label>
+					</div>
+					<a href="#" id="clearSession" class="small text-decoration-none">Bersihkan sesi</a>
+				</div>
+				<div class="error-text mb-2" id="errBox"></div>
+				<button type="submit" class="neo-btn neo-btn--teal w-100">
+					<span class="neo-btn__label">Login</span>
+					<span class="neo-btn__icon">→</span>
+				</button>
+			</form>
+		</div>
+	</div>
+
+	<script src="assets/js/auth.js"></script>
+	<script>
+		// Konfigurasi kredensial sederhana (ubah sesuai kebutuhan Anda)
+		const VALID_USER = (window.LOGIN_USERNAME) || 'admin';
+		const VALID_PASS = (window.LOGIN_PASSWORD) || '@pelindo123';
+
+		// Utilitas token sederhana
+		const TOKEN_KEY = 'auth_token';
+		const USER_KEY = 'auth_user';
+		const EXP_KEY = 'auth_exp';
+
+		function isLoggedIn() {
+			const t = localStorage.getItem(TOKEN_KEY);
+			const exp = parseInt(localStorage.getItem(EXP_KEY) || '0', 10);
+			if (!t || !exp) return false;
+			return Date.now() < exp;
+		}
+
+		function setSession(username, days) {
+			const token = Math.random().toString(36).slice(2) + Date.now().toString(36);
+			const expMs = (days || 1) * 24 * 60 * 60 * 1000; // default 1 hari
+			localStorage.setItem(TOKEN_KEY, token);
+			localStorage.setItem(USER_KEY, username);
+			localStorage.setItem(EXP_KEY, (Date.now() + expMs).toString());
+			// set last activity now
+			localStorage.setItem('auth_last_activity', String(Date.now()));
+		}
+
+		function clearSession() {
+			localStorage.removeItem(TOKEN_KEY);
+			localStorage.removeItem(USER_KEY);
+			localStorage.removeItem(EXP_KEY);
+		}
+
+		function getRedirect() {
+			const url = new URL(window.location.href);
+			return url.searchParams.get('redirect') || 'outstanding.html';
+		}
+
+		// Jika sudah login, langsung alihkan
+		if (isLoggedIn()) {
+			window.location.replace(getRedirect());
+		}
+
+		// Interaksi form
+		const form = document.getElementById('loginForm');
+		const errBox = document.getElementById('errBox');
+		const toggleBtn = document.getElementById('togglePass');
+		const passInput = document.getElementById('password');
+		const rememberMe = document.getElementById('rememberMe');
+		const clearBtn = document.getElementById('clearSession');
+
+		toggleBtn.addEventListener('click', () => {
+			const t = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+			passInput.setAttribute('type', t);
+		});
+
+		clearBtn.addEventListener('click', (e) => {
+			e.preventDefault();
+			clearSession();
+			errBox.textContent = 'Sesi dibersihkan.';
+			setTimeout(() => errBox.textContent = '', 1500);
+		});
+
+		form.addEventListener('submit', (e) => {
+			e.preventDefault();
+			errBox.textContent = '';
+			const u = (document.getElementById('username').value || '').trim();
+			const p = passInput.value || '';
+			if (!u || !p) {
+				errBox.textContent = 'Username dan password wajib diisi.';
+				return;
+			}
+			// Validasi sederhana (tanpa backend)
+			if (u.toLowerCase() === String(VALID_USER).toLowerCase() && p === String(VALID_PASS)) {
+				setSession(u, rememberMe.checked ? 30 : 1);
+				window.location.replace('outstanding.html');
+			} else {
+				errBox.textContent = 'Kredensial tidak valid.';
+			}
+		});
+	</script>
 </body>
 </html>
+
