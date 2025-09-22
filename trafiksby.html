@@ -191,8 +191,6 @@
 			display: none !important;
 		}
 
-		 /* Hide all revenue KPI cards (Tambat, Pandu, Tunda) */
-		.kpi-card--revenue { display: none !important; }
 
 		/* Soft Blue theme for Pivot */
 		:root {
@@ -520,7 +518,38 @@
 					<div id="totalLN" class="card-text">0</div>
 				</div>
 			</div>
+		</div>
 
+		 <!-- ganti 2 container donut menjadi 1 row 2 kolom -->
+		<div class="container my-3">
+			<div class="row donut-row g-3 align-items-stretch">
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Berdasarkan Lokasi</h5>
+					<div class="chart-box">
+						<canvas id="donutLocation"></canvas>
+					</div>
+				</div>
+
+				<!-- Tetap: Bar chart Package Type -->
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Jenis Kemasan</h5>
+					<div class="chart-box">
+						<canvas id="barPackageType"></canvas>
+					</div>
+				</div>
+
+				<!-- Pindahkan: Bar chart Jenis Kapal ke baris ini -->
+				<div class="col-12 col-md-4">
+					<h5 class="text-center">Jenis Kapal</h5>
+					<div class="chart-box">
+						<canvas id="barVesselType"></canvas>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Container: KPI Pendapatan (di bawah chart) -->
+		<div class="kpi-container my-3">
 			<!-- Card: Pendapatan Tambat Surabaya -->
 			<div class="card kpi-card kpi-azure kpi-card--revenue">
 				<div class="card-body">
@@ -566,34 +595,6 @@
 				<div class="card-body">
 					<div class="card-title">Pendapatan Tunda Gresik</div>
 					<div id="totalTundaGre" class="card-text">Rp 0</div>
-				</div>
-			</div>
-		</div>
-
-		 <!-- ganti 2 container donut menjadi 1 row 2 kolom -->
-		<div class="container my-3">
-			<div class="row donut-row g-3 align-items-stretch">
-				<div class="col-12 col-md-4">
-					<h5 class="text-center">Berdasarkan Lokasi</h5>
-					<div class="chart-box">
-						<canvas id="donutLocation"></canvas>
-					</div>
-				</div>
-
-				<!-- Tetap: Bar chart Package Type -->
-				<div class="col-12 col-md-4">
-					<h5 class="text-center">Jenis Kemasan</h5>
-					<div class="chart-box">
-						<canvas id="barPackageType"></canvas>
-					</div>
-				</div>
-
-				<!-- Pindahkan: Bar chart Jenis Kapal ke baris ini -->
-				<div class="col-12 col-md-4">
-					<h5 class="text-center">Jenis Kapal</h5>
-					<div class="chart-box">
-						<canvas id="barVesselType"></canvas>
-					</div>
 				</div>
 			</div>
 		</div>

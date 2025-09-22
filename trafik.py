@@ -56,6 +56,7 @@ def build_summary_rows(data):
     - location, shipping_type, package_type, vessel_type
     - grt dan gt (salah satu boleh kosong, trafiksby handle keduanya)
     - bulan, tahun (turunan dari invoice_date)
+    - moorage_revenue, pilotage_revenue, towage_revenue
     """
     rows = []
     if not data or not isinstance(data, dict):
@@ -92,6 +93,10 @@ def build_summary_rows(data):
             "gt": gt_val,
             "bulan": bulan,
             "tahun": tahun,
+            # revenue fields as-is (string); dashboard JS will parse currency/number
+            "moorage_revenue": r.get("moorage_revenue", ""),
+            "pilotage_revenue": r.get("pilotage_revenue", ""),
+            "towage_revenue": r.get("towage_revenue", ""),
         })
 
     return rows
@@ -109,6 +114,9 @@ def save_summary_to_csv(rows, filename="trafik.csv"):
         "gt",
         "bulan",
         "tahun",
+        "moorage_revenue",
+        "pilotage_revenue",
+        "towage_revenue",
     ]
     try:
         with open(filename, mode="w", newline="", encoding="utf-8") as f:
