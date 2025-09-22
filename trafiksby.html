@@ -394,14 +394,45 @@
 		}
 
 		/* Donut charts side-by-side */
-		.donut-row .chart-box { height: 280px; position: relative; }
+		.donut-row .chart-box {
+			height: 280px;
+			position: relative;
+			background: rgba(255,255,255,0.65);
+			backdrop-filter: blur(8px) saturate(110%);
+			-webkit-backdrop-filter: blur(8px) saturate(110%);
+			border: 1px solid rgba(255,255,255,0.45);
+			border-radius: 10px;
+			box-shadow: 0 10px 10px rgba(0,0,0,0.12);
+			padding: 8px;
+			transition: box-shadow .25s ease, transform .25s ease;
+		}
 		@media (max-width: 576px) {
 			.donut-row .chart-box { height: 260px; }
 		}
+		.donut-row .chart-box:hover {
+			box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+			transform: translateY(-3px);
+		}
+
 		/* Bar row under donuts */
-		.bar-row .chart-box { height: 320px; position: relative; }
+		.bar-row .chart-box {
+			height: 320px;
+			position: relative;
+			background: rgba(255,255,255,0.65);
+			backdrop-filter: blur(8px) saturate(110%);
+			-webkit-backdrop-filter: blur(8px) saturate(110%);
+			border: 1px solid rgba(255,255,255,0.45);
+			border-radius: 10px;
+			box-shadow: 0 10px 10px rgba(0,0,0,0.12);
+			padding: 8px;
+			transition: box-shadow .25s ease, transform .25s ease;
+		}
 		@media (max-width: 576px) {
 			.bar-row .chart-box { height: 300px; }
+		}
+		.bar-row .chart-box:hover {
+			box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+			transform: translateY(-3px);
 		}
 
 		/* Override khusus header tabel "Total Call dan GRT" */
