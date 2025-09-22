@@ -3,9 +3,7 @@ import csv
 from datetime import datetime
 
 def fetch_traffic_data():
-    """
-    Fetch traffic data from the API.
-    """
+    """1) Scrap data dari API dan kembalikan payload JSON mentah."""
     url = "https://phinnisi.pelindo.co.id:9014/api/reporting/traffic/list"
     headers = {
         "accept": "application/json, text/plain, */*",
@@ -34,53 +32,107 @@ def fetch_traffic_data():
         print(f"❌ Failed to fetch traffic data: {e}")
         return None
 
-def save_traffic_data_to_csv(data, filename="trafik.csv"):
-    """
-    Save traffic data to a CSV file with selected columns.
-    """
-    # Debugging: Print the structure of the data
-    print("Debugging: Data received for saving:", data)
 
-    if not data or "data" not in data or "dataRec" not in data["data"] or not isinstance(data["data"]["dataRec"], list) or not data["data"]["dataRec"]:
-        print("❌ No valid data to save.")
-        return
-
-    # Define the columns to extract
-    selected_columns = [
-        "no_pkk", "no_pkk_inaportnet", "vessel", "agent", "loa", "grt",
-        "location", "lokasi_awal", "shipping_type", "jenis_bendera", "vessel_type",
-        "package_type", "flag", "port_of_origin", "destination_port", "next_port",
-        "last_port", "moorage_revenue", "pilotage_revenue", "towage_revenue",
-        "mooring_boat_revenue", "invoice_date", "bulan", "tahun"
-    ]
-
+def _parse_month_year(invoice_date: str):
+    """Ekstrak nama bulan (Indonesia) dan tahun dari string tanggal 'dd-mm-YYYY HH:MM'."""
+    if not invoice_date:
+        return "", ""
     try:
-        with open(filename, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            # Write header
-            writer.writerow(selected_columns)
-            # Write rows with selected columns
-            for row in data["data"]["dataRec"]:
-                # Extract the month and year from invoice_date
-                invoice_date = row.get("invoice_date", "")
-                bulan = ""
-                tahun = ""
-                if invoice_date:
-                    try:
-                        # Handle multiple date formats
-                        parsed_date = datetime.strptime(invoice_date, "%d-%m-%Y %H:%M")
-                        bulan = parsed_date.strftime("%B")
-                        tahun = parsed_date.strftime("%Y")
-                    except ValueError:
-                        print(f"❌ Invalid date format for invoice_date: {invoice_date}")
-                writer.writerow([row.get(col, "") if col not in ["bulan", "tahun"] else (bulan if col == "bulan" else tahun) for col in selected_columns])
-        print(f"✅ Traffic data saved to {filename}.")
+        dt = datetime.strptime(invoice_date, "%d-%m-%Y %H:%M")
+        bulan = dt.strftime("%B")
+        tahun = dt.strftime("%Y")
+        return bulan, tahun
+    except Exception:
+        return "", ""
+
+
+def build_summary_rows(data):
+    """
+    2) Bentuk summary minimal sesuai kebutuhan trafiksby.html.
+       Hanya sisakan kolom yang dipakai di dashboard agar CSV kecil dan cepat.
+
+    Kolom yang dipertahankan:
+    - no_pkk, no_pkk_inaportnet
+    - location, shipping_type, package_type, vessel_type
+    - grt dan gt (salah satu boleh kosong, trafiksby handle keduanya)
+    - bulan, tahun (turunan dari invoice_date)
+    """
+    rows = []
+    if not data or not isinstance(data, dict):
+        return rows
+
+    recs = (
+        data.get("data", {}).get("dataRec", [])
+        if isinstance(data.get("data", {}), dict)
+        else []
+    )
+
+    for r in recs:
+        invoice_date = r.get("invoice_date", "")
+        bulan, tahun = _parse_month_year(invoice_date)
+
+        # Ambil nilai GRT/GT sebagai string apa adanya; JS akan parse angka
+        grt_val = r.get("grt", "")
+        gt_val = r.get("gt", "")
+
+        # Filter: hanya baris yang relevan (punya salah satu identitas kunjungan)
+        no_pkk = (r.get("no_pkk") or "").strip()
+        no_pkk_inaport = (r.get("no_pkk_inaportnet") or "").strip()
+        if not (no_pkk or no_pkk_inaport):
+            continue
+
+        rows.append({
+            "no_pkk": no_pkk,
+            "no_pkk_inaportnet": no_pkk_inaport,
+            "location": (r.get("location") or "").strip(),
+            "shipping_type": (r.get("shipping_type") or "").strip(),
+            "package_type": (r.get("package_type") or "").strip(),
+            "vessel_type": (r.get("vessel_type") or "").strip(),
+            "grt": grt_val,
+            "gt": gt_val,
+            "bulan": bulan,
+            "tahun": tahun,
+        })
+
+    return rows
+
+def save_summary_to_csv(rows, filename="trafik.csv"):
+    """3) Simpan summary ke CSV dan 4) tidak menyimpan raw data."""
+    headers = [
+        "no_pkk",
+        "no_pkk_inaportnet",
+        "location",
+        "shipping_type",
+        "package_type",
+        "vessel_type",
+        "grt",
+        "gt",
+        "bulan",
+        "tahun",
+    ]
+    try:
+        with open(filename, mode="w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=headers)
+            w.writeheader()
+            for r in rows:
+                # pastikan hanya header yang ditulis
+                w.writerow({k: r.get(k, "") for k in headers})
+        print(f"✅ Summary saved to {filename} ({len(rows)} rows).")
     except Exception as e:
-        print(f"❌ Failed to save traffic data: {e}")
+        print(f"❌ Failed to save summary CSV: {e}")
 
 if __name__ == "__main__":
-    traffic_data = fetch_traffic_data()
-    if (traffic_data):
-        print("Fetched data:", traffic_data)  # Debugging line
-        save_traffic_data_to_csv(traffic_data)
+    # 1) Scrap data
+    data = fetch_traffic_data()
+    if not data:
+        raise SystemExit(1)
+
+    # 2) Bangun summary minimal untuk dashboard
+    summary_rows = build_summary_rows(data)
+
+    # 3) Simpan summary ke trafik.csv
+    save_summary_to_csv(summary_rows, filename="trafik.csv")
+
+    # 4) Hapus data scrap (di memori) — tidak disimpan ke file apa pun
+    del data
 
