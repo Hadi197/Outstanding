@@ -1741,6 +1741,7 @@
 	<!-- Ensure Chart.js and plugin are available -->
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+	<script src="assets/js/auth.js"></script>
 	<script>
 	// Palette: match KPI card gradients (use solid tones)
 	const CARD_COLORS = {
@@ -1767,5 +1768,10 @@
 		return out;
 	}
 	</script>
+	<script>
+  if (typeof enforceAuth === 'function') {
+    enforceAuth();
+  }
+</script>
 </body>
 </html>
