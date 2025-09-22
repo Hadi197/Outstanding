@@ -159,9 +159,29 @@
 			flex-wrap: wrap;
 			gap: 12px;
 			align-items: stretch;
+			/* make the whole cards area look like a chart box */
+			background: rgba(255,255,255,0.65);
+			backdrop-filter: blur(8px) saturate(110%);
+			-webkit-backdrop-filter: blur(8px) saturate(110%);
+			border: 1px solid rgba(255,255,255,0.45);
+			border-radius: 12px;
+			box-shadow: 0 10px 10px rgba(0,0,0,0.12);
+			padding: 12px;
+			transition: box-shadow .25s ease, transform .25s ease;
+		}
+		.kpi-container:hover {
+			box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+			transform: translateY(-3px);
 		}
 		@media (max-width: 576px) {
-			.kpi-container { gap: 10px; }
+			.kpi-container { gap: 10px; padding: 10px; }
+		}
+
+		/* Make each KPI card hover like chart boxes */
+		.kpi-card { transition: box-shadow .25s ease, transform .25s ease; }
+		.kpi-card:hover {
+			box-shadow: 0 6px 18px rgba(0,0,0,0.24);
+			transform: translateY(-3px);
 		}
 
 		/* Hide Lokasi table and status text */
