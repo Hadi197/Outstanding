@@ -516,6 +516,44 @@
 			color: #ffffff !important;         /* teks putih */
 			border-color: #083067 !important;  /* garis senada */
 		}
+
+		/* Modern styling khusus tabel Tunda */
+		:root {
+			--tunda-head-bg: #0b3a82;
+			--tunda-head-border: #083067;
+			--tunda-border: #d6e3f3;
+			--tunda-row-alt: #f7fbff;
+			--tunda-row-hover: #eef6ff;
+		}
+		#panel-tunda .table-responsive {
+			border: 1px solid var(--tunda-border);
+			border-radius: 12px;
+			box-shadow: 0 10px 18px rgba(11, 58, 130, .12);
+			background: #ffffff;
+			overflow: hidden;
+		}
+		#panel-tunda thead th {
+			position: sticky;
+			top: 0;
+			z-index: 2;
+			background: var(--tunda-head-bg);
+			color: #fff;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: .2px;
+			border-bottom: 1px solid var(--tunda-head-border);
+		}
+		#panel-tunda tbody td {
+			border-color: var(--tunda-border) !important;
+			vertical-align: middle;
+			padding: 8px 10px;
+		}
+		#panel-tunda tbody tr:nth-child(even) td { background: var(--tunda-row-alt); }
+		#panel-tunda tbody tr:hover td { background: var(--tunda-row-hover); transition: background .15s ease-in-out; }
+		#panel-tunda td.text-end { font-variant-numeric: tabular-nums; }
+
+		/* Optional: tighter table in panel (kept) */
+		#panel-tunda table th, #panel-tunda table td { font-size: 0.85rem; }
 	</style>
 </head>
 <body>
@@ -525,11 +563,16 @@
 			<span class="fx-accent">Surabaya</span>
 		</h1>
 
-			<!-- Button: Dashboard (left-aligned) -->
-		<div class="d-flex justify-content-start mb-3">
+		<!-- Button row: Outstanding + Pendapatan Tunda -->
+		<div class="d-flex justify-content-start gap-2 mb-3">
 			<a href="index.html" class="neo-btn neo-btn--teal">
 				<span class="neo-btn__label">Outstanding</span>
 				<span class="neo-btn__icon">⌂</span>
+			</a>
+			<!-- Pindahkan tombol Pendapatan Tunda ke baris ini -->
+			<a href="#panel-tunda" id="btnTunda" class="neo-btn neo-btn--orange neo-btn--sm">
+				<span class="neo-btn__label">Pendapatan Tunda</span>
+				<span class="neo-btn__icon">→</span>
 			</a>
 		</div>
 
@@ -686,6 +729,17 @@
 				<table class="table table-sm table-bordered table-hover align-middle">
 					<thead id="pivotSumHead"></thead>
 					<tbody id="pivotSumBody"></tbody>
+				</table>
+			</div>
+		</div>
+
+		<!-- Panel tabel Pendapatan Tunda (tug.csv) tetap -->
+		<div id="panel-tunda" class="container my-3" style="display:none;">
+			<h5 class="text-center mb-2">Pendapatan Tunda</h5>
+			<div class="table-responsive">
+				<table class="table table-sm table-bordered table-hover align-middle">
+					<thead id="tugHead"></thead>
+					<tbody id="tugBody"></tbody>
 				</table>
 			</div>
 		</div>
@@ -1814,6 +1868,82 @@
 			initBarVesselType();
 		}
 	})();
+
+		// Loader: tampilkan panel tunda dan muat tug.csv saat pertama kali diklik
+		(function initTundaTab(){
+			const btn = document.getElementById('btnTunda');
+			const panel = document.getElementById('panel-tunda');
+			if (!btn || !panel) return;
+
+			btn.addEventListener('click', async (e) => {
+				e.preventDefault();
+				panel.style.display = 'block';
+
+				if (!panel.dataset.loaded) {
+					try {
+						const csvText = await fetchCSV('tug.csv');
+						if (!csvText) throw new Error('no data');
+						const { headers, rows } = parseCSV(csvText);
+
+						const desired = [
+							{ key: 'vessel_name', label: 'Nama Tunda' },
+							{ key: 'movement',    label: 'Gerakan'   },
+							{ key: 'grt',         label: 'GRT'       },
+							{ key: 'revenue',     label: 'Pendapatan'},
+							{ key: 'mobile',      label: 'Gadget'    },
+							{ key: 'web',         label: 'Manual'    },
+							{ key: 'partial',     label: 'Gabungan'  }
+						];
+						const lookup = {};
+						headers.forEach(h => lookup[h.toLowerCase()] = h);
+						const cols = desired
+							.filter(d => lookup[d.key])
+							.map(d => ({ ...d, field: lookup[d.key] }));
+
+						const thead = document.getElementById('tugHead');
+						const tbody = document.getElementById('tugBody');
+
+						// Header
+						thead.innerHTML = `
+							<tr>
+								${cols.map(c => `<th class="text-center">${c.label}</th>`).join('')}
+							</tr>
+						`;
+
+						// Body dengan format angka (ribuan/jutaan) pada kolom numerik
+						const numericKeys = new Set(['grt','revenue','mobile','web','partial']);
+						const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
+
+						tbody.innerHTML = rows.map(r => `
+							<tr>
+								${cols.map(c => {
+									const raw = r[c.field] ?? '';
+									let display = raw;
+									if (numericKeys.has(c.key)) {
+										const trimmed = String(raw).trim();
+										if (trimmed !== '') {
+											const num = parseMoney(raw);
+											if (Number.isFinite(num)) display = nf.format(num);
+										} else {
+											display = '';
+										}
+									}
+									const cls = numericKeys.has(c.key) ? 'text-end' : '';
+									return `<td class="${cls}">${display}</td>`;
+								}).join('')}
+							</tr>
+						`).join('');
+
+						panel.dataset.loaded = '1';
+					} catch (err) {
+						console.error('Gagal memuat tug.csv:', err);
+						panel.querySelector('h5').textContent = 'Pendapatan Tunda (gagal memuat tug.csv)';
+					}
+				}
+
+				panel.scrollIntoView({ behavior: 'smooth' });
+			});
+		})();
 	</script>
 
 	<!-- Ensure Chart.js and plugin are available -->
