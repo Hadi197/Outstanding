@@ -1,147 +1,159 @@
-import csv
+# /Users/hadipurwana/Documents/PYTHON/OUT ALL/lookup.py
+import argparse
+from pathlib import Path
+import sys
 import pandas as pd
-import os
 
-def load_csv(file_path):
-    """
-    Load data from a CSV file.
 
-    :param file_path: Path to the CSV file.
-    :return: List of dictionaries representing the rows.
-    """
-    try:
-        with open(file_path, mode="r", encoding="utf-8") as file:
-            reader = csv.DictReader(file)
-            return list(reader)
-    except Exception as e:
-        print(f"❌ Failed to load CSV file {file_path}: {e}")
-        return []
+def resolve_path(p: str | None, default_names: list[str], search_dir: Path) -> Path:
+    if p:
+        cand = Path(p)
+        if cand.exists():
+            return cand
+        # Try relative to search_dir
+        cand2 = (search_dir / p).resolve()
+        if cand2.exists():
+            return cand2
+        print(f"Error: File not found: {p}", file=sys.stderr)
+        sys.exit(1)
 
-def save_to_csv(data, output_file):
-    """
-    Save the given data to a CSV file.
+    # Try defaults (case-insensitive search)
+    lower_defaults = {n.lower() for n in default_names}
+    for f in search_dir.iterdir():
+        if f.is_file() and f.name.lower() in lower_defaults:
+            return f.resolve()
 
-    :param data: List of dictionaries to save.
-    :param output_file: Path to the output CSV file.
-    """
-    if not data:
-        print("⚠️ No data to save.")
-        return
+    print(f"Error: Could not locate any of: {', '.join(default_names)} in {search_dir}", file=sys.stderr)
+    sys.exit(1)
 
-    try:
-        with open(output_file, mode="w", newline="", encoding="utf-8") as file:
-            writer = csv.DictWriter(file, fieldnames=data[0].keys())
-            writer.writeheader()
-            writer.writerows(data)
-        print(f"✅ Data successfully saved to {output_file}")
-    except Exception as e:
-        print(f"❌ Failed to save data to CSV: {e}")
 
-def lookup_and_merge(wasop_data, spb_data):
-    """
-    Gabungkan data dari WASOP dan SPB berdasarkan kolom 'no_pkk_inaportnet' dan 'nomor_pkk'.
+def pick_column(df: pd.DataFrame, wanted: str) -> str:
+    # Return a column name matching wanted (case-insensitive, spaces/underscores ignored)
+    def norm(s: str) -> str:
+        return ''.join(ch for ch in s.lower() if ch.isalnum())
 
-    :param wasop_data: List of dictionaries dari WASOP.
-    :param spb_data: List of dictionaries dari SPB.
-    :return: List hasil penggabungan.
-    """
-    spb_lookup = {row["nomor_pkk"]: row for row in spb_data}
-    merged_data = []
+    target = norm(wanted)
+    for col in df.columns:
+        if norm(col) == target:
+            return col
+    # Also try common variants
+    variants = {
+        'nomor_pkk': ['no_pkk', 'nomor pkk', 'no pkk', 'no_pkk_inaportnet', 'pkk'],
+        'no_pkk_inaportnet': ['no_pkk', 'nomor_pkk', 'pkk_inaportnet', 'pkk'],
+    }
+    for alt in variants.get(wanted, []):
+        t = norm(alt)
+        for col in df.columns:
+            if norm(col) == t:
+                return col
+    print(f"Error: Kolom '{wanted}' tidak ditemukan di dataframe. Kolom tersedia: {list(df.columns)}", file=sys.stderr)
+    sys.exit(1)
 
-    for wasop_row in wasop_data:
-        no_pkk_inaportnet = wasop_row.get("no_pkk_inaportnet")
-        spb_row = spb_lookup.get(no_pkk_inaportnet)
 
-        if spb_row:
-            # Gabungkan data dari kedua tabel
-            merged_row = {**wasop_row, **spb_row}
-            # Pastikan kolom 'waktu_tolak', 'gt', dan 'loa' masuk ke hasil gabungan
-            merged_row["waktu_tolak"] = spb_row.get("waktu_tolak")
-            merged_row["gt"] = wasop_row.get("gt")
-            merged_row["loa"] = wasop_row.get("loa")
-            merged_data.append(merged_row)
+def normalize_key_series(s: pd.Series) -> pd.Series:
+    # Treat as string keys; strip whitespace
+    return s.astype(str).str.strip()
 
-    return merged_data
 
-def clean_data(input_file, output_file):
-    # Load the CSV file into a DataFrame
-    df = pd.read_csv(input_file)
+def main(argv: list[str]) -> int:
+    here = Path(__file__).resolve().parent
 
-    # Remove rows where 'name_process_code' contains 'Nota'
-    df = df[~df['name_process_code'].str.contains('Nota', na=False)]
+    parser = argparse.ArgumentParser(
+        description="Gabungkan SPB.csv (kolom: nomor_pkk) dengan wasop.csv (kolom: no_pkk_inaportnet)."
+    )
+    parser.add_argument("--spb", help="Path ke SPB.csv (default: cari di direktori skrip)")
+    parser.add_argument("--wasop", help="Path ke wasop.csv (default: cari di direktori skrip)")
+    parser.add_argument("--how", choices=["left", "right", "inner", "outer"], default="left",
+                        help="Tipe merge (default: left, WASOP sebagai referensi)")
+    parser.add_argument("--output", "-o", help="Path output CSV (default: gabung.csv di direktori skrip)")
+    args = parser.parse_args(argv)
 
-    # Save the cleaned DataFrame back to the CSV file
-    df.to_csv(output_file, index=False)
-    print(f"Data cleaned and saved to {output_file}")
+    spb_path = resolve_path(args.spb, ["SPB.csv", "spb.csv"], here)
+    wasop_path = resolve_path(args.wasop, ["wasop.csv", "WASOP.csv"], here)
+    out_path = Path(args.output) if args.output else (here / "gabung.csv")
 
-def modify_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Modifikasi DataFrame: drop kolom tertentu dan tambah kolom baru tanpa konversi datetime.
-    """
-    # Buang kolom yang tidak diperlukan
-    columns_to_drop = ["arrive_date_convert", "departure_date_convert", "company_name", "name_branch"]
-    df = df.drop(columns=columns_to_drop, errors="ignore")
+    print(f"Memuat SPB: {spb_path}")
+    print(f"Memuat WASOP: {wasop_path}")
 
-    # Tambahkan kolom baru dengan nilai default (sesuaikan jika perlu)
-    df["waktu_tolak"] = None
-    df["gt"] = None
-    df["loa"] = None
+    # Load as string to preserve PKK formatting
+    spb = pd.read_csv(spb_path, dtype=str, keep_default_na=False)
+    wasop = pd.read_csv(wasop_path, dtype=str, keep_default_na=False)
 
-    return df
+    print(f"Baris SPB: {len(spb):,} | Kolom: {len(spb.columns)}")
+    print(f"Baris WASOP: {len(wasop):,} | Kolom: {len(wasop.columns)}")
 
-def merge_csv_files(wasop_file, spb_file, output_file, abai_file="abai.csv"):
-    """
-    Gabungkan data tanpa mem-format ulang kolom waktu_tolak (biarkan asli).
-    """
-    try:
-        # Load kedua file CSV
-        wasop_df = pd.read_csv(wasop_file)
-        spb_df = pd.read_csv(spb_file)
+    spb_key_col = pick_column(spb, "nomor_pkk")
+    wasop_key_col = pick_column(wasop, "no_pkk_inaportnet")
 
-        # Gabungkan berdasarkan kolom 'no_pkk_inaportnet' dan 'nomor_pkk'
-        merged_df = pd.merge(wasop_df, spb_df, left_on="no_pkk_inaportnet", right_on="nomor_pkk", how="inner")
+    spb_key = normalize_key_series(spb[spb_key_col])
+    wasop_key = normalize_key_series(wasop[wasop_key_col])
 
-        # Ambil hanya kolom yang diperlukan
-        selected_columns = [
-            "no_pkk", "no_pkk_inaportnet", "nomor_spb", "name_process_code",
-            "gt", "loa", "waktu_tolak", "vessel_name"
-        ]
-        merged_df = merged_df[selected_columns]
+    # Use indicator to report match stats (WASOP as left, SPB as right)
+    merged = wasop.merge(
+        spb,
+        how=args.how,
+        left_on=wasop_key,
+        right_on=spb_key,
+        suffixes=("_spb", "_wasop"),
+        indicator=True,
+    )
 
-        # 🔥 Terapkan filter abai.csv
-        merged_df = apply_abai_filter(merged_df, abai_file)
+    # Re-do merge cleanly using column names to keep keys (WASOP left)
+    merged = wasop.merge(
+        spb,
+        how=args.how,
+        left_on=wasop_key_col,
+        right_on=spb_key_col,
+        suffixes=("_spb", "_wasop"),
+        indicator=True,
+    )
 
-        # Simpan hasil gabungan ke file output
-        merged_df.to_csv(output_file, index=False)
-        print(f"[OK] Data berhasil digabungkan dan disimpan ke: {output_file}")
-    except Exception as e:
-        print(f"[!] Terjadi kesalahan saat menggabungkan file: {e}")
+    # Normalize keys in the merged result (optional, for consistency)
+    if spb_key_col in merged.columns:
+        merged[spb_key_col] = normalize_key_series(merged[spb_key_col])
+    if wasop_key_col in merged.columns:
+        merged[wasop_key_col] = normalize_key_series(merged[wasop_key_col])
 
-def apply_abai_filter(df: pd.DataFrame, abai_file: str) -> pd.DataFrame:
-    """
-    Hapus baris dari df jika no_pkk_inaportnet ada di abai.csv
-    """
-    try:
-        abai_df = pd.read_csv(abai_file)
-        if "no_pkk_inaportnet" in abai_df.columns:
-            abai_list = abai_df["no_pkk_inaportnet"].dropna().unique()
-            df = df[~df["no_pkk_inaportnet"].isin(abai_list)]
-            print(f"⚠️ {len(abai_list)} PKK diabaikan dari hasil akhir")
-    except Exception as e:
-        print(f"⚠️ Gagal membaca abai.csv: {e}")
-    return df
+    # Report stats
+    left_only = (merged["_merge"] == "left_only").sum() if "_merge" in merged.columns else 0
+    right_only = (merged["_merge"] == "right_only").sum() if "_merge" in merged.columns else 0
+    both = (merged["_merge"] == "both").sum() if "_merge" in merged.columns else len(merged)
 
-def main():
-    # cari path folder tempat file ini berada
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    print(f"Hasil merge: {len(merged):,} baris")
+    print(f"- Cocok di kedua sisi: {both:,}")
+    if args.how in ("left", "outer"):
+        print(f"- Hanya di WASOP (left_only): {left_only:,}")
+    if args.how in ("right", "outer"):
+        print(f"- Hanya di SPB (right_only): {right_only:,}")
 
-    # pakai path relatif, otomatis ke root repo (tempat script disimpan)
-    wasop_file = os.path.join(base_dir, "wasop.csv")
-    spb_file = os.path.join(base_dir, "spb.csv")
-    output_file = os.path.join(base_dir, "gabung.csv")
+    # Filter: tampilkan baris dengan SPB kosong dan departure_date > 7 hari dari hari ini
+    # atau baris dengan SPB tidak kosong
+    nomor_spb_series = merged["nomor_spb"] if "nomor_spb" in merged.columns else pd.Series([None] * len(merged))
+    spb_empty = nomor_spb_series.isna() | (nomor_spb_series.astype(str).str.strip() == "")
+    spb_not_empty = ~spb_empty
 
-    # Gabungkan file CSV
-    merge_csv_files(wasop_file, spb_file, output_file)
+    # Normalize departure_date and today to be timezone-naive
+    dep_dt = pd.to_datetime(merged.get("departure_date"), errors="coerce").dt.tz_localize(None)
+    today = pd.Timestamp.today().normalize().tz_localize(None)
+
+    age_days = (today - dep_dt).dt.days
+    older_than_7 = age_days > 7
+
+    # Combine conditions: SPB kosong dan departure_date > 7 hari, atau SPB tidak kosong
+    mask = (spb_empty & older_than_7) | spb_not_empty
+    merged = merged[mask].copy()
+
+    # Hapus kolom indikator sebelum simpan jika tidak diperlukan
+    if "_merge" in merged.columns:
+        merged = merged.drop(columns=["_merge"])
+
+    # Save
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    merged.to_csv(out_path, index=False)
+    print(f"Tersimpan: {out_path}")
+
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main(sys.argv[1:]))

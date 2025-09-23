@@ -37,7 +37,7 @@ def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
     # 1️⃣ Jalankan semua script Python lain
-    scripts = ["spb.py", "wasop.py", "trafik.py", "lookup.py"]
+    scripts = ["spb.py", "wasop.py", "lookup.py"]
     for script in scripts:
         script_path = os.path.join(base_dir, script)
         if os.path.exists(script_path):
@@ -46,7 +46,7 @@ def main():
             print(f"❌ Script {script} tidak ditemukan di {base_dir}")
 
     # 2️⃣ Baca semua CSV di root repo
-    csv_files = ["wasop.csv", "gabung.csv", "spb.csv", "trafik.csv"]
+    csv_files = ["wasop.csv", "gabung.csv", "spb.csv"]
     dataframes = {}
     for csv_file in csv_files:
         df = read_csv_relative(base_dir, csv_file)
@@ -72,8 +72,8 @@ def main():
     else:
         print("\n❌ Salah satu file CSV untuk gabung tidak ditemukan.")
 
-    # 4️⃣ Simpan ulang trafik.csv agar selalu ter-update
-    if "trafik.csv" in dataframes:
+if __name__ == "__main__":
+    main()
         output_file = os.path.join(base_dir, "trafik.csv")
         dataframes["trafik.csv"].to_csv(output_file, index=False)
         print(f"✅ File trafik.csv berhasil di-overwrite: {output_file}")

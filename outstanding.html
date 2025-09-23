@@ -3,480 +3,450 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Outstanding Tanjung Perak</title>
+    <title>Outstanding Wilayah 3</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Ensure Chart.js is included -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/neo-buttons.css" />
-    <script src="assets/js/auth.js"></script>
     <style>
         table {
-            width: 100%; /* Match table width to card width */
+            width: 100%;
         }
         table td, table th {
-            font-size: 0.7rem; /* Make table text smaller */
+            font-size: 0.7rem;
         }
-        .pagination {
-            display: none; /* Hide pagination */
-        }
-        .card {
-            flex: 1; /* Make cards equal width */
-            margin: 5px; /* Add spacing between cards */
-            cursor: pointer; /* Make cards clickable */
-        }
-        .card-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between; /* Align cards in a single row */
-        }
-        .card-title {
-            font-size: 0.8rem; /* Make card titles smaller */
-            text-align: center; /* Center-align text and values */
-        }
-        .card-text {
-            font-size: 1.5rem; /* Make card values larger */
-            font-weight: bold; /* Make card values bold */
-            text-align: center; /* Center-align text and values */
-        }
-        .chart-container {
-            margin-top: 15px;
-            margin-bottom: 25px;
-            background: rgba(255,255,255,0.65);            /* was solid white */
-            backdrop-filter: blur(8px) saturate(110%);
-            -webkit-backdrop-filter: blur(8px) saturate(110%);
-            border: 1px solid rgba(255,255,255,0.45);
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-shadow: 0 10px 10px rgba(0,0,0,0.15); /* added */
-            transition: box-shadow .25s ease, transform .25s ease; /* added */
-        }
-        .chart-container:hover { /* added */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-            transform: translateY(-3px);
-        }
-        .chart-container h5 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 8px;
-            text-align: center;
-        }
-        #cardsContainer .card {
-            min-width: 120px;
-        }
-        .fixed-size {
-            width:1600px;      /* diubah dari width:100%; max-width:1200px; */
-            height:300px;      /* tetap 300 */
-            margin-left:auto;
-            margin-right:auto;
-            position:relative;
-        }
-        .fixed-size canvas {
-            /* Hapus force width/height absolute supaya Chart.js hit detection akurat */
-            height:100%;
-            width:100%;
-        }
-        /* Tambahan efek shadow pada card */
-        .card {
-            /* Shadow dasar */
-            box-shadow: 0 8px 6px rgba(0,0,0,0.15);
-            transition: box-shadow .25s ease, transform .25s ease;
-        }
-        .card:hover {
-            /* Shadow saat hover */
-            box-shadow: 0 6px 18px rgba(0,0,0,0.28);
-            transform: translateY(-3px);
-        }
-        /* JANGAN override background KPI cards */
-        .card:not([class*="bg-"]):not(.kpi-card) {
-            background: rgba(255,255,255,0.75);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(255,255,255,0.5);
-        }
-        .futuristic-title {
-            display:flex;                /* pusatkan isi */
-            justify-content:center;
-            align-items:center;
-            gap:.8rem;
-            width:100%;
-            margin:0 auto;
-            font-family:'Orbitron', Arial, sans-serif;
-            font-size:clamp(2rem,3.6vw,3.4rem);
-            font-weight:700;
-            text-transform:uppercase;
-            letter-spacing:.08rem;       /* dikurangi agar lebih rapih */
-            background:linear-gradient(90deg,#9ffbff 0%,#65ffd9 25%,#ffe580 50%,#ffb3f5 75%,#ffffff 100%);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color:transparent;
-            -webkit-text-fill-color: transparent;
-            position:relative;
-            padding:.2rem .4rem;
-            border-radius:0;
-            filter:none;
-            text-shadow:
-                0 0 2px rgba(244, 200, 200, 0.85),
-                0 0 4px rgba(241, 199, 199, 0.75),
-                0 2px 6px rgba(0,0,0,0.6),
-                0 0 10px rgba(125,249,255,.8),
-                0 0 18px rgba(84,255,228,.55),
-                0 0 28px rgba(255,157,240,.45);
-        }
-        .futuristic-title::before,
-        .futuristic-title::after {
-            content:none !important;
-            display:none !important;
-        }
-        .futuristic-title span {
-            display:inline-block;
-            animation:glowPulse 3.8s ease-in-out infinite;
-            text-shadow:
-                0 0 2px rgba(61, 26, 26, 0.85),
-                0 0 4px rgba(56, 26, 26, 0.7),
-                0 1px 5px rgba(0,0,0,0.55),
-                0 0 8px rgba(125,249,255,.85),
-                0 0 16px rgba(84,255,228,.6),
-                0 0 24px rgba(255,157,240,.5);
-        }
-        .futuristic-title .fx-accent { animation-delay:.5s; }
-        .futuristic-title .fx-highlight { animation-delay:1s; }
-        @keyframes glowPulse {
-            0%,100% {
-                opacity:1;
-                text-shadow:
-                    0 0 2px rgba(9, 9, 9, 0.9),
-                    0 0 4px rgba(55, 55, 57, 0.7),
-                    0 1px 6px rgba(0,0,0,0.55),
-                    0 0 10px rgba(125,249,255,.9),
-                    0 0 20px rgba(84,255,228,.7),
-                    0 0 32px rgba(255,157,240,.55);
-            }
-            50% {
-                opacity:.95;
-                text-shadow:
-                    0 0 2px rgba(174, 177, 240, 0.85),
-                    0 0 3px rgba(0,0,0,0.65),
-                    0 1px 5px rgba(0,0,0,0.55),
-                    0 0 6px rgba(125,249,255,.65),
-                    0 0 14px rgba(84,255,228,.5),
-                    0 0 24px rgba(255,157,240,.42);
-            }
-        }
-
-        /* Futuristic soft blue background */
-        html, body { height: 100%; }
-        body {
-            background-color: #eaf6ff;
-            background-image:
-                /* soft glows */
-                radial-gradient(1000px 800px at 20% 10%, rgba(173,216,230,.35) 0%, rgba(173,216,230,0) 60%),
-                radial-gradient(800px 600px at 80% 20%, rgba(125,249,255,.22) 0%, rgba(125,249,255,0) 55%),
-                radial-gradient(900px 700px at 30% 80%, rgba(84,255,228,.16) 0%, rgba(84,255,228,0) 55%),
-                /* base gradient */
-                linear-gradient(180deg, #f4fbff 0%, #e7f6ff 50%, #ecfaff 100%);
-            background-attachment: fixed, fixed, fixed, fixed;
-            background-size: auto, auto, auto, 100% 100%;
-            background-repeat: no-repeat;
-        }
-
-        /* Subtle animated sheen overlay */
-        body::after {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background: linear-gradient(120deg,
-                rgba(145,194,255,.18),
-                rgba(125,249,255,.12),
-                rgba(173,216,230,.18)
-            );
-            background-size: 300% 300%;
-            animation: gradientShift 18s ease-in-out infinite;
-            mix-blend-mode: screen;
-        }
-        @keyframes gradientShift {
-            0%   { background-position: 0% 50%; }
-            50%  { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            body::after { animation: none; }
-        }
-
-        /* Optional: enable this image layer for added texture (Uncomment to use) */
-        /* body {
-            background-image:
-                radial-gradient(1000px 800px at 20% 10%, rgba(173,216,230,.35) 0%, rgba(173,216,230,0) 60%),
-                radial-gradient(800px 600px at 80% 20%, rgba(125,249,255,.22) 0%, rgba(125,249,255,0) 55%),
-                radial-gradient(900px 700px at 30% 80%, rgba(84,255,228,.16) 0%, rgba(84,255,228,0) 55%),
-                linear-gradient(180deg, #f4fbff 0%, #e7f6ff 50%, #ecfaff 100%),
-                url('https://images.unsplash.com/photo-1549880338-65ddcdfd017b?auto=format&fit=crop&w=1920&q=80');
-            background-size: auto, auto, auto, 100% 100%, cover;
-            background-position: center;
-            background-attachment: fixed, fixed, fixed, fixed, fixed;
-        } */
-
-        /* Center table header text */
-        #tableContainer thead th,
-        #table-header th {
+        #tableContainer thead th {
             text-align: center;
             vertical-align: middle;
         }
 
-        /* Gradient backgrounds for dashboard cards */
-        #cardsContainer .card.bg-danger {
-            background: linear-gradient(135deg, #ff6a88 0%, #ff3d3d 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-primary {
-            background: linear-gradient(135deg, #2b7cff 0%, #0047ff 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-success {
-            background: linear-gradient(135deg, #42e695 0%, #3bb2b8 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-warning {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%) !important;
-            border: 0;
-        }
-        #cardsContainer .card.bg-secondary {
-            background: linear-gradient(135deg, #a1a1aa 0%, #6b7280 100%) !important;
-            border: 0;
-        }
-
-        /* Subtle hover lift + brighten */
-        #cardsContainer .card[class*="bg-"]:hover {
-            filter: brightness(1.05);
-        }
-
-        /* Improve legibility on gradients */
-        #cardsContainer .card .card-title,
-        #cardsContainer .card .card-text {
-            text-shadow: 0 1px 2px rgba(0,0,0,.25);
-        }
-
-        /* KPI Card: gradient, rounded, shadow (match trafiksby.html) */
-        .kpi-card {
+        /* Judul untuk section card (diperbarui: center + animasi light & shadow) */
+        .cards-section-title {
+            display: inline-block;
             position: relative;
-            color: #fff;
-            border: 0;
-            border-radius: 14px;
-            overflow: hidden;
-            min-width: 200px;
-            width: 220px;
-            height: auto;           /* biarkan tinggi mengikuti konten */
-            min-height: 96px;       /* tetap minimal seperti sebelumnya */
-            box-shadow: 0 10px 20px rgba(0,0,0,.12);
-        }
-        .kpi-card .card-body {
-            position: relative;
-            padding: 12px 14px 46px; /* sisakan ruang untuk nilai di bawah */
-        }
-        .kpi-card .card-title {
-            font-size: .8rem;
-            font-weight: 600;
-            letter-spacing: .2px;
-            margin: 0;
-            text-align: left;
-            opacity: .95;
-            /* Ganti ellipsis => wrap penuh */
-            white-space: normal;
+            font-size: 4rem; /* lebih besar */
+            line-height: 1;
+            font-weight: 900;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin: 0 auto 18px;
+            text-align: center;
+            padding: 12px 28px;
+            border-radius: 12px;
+            color: transparent;
+            background: linear-gradient(90deg, #00fff0 0%, #7a00ff 50%, #ff0066 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            /* neon glow */
+            text-shadow:
+                0 2px 8px rgba(0,255,240,0.08),
+                0 8px 24px rgba(122,0,255,0.08),
+                0 18px 40px rgba(255,0,102,0.04);
+            /* outer subtle glow box to enhance futuristik feel */
+            box-shadow: 0 8px 40px rgba(122,0,255,0.06), inset 0 -6px 24px rgba(0,255,240,0.02);
+            animation: neonPulse 3s ease-in-out infinite;
             overflow: visible;
-            text-overflow: unset;
-            overflow-wrap: anywhere; /* pecah kata panjang jika perlu */
-            word-break: break-word;
-            hyphens: auto;
-            line-height: 1.25;
         }
-        .kpi-card .card-text {
-            font-size: 1.6rem;
-            font-weight: 800;
-            line-height: 1.05;
-            position: absolute;
-            left: 14px;
-            right: 14px;
-            bottom: 10px;
-            margin: 0;
-            text-align: right;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .kpi-card::before,
-        .kpi-card::after {
+
+        .cards-section-title::after {
             content: "";
             position: absolute;
-            border-radius: 50%;
+            top: -10%;
+            left: -140%;
+            width: 80%;
+            height: 120%;
             pointer-events: none;
-            background: rgba(255,255,255,.18);
-            filter: blur(0.5px);
-        }
-        .kpi-card::before { width: 140px; height: 140px; right: -30px; top: -30px; }
-        .kpi-card::after  { width: 200px; height: 200px; right: -80px; bottom: -80px; background: rgba(255,255,255,.12); }
-
-        /* Gradient variants (match trafiksby.html) - pakai !important agar menang */
-        .kpi-orange { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%) !important; }
-        .kpi-blue   { background: linear-gradient(135deg, #396afc 0%, #2948ff 100%) !important; }
-        .kpi-green  { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%) !important; }
-        .kpi-teal   { background: linear-gradient(135deg, #06beb6 0%, #48b1bf 100%) !important; }
-        .kpi-purple { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%) !important; }
-        .kpi-azure  { background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important; }
-        .kpi-indigo { background: linear-gradient(135deg, #7928CA 0%, #FF0080 100%) !important; }
-
-        /* Wrapper untuk semua KPI cards (glassy container + shadow seperti chart) */
-        .kpi-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: stretch;
-            background: rgba(255,255,255,0.65);
-            backdrop-filter: blur(8px) saturate(110%);
-            -webkit-backdrop-filter: blur(8px) saturate(110%);
-            border: 1px solid rgba(255,255,255,0.45);
-            border-radius: 12px;
-            box-shadow: 0 10px 10px rgba(0,0,0,0.12);
-            padding: 12px;
-            transition: box-shadow .25s ease, transform .25s ease;
-        }
-        .kpi-container:hover {
-            box-shadow: 0 6px 18px rgba(0,0,0,0.24);
-            transform: translateY(-3px);
+            background: linear-gradient(90deg, rgba(0,255,240,0) 0%, rgba(255,255,255,0.85) 50%, rgba(122,0,255,0) 100%);
+            transform: skewX(-30deg);
+            opacity: 0.9;
+            filter: blur(14px);
+            animation: sweep 3s linear infinite;
         }
 
-        /* KPI cards hover effect to match chart boxes */
-        .kpi-card { transition: box-shadow .25s ease, transform .25s ease; }
-        .kpi-card:hover {
-            box-shadow: 0 6px 18px rgba(0,0,0,0.24);
-            transform: translateY(-3px);
+        @keyframes neonPulse {
+            0%   { filter: drop-shadow(0 0 0 rgba(122,0,255,0)); transform: scale(1); }
+            50%  { filter: drop-shadow(0 16px 48px rgba(0,255,240,0.12)); transform: scale(1.02); }
+            100% { filter: drop-shadow(0 0 0 rgba(122,0,255,0)); transform: scale(1); }
         }
+
+        @keyframes sweep {
+            0%   { left: -140%; opacity: 0; }
+            20%  { opacity: 0.9; }
+            60%  { left: 120%; opacity: 0.6; }
+            100% { left: 120%; opacity: 0; }
+        }
+
+        /* responsive: reduce size on small screens */
         @media (max-width: 576px) {
-            .kpi-card { width: 180px; height: auto; min-height: 86px; }
-            .kpi-card .card-title { font-size: .74rem; }
-            .kpi-card .card-text { font-size: 1.4rem; bottom: 8px; }
-            .kpi-card .card-body { padding-bottom: 40px; } /* ruang nilai pada layar kecil */
-            .kpi-container { gap: 10px; padding: 10px; }
+            .cards-section-title { font-size: 2rem; padding: 8px 12px; }
         }
+
+        /* Chart responsive: jangan melewati page, sejajar dengan tabel (.container) */
+        .chart-wrapper {
+            width: 100%;
+            max-width: 100%; /* tetap dalam container */
+            height: 300px;   /* tinggi tetap */
+            margin: 0 auto;
+            box-sizing: border-box;
+            padding: 0 8px; /* beri sedikit padding agar tidak menempel ke tepi layar */
+        }
+        /* Pastikan canvas mengikuti lebar wrapper dan menjaga tinggi yang diinginkan */
+        #barChart {
+            width: 100% !important;
+            height: 300px !important;
+            display: block;
+        }
+        /* Untuk layar kecil, kecilkan tinggi agar tetap proporsional */
+        @media (max-width: 576px) {
+            .chart-wrapper { height: 220px; }
+            #barChart { height: 220px !important; }
+        }
+
+        /* Hide the chart title */
+        #chartTitle { display: none !important; }
+
+        /* Cards panel & card design (updated for proportional layout) */
+        .cards-panel {
+            background: rgba(255,255,255,0.95); /* near-white panel */
+            border: 1px solid rgba(15,40,55,0.06);
+            color: #0b2b3a;
+            box-shadow: 0 8px 20px rgba(10,20,30,0.06);
+            border-radius: 18px;
+            padding: 18px;
+            backdrop-filter: none;
+            margin-bottom: 12px;
+        }
+
+        /* Ensure card text is readable on light background */
+        .stat-title, .stat-value {
+            color: #062431; /* dark blue/teal */
+        }
+
+        /* Table adjustments for light background */
+        .table {
+            background-color: transparent;
+            color: #062431;
+        }
+        .table thead th {
+            background-color: rgba(255,255,255,0.85) !important;
+            color: #062431 !important;
+        }
+        .table tbody td {
+            background-color: rgba(255,255,255,0.95);
+            color: #062431;
+        }
+
+        /* Grid layout: responsive columns that stay proportional */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .stat-card {
+            min-height: 120px;           /* uniform height */
+            padding: 16px 18px;
+            border-radius: 12px;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 8px 20px rgba(20,30,50,0.06);
+            transition: transform .18s ease, box-shadow .18s ease;
+        }
+        .stat-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(20,30,50,0.12); }
+
+        /* Title left, value right (updated for responsive sizes & wrapping) */
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .stat-title {
+            /* responsive font, allow wrapping up to 2 lines */
+            font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+            font-weight: 700;
+            opacity: 0.95;
+            max-width: 70%;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2; /* limit to 2 lines */
+            line-clamp: 2; /* standard property (added for compatibility) */
+            -webkit-box-orient: vertical;
+            word-break: break-word;
+            line-height: 1.1;
+        }
+        .stat-value {
+            /* responsive value size, stays readable but not overflowing */
+            font-size: clamp(1.1rem, 3.2vw, 2.2rem);
+            font-weight: 900;
+            line-height: 1;
+            text-align: right;
+            white-space: nowrap;
+            min-width: 3.2em; /* keep enough space for number */
+        }
+
+        /* decorative circle positioned bottom-right for subtle effect */
+        .stat-card .card-circle {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            right: -30px;
+            bottom: -30px;
+            opacity: 0.12;
+            filter: blur(8px);
+            pointer-events: none;
+        }
+
+        /* sample gradient presets (used inline as style in JS) */
+        /* responsive adjustments */
+        @media (max-width: 600px) {
+            .stat-card { min-height: 100px; padding: 12px; }
+            .stat-value { font-size: clamp(0.95rem, 5.5vw, 1.6rem); }
+            .stat-title { font-size: clamp(0.7rem, 2.6vw, 0.85rem); }
+        }
+
+        /* Hide the specific filter labels */
+        label[for="pelabuhanFilter"],
+        label[for="yearFilter"] {
+            display: none !important;
+        }
+
+        /* Page light-blue background + default foreground color */
+        body {
+            background-color: #e6f7ff; /* light blue */
+            color: #0b2b3a; /* dark text for readability */
+        }
+
+		/* Neo button asset: neon/glass button with improved contrast */
+		.neo-button {
+			--bg: linear-gradient(90deg,#075985 0%, #0b6fb3 60%); /* darker */
+			--glow: rgba(11,111,179,0.28);
+			display: inline-block;
+			padding: 8px 14px;
+			font-weight: 800;
+			font-size: 0.9rem;
+			color: #ffffff;
+			background: var(--bg);
+			border: 1px solid rgba(4,30,60,0.12);
+			border-radius: 10px;
+			position: relative;
+			cursor: pointer;
+			overflow: hidden;
+			transition: transform .12s ease, box-shadow .18s ease;
+			box-shadow: 0 10px 30px rgba(4,30,60,0.18), 0 0 28px rgba(11,111,179,0.10) inset;
+			text-shadow: 0 1px 2px rgba(2,10,18,0.45);
+		}
+		.neo-button:focus { outline: none; box-shadow: 0 12px 36px var(--glow); transform: translateY(-1px); }
+		.neo-button:hover { transform: translateY(-3px); box-shadow: 0 18px 46px var(--glow); }
+
+		/* animated sheen — reduce intensity so it won't wash text */
+		.neo-button::before {
+			content: "";
+			position: absolute;
+			top: -40%;
+			left: -40%;
+			width: 40%;
+			height: 180%;
+			background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0) 100%);
+			transform: rotate(-25deg);
+			opacity: 0.6;
+			transition: none;
+			animation: sheen 3.2s linear infinite;
+			pointer-events: none;
+		}
+		@keyframes sheen {
+			0% { left: -40%; opacity: 0; }
+			10% { opacity: 0.9; }
+			50% { left: 120%; opacity: 0.6; }
+			90% { opacity: 0; }
+			100% { left: 120%; opacity: 0; }
+		}
+
+		/* small inner highlight (bottom edge) */
+		.neo-button::after {
+			content: "";
+			position: absolute;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			height: 6px;
+			background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+			pointer-events: none;
+			border-bottom-left-radius: 10px;
+			border-bottom-right-radius: 10px;
+			opacity: 0.85;
+		}
+
+		/* accessible reduced motion */
+		@media (prefers-reduced-motion: reduce) {
+			.neo-button::before { animation: none; opacity: 0.35; }
+		}
+
+		/* Brighter neo-select: white / very-light-blue, dark text, subtle inner highlight */
+		.neo-select {
+			--bg: linear-gradient(180deg,#ffffff 0%, #f2fbff 60%);
+			appearance: none;
+			-webkit-appearance: none;
+			-moz-appearance: none;
+			background: var(--bg);
+			color: #062431; /* dark text for readability */
+			border: 1px solid rgba(6,36,49,0.10);
+			padding: 8px 40px 8px 12px;
+			border-radius: 10px;
+			font-weight: 700;
+			font-size: 0.9rem;
+			box-shadow: 0 6px 18px rgba(6,36,49,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+			/* dark arrow */
+			background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 24 24"><path fill="%23062231" d="M7 10l5 5 5-5z"/></svg>');
+			background-repeat: no-repeat;
+			background-position: right 12px center;
+			cursor: pointer;
+		}
+		.neo-select:hover {
+			box-shadow: 0 8px 22px rgba(6,36,49,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
+			transform: translateY(-1px);
+		}
+		.neo-select:focus {
+			outline: none;
+			box-shadow: 0 10px 30px rgba(6,36,49,0.10);
+			transform: translateY(-1px);
+		}
+
+		@media (max-width: 576px) {
+			.neo-select { font-size: 0.82rem; padding: 7px 34px 7px 8px; }
+		}
+
+		/* keep default "ALL" option readable */
+		#pelabuhanFilter option[value="ALL"],
+		#yearFilter option[value="ALL"],
+		.neo-select option[value="ALL"] {
+			color: #333333 !important;
+		}
+
+		/* wrapper to allow animated ring around select (select pseudo-elems unreliable) */
+		.neo-select-wrap {
+			position: relative;
+			display: inline-block;
+			border-radius: 12px;
+			padding: 2px; /* space for animated ring */
+			/* ensure wrapper doesn't affect layout too much */
+			vertical-align: middle;
+		}
+
+		/* animated light ring (subtle) */
+		.neo-select-wrap::before {
+			content: "";
+			position: absolute;
+			inset: 0;               /* cover wrapper area */
+			border-radius: 14px;    /* slightly larger than select */
+			pointer-events: none;
+			opacity: 0;             /* shown only on hover/focus-within */
+			background: linear-gradient(90deg,
+				rgba(255,255,255,0) 0%,
+				rgba(255,255,255,0.75) 45%,
+				rgba(255,255,255,0) 100%);
+			filter: blur(8px);
+			transform: translateX(-120%);
+		}
+
+		/* run sweep continuously but visible only on hover/focus */
+		.neo-select-wrap:focus-within::before,
+		.neo-select-wrap:hover::before {
+			opacity: 1;
+			animation: lightSweep 2.6s linear infinite;
+		}
+
+		@keyframes lightSweep {
+			0%   { transform: translateX(-120%); }
+			50%  { transform: translateX(20%); }
+			100% { transform: translateX(120%); }
+		}
+
+		/* subtle static ring as border accent (low opacity) */
+		.neo-select-wrap::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			border-radius: 14px;
+			pointer-events: none;
+			box-shadow: 0 0 0 1px rgba(6,36,49,0.06) inset;
+		}
+
+		/* ensure the select stays above the ring */
+		.neo-select {
+			position: relative;
+			z-index: 2;
+			border-radius: 10px;
+		}
+
+		/* Chart card: container around chart with soft shadow and rounded corners */
+		.chart-card {
+			background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,255,0.98));
+			border-radius: 16px;
+			padding: 12px;
+			box-shadow: 0 18px 40px rgba(12,40,70,0.08), 0 6px 20px rgba(6,36,49,0.04) inset;
+			margin: 0 auto;
+			max-width: 100%;
+			/* keep layout consistent with container */
+			box-sizing: border-box;
+		}
+
+		/* make canvas pop a bit */
+		.chart-card #barChart {
+			border-radius: 10px;
+			box-shadow: 0 8px 28px rgba(6,36,49,0.06);
+			background: transparent;
+			display: block;
+		}
     </style>
 </head>
 <body>
-    <!-- Container hanya untuk judul & tombol -->
-    <div class="container mt-5">
-        <h1 class="text-center mb-4 futuristic-title">
-            <span class="fx-primary">Outstanding</span>
-            <span class="fx-accent">Tanjung</span>
-            <span class="fx-highlight">Perak</span>
-        </h1>
-        <div class="d-flex justify-content-start gap-2 mb-3">
-            <button id="downloadExcel" class="neo-btn neo-btn--blue neo-btn--sm">
-                <span class="neo-btn__label">Download Excel</span>
-                <span class="neo-btn__icon">⬇</span>
-            </button>
-            <a href="trafiksby.html" class="neo-btn neo-btn--purple neo-btn--sm" id="openTrafik">
-                <span class="neo-btn__label">Trafik</span>
-                <span class="neo-btn__icon">➜</span>
-            </a>
-            <!-- Tambah: tombol Tarif di baris yang sama -->
-            <a href="tarif.html" class="neo-btn neo-btn--teal neo-btn--sm" id="openTarif">
-                <span class="neo-btn__label">Tarif</span>
-                <span class="neo-btn__icon">➜</span>
-            </a>
-        </div>
-    </div>
+    <!-- Tambahkan judul ini tepat sebelum div kartu -->
+	<div class="container mb-2 text-center">
+		<div class="cards-section-title">OUTSTANDING WILAYAH 3</div>
+	</div>
 
-    <!-- Active filter info -->
-    <div class="container" id="activeFilterContainer" style="display:none;">
-        <div class="alert alert-info py-2 px-3 d-flex justify-content-between align-items-center">
-            <span id="activeFilterText"></span>
-            <button class="btn btn-sm btn-outline-secondary" id="clearFilterBtn">Clear Filter</button>
-        </div>
-    </div>
-
-    <!-- Container terpisah untuk cards -->
-    <div class="container mb-3" id="cardsContainer">
-        <!-- Replace the row/card-container with KPI cards -->
-        <div class="kpi-container">
-            <!-- Total Outstanding -->
-            <div class="card kpi-card kpi-orange">
-                <div class="card-body">
-                    <div class="card-title">Total Outstanding</div>
-                    <div class="card-text" id="totalOutstanding">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Surabaya -->
-            <div class="card kpi-card kpi-blue">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Surabaya</div>
-                    <div class="card-text" id="totalSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Gresik -->
-            <div class="card kpi-card kpi-green">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Gresik</div>
-                    <div class="card-text" id="totalGresik">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Dalam Negeri Surabaya -->
-            <div class="card kpi-card kpi-teal">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Dalam Negeri Surabaya</div>
-                    <div class="card-text" id="totalDalamNegeriSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Dalam Negeri Gresik -->
-            <div class="card kpi-card kpi-azure">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Dalam Negeri Gresik</div>
-                    <div class="card-text" id="totalDalamNegeriGresik">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Luar Negeri Surabaya -->
-            <div class="card kpi-card kpi-purple">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Luar Negeri Surabaya</div>
-                    <div class="card-text" id="totalLuarNegeriSurabaya">0</div>
-                </div>
-            </div>
-
-            <!-- Total Kapal Luar Negeri Gresik -->
-            <div class="card kpi-card kpi-indigo">
-                <div class="card-body">
-                    <div class="card-title">Total Kapal Luar Negeri Gresik</div>
-                    <div class="card-text" id="totalLuarNegeriGresik">0</div>
-                </div>
+    <div class="container mb-4">
+	<div class="cards-panel">
+		<div id="pelabuhanCardsRow" class="cards-grid"></div>
+	</div>
+</div>
+    <div class="container mb-5">
+        <h5 id="chartTitle" class="text-center">Departures per Month</h5>
+        <div class="chart-card">
+            <!-- responsive wrapper kept inside chart-card -->
+            <div class="chart-wrapper">
+                <canvas id="barChart"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Container Bar Chart keseluruhan -->
-    <div class="container chart-container fixed-size" id="overallChartContainer">
-        <h5>Bar Chart Keseluruhan</h5>
-        <canvas id="barChart" height="200"></canvas>
-    </div>
+    <div class="container mb-3 d-flex align-items-end" style="gap:8px;">
+	<div>
+		<label for="pelabuhanFilter" class="form-label">Filter by Pelabuhan:</label>
+		<div class="neo-select-wrap" style="width:auto; display:inline-block;">
+			<select id="pelabuhanFilter" class="form-select form-select-sm neo-select" style="width: auto;">
+				<option value="ALL">Semua Pelabuhan</option>
+			</select>
+		</div>
+	</div>
+	<div>
+		<label for="yearFilter" class="form-label">Filter by Tahun:</label>
+		<div class="neo-select-wrap" style="width:auto; display:inline-block;">
+			<select id="yearFilter" class="form-select form-select-sm neo-select" style="width: auto;">
+				<option value="ALL">Semua Tahun</option>
+			</select>
+		</div>
+	</div>
+	<div class="ms-auto">
+		<button id="clearFilterBtn" class="neo-button" type="button">Clear Filter</button>
+	</div>
+</div>
 
-    <!-- Container Bar Chart Surabaya -->
-    <div class="container chart-container fixed-size" id="surabayaChartContainer">
-        <h5>Bar Chart Surabaya</h5>
-        <canvas id="barChartSurabaya" height="200"></canvas>
-    </div>
-
-    <!-- Container Bar Chart Gresik -->
-    <div class="container chart-container fixed-size" id="gresikChartContainer">
-        <h5>Bar Chart Gresik</h5>
-        <canvas id="barChartGresik" height="200"></canvas>
-    </div>
-
-    <!-- Container untuk tabel & pencarian -->
     <div class="container mb-5" id="tableContainer">
-        <input type="text" id="searchInput" class="form-control mb-3" placeholder="Search in table...">
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
                 <tr id="table-header">
@@ -524,7 +494,7 @@
                 values.push(current.trim());
 
                 return headers.reduce((acc, header, index) => {
-                    acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : ""; // Remove surrounding quotes
+                    acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : "";
                     return acc;
                 }, {});
             });
@@ -536,6 +506,9 @@
             no_pkk: "PKK",
             no_pkk_inaportnet: "PKK INAPORTNET",
             nomor_spb: "SPB",
+            no_pkk_spb: "NO PKK",          // <-- added
+            company_name: "AGEN",          // <-- added
+            departure_date: "KEBERANGKATAN", // <-- added
             name_process_code: "STATUS",
             gt: "GRT",
             loa: "LOA",
@@ -554,8 +527,14 @@
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
-            // Gunakan key asli, tampilkan label via HEADER_MAP
-            const updatedHeaders = ["NO", ...headers.filter(header => header !== "name_branch"), "PELABUHAN", "PELAYARAN"];
+            // Sembunyikan kolom name_branch (diganti PELABUHAN), no_pkk_wasop, dan waktu_tolak (TGL/JAM)
+            const hiddenCols = new Set(["name_branch", "no_pkk_wasop", "waktu_tolak"]);
+            const updatedHeaders = [
+                "NO",
+                ...headers.filter(h => !hiddenCols.has(h)),
+                "PELABUHAN",
+                "PELAYARAN"
+            ];
 
             // Populate table headers (pakai label tampilan)
             updatedHeaders.forEach(header => {
@@ -572,9 +551,7 @@
                     if (header === "NO") {
                         td.textContent = index + 1;
                     } else if (header === "PELABUHAN") {
-                        if (row["no_pkk_inaportnet"]?.includes("IDSUB")) td.textContent = "SURABAYA";
-                        else if (row["no_pkk_inaportnet"]?.includes("IDGRE")) td.textContent = "GRESIK";
-                        else td.textContent = "";
+                        td.textContent = row["name_branch"] || "";
                     } else if (header === "PELAYARAN") {
                         if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
                         else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
@@ -588,477 +565,348 @@
             });
         }
 
-        function normalizeFilter(title) {
-            return {
-                "Total Kapal Surabaya": "SURABAYA",
-                "Total Kapal Gresik": "GRESIK",
-                "Total Kapal Dalam Negeri Surabaya": "DN_SUB",
-                "Total Kapal Dalam Negeri Gresik": "DN_GRE",
-                "Total Kapal Luar Negeri Surabaya": "LN_SUB",
-                "Total Kapal Luar Negeri Gresik": "LN_GRE",
-                "Total Outstanding": "ALL"
-            }[title] || "ALL";
-        }
-
-        function applyFilter(row, filterKey) {
-            switch (filterKey) {
-                case "SURABAYA": return row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "GRESIK": return row["no_pkk_inaportnet"]?.includes("IDGRE");
-                case "DN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "DN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
-                case "LN_SUB": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB");
-                case "LN_GRE": return row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE");
-                default: return true;
-            }
-        }
-
-        // Agregasi data berdasarkan bulan (tanpa konversi Date, cukup ambil 7 karakter awal "YYYY-MM")
-        function aggregateByMonth(data, filterKey = "ALL", port = null) {
+        function aggregateByMonth(data) {
             const monthCounts = {};
             data.forEach(row => {
-                if (!row["waktu_tolak"]) return;
-                if (!applyFilter(row, filterKey)) return;
+                const departureDate = row["departure_date"];
+                if (!departureDate) return;
 
-                if (port) {
-                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
-                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
-                    if (pel !== port) return;
-                }
-
-                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                if (!key) return;
-                monthCounts[key] = (monthCounts[key] || 0) + 1;
+                const monthKey = departureDate.slice(0, 7); // Extract YYYY-MM format
+                monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
             });
 
             const labels = Object.keys(monthCounts).sort();
-            const values = labels.map(l => monthCounts[l]);
+            const values = labels.map(label => monthCounts[label]);
             return { labels, values };
         }
 
-        // Filter data tabel berdasarkan bulan yang dipilih
-        function computeFilteredData(data, filterKey, currentMonth) {
-            return data.filter(row => {
-                if (!row["waktu_tolak"]) return false;
-                if (!applyFilter(row, filterKey)) return false;
+        let selectedMonth = null;
 
-                const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                if (!key) return false;
+        function buildBarChart(ctx, labels, values) {
+	const baseColors = [
+		"#e57373", "#ba68c8", "#7986cb", "#64b5f6", "#4dd0e1", "#81c784", "#ffd54f", "#ffb74d", "#2f4b7c"
+	];
 
-                // hanya tampilkan data bulan yang sedang dipilih
-                if (currentMonth && key !== currentMonth) return false;
+	const maxVal = Math.max(...values, 1);
+	const ghostValues = labels.map(() => Math.ceil(maxVal * 1.6)); // tall translucent background bars
 
-                return true;
-            });
-        }
+	const chart = new Chart(ctx, {
+		type: "bar",
+		data: {
+			labels: labels,
+			datasets: [
+				// Ghost background columns
+				{
+					label: "ghost",
+					data: ghostValues,
+					// will be drawn full-width but translucent
+					backgroundColor: function(c) {
+						const chart = c.chart;
+						const {ctx, chartArea} = chart;
+						if (!chartArea) return "rgba(150,150,200,0.08)";
+						const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+						grad.addColorStop(0, "rgba(200,220,240,0.22)");
+						grad.addColorStop(1, "rgba(200,220,240,0.06)");
+						return grad;
+					},
+					borderWidth: 0,
+					barPercentage: 1.0,
+					categoryPercentage: 0.92,
+					borderSkipped: false,
+					// rounded top effect (large radius)
+					borderRadius: 100
+				},
+				// Foreground pill columns (actual values)
+				{
+					label: "Jumlah Keberangkatan",
+					data: values,
+					backgroundColor: function(c) {
+						const chart = c.chart;
+						const {ctx, chartArea} = chart;
+						const idx = c.dataIndex;
+						const color = baseColors[idx % baseColors.length];
+						if (!chartArea) return color;
+						const grad = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+						grad.addColorStop(0, color);
+						grad.addColorStop(1, "rgba(255,255,255,0.18)");
+						return grad;
+					},
+					borderColor: function(c) {
+						const idx = c.dataIndex;
+						return baseColors[idx % baseColors.length];
+					},
+					borderWidth: 0,
+					// make pill narrow and rounded
+					barPercentage: 0.34,
+					categoryPercentage: 0.5,
+					borderRadius: 40,
+					borderSkipped: false
+				}
+			]
+		},
+		options: {
+			responsive: true,
+			maintainAspectRatio: false,
+			layout: { padding: { top: 28, bottom: 10, left: 10, right: 10 } },
+			plugins: {
+				legend: { display: false },
+				title: {
+					display: true,
+					text: "Bar Chart Keseluruhan",
+					align: "center",
+					font: { size: 18, weight: "700" }
+				},
+				datalabels: {
+					// Show circular white label only for foreground dataset (datasetIndex === 1)
+					display: function(ctx) { return ctx.datasetIndex === 1; },
+					anchor: 'end',
+					align: 'center',
+					offset: -28, // place above pill
+					backgroundColor: function(ctx) {
+						return '#ffffff';
+					},
+					borderColor: function(ctx) {
+						// colored ring matching pill
+						const idx = ctx.dataIndex;
+						return baseColors[idx % baseColors.length];
+					},
+					borderWidth: 4,
+					borderRadius: 999,
+					color: function(ctx) {
+						const idx = ctx.dataIndex;
+						return baseColors[idx % baseColors.length];
+					},
+					font: { weight: '700', size: 12 },
+					padding: { top: 6, bottom: 6, left: 8, right: 8 },
+					formatter: function(value) { return value; }
+				}
+			},
+			scales: {
+				x: {
+					grid: {
+						color: "rgba(15,30,40,0.06)"
+					},
+					ticks: {
+						color: "#062431",
+						maxRotation: 90,
+						minRotation: 90
+					},
+					title: {
+						display: true,
+						text: "Month",
+						color: "#062431"
+					}
+				},
+				y: {
+					beginAtZero: true,
+					grid: { color: "rgba(15,30,40,0.06)" },
+					ticks: { color: "#062431" },
+					title: { display: true, text: "Value", color: "#062431" }
+				}
+			},
+			// clicking behavior preserved from previous implementation
+			onClick: function(evt, elements) {
+				const chart = this;
+				if (elements.length) {
+					const idx = elements[0].index;
+					const month = chart.data.labels[idx];
+					selectedMonth = month;
+					filterTableByPelabuhan(globalData, document.getElementById("pelabuhanFilter").value, month);
+				} else {
+					selectedMonth = null;
+					filterTableByPelabuhan(globalData, document.getElementById("pelabuhanFilter").value);
+				}
+			}
+		},
+		plugins: [ChartDataLabels]
+	});
 
-        // Plugin shadow untuk batang bar chart
-        const barShadowPlugin = {
-            id: "barShadow",
-            afterDatasetsDraw(chart, args, opts) {
-                const { ctx } = chart;
-                const {
-                    shadowColor = "rgba(0,0,0,0.28)",
-                    blur = 6,
-                    offsetY = 4,
-                    offsetX = 0
-                } = opts || {};
-                chart.data.datasets.forEach((ds, di) => {
-                    const meta = chart.getDatasetMeta(di);
-                    if (!meta.visible) return;
-                    meta.data.forEach(bar => {
-                        const props = bar.getProps(["x","y","base","width","height"], true);
-                        const x = props.x - props.width / 2;
-                        const y = Math.min(props.y, props.base);
-                        const h = Math.abs(props.base - props.y);
-                        ctx.save();
-                        ctx.fillStyle = shadowColor;
-                        ctx.filter = `blur(${blur}px)`;
-                        ctx.fillRect(x + offsetX, y + offsetY, props.width, h);
-                        ctx.restore();
-                    });
-                });
-            }
-        };
-
-        // Helper warna & gradient
-        function hexToRgb(hex) {
-            const m = hex.replace('#','').match(/.{1,2}/g);
-            if (!m) return { r: 0, g: 0, b: 0 };
-            const [r,g,b] = m.map(x => parseInt(x, 16));
-            return { r, g, b };
-        }
-        function rgba(rgb, a) {
-            return `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
-        }
-        function getBarGradient(ctx, baseHex) {
-            const { chart } = ctx;
-            const { ctx: c, chartArea } = chart;
-            if (!chartArea) return baseHex; // first pass
-            const rgb = hexToRgb(baseHex || '#2b7cff');
-            const grad = c.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-            grad.addColorStop(0.0, rgba(rgb, 0.85));
-            grad.addColorStop(0.5, rgba(rgb, 0.9));
-            grad.addColorStop(1.0, rgba(rgb, 0.95));
-            return grad;
-        }
-
-        // Gambar "track" lembut di belakang bar (capsule tinggi)
-        const barTrackPlugin = {
-            id: "barTrack",
-            beforeDatasetsDraw(chart, args, opts) {
-                const { ctx, chartArea } = chart;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-                if (!meta?.data?.length) return;
-                meta.data.forEach((bar, i) => {
-                    const props = bar.getProps(["x","y","base","width"], true);
-                    const x = props.x;
-                    const w = Math.max(10, props.width * 0.72);
-                    const h = chartArea.bottom - chartArea.top - 10; // sedikit margin atas
-                    const left = x - w/2;
-                    const top = chartArea.top + 5;
-                    const radius = w/2; // capsule penuh
-                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
-
-                    ctx.save();
-                    ctx.fillStyle = rgba(rgb, 0.10);
-                    // rounded-rect vertical (capsule)
-                    ctx.beginPath();
-                    const r = Math.min(radius, w/2, h/2);
-                    ctx.moveTo(left + r, top);
-                    ctx.arcTo(left + w, top, left + w, top + r, r);
-                    ctx.lineTo(left + w, top + h - r);
-                    ctx.arcTo(left + w, top + h, left + w - r, top + h, r);
-                    ctx.lineTo(left + r, top + h);
-                    ctx.arcTo(left, top + h, left, top + h - r, r);
-                    ctx.lineTo(left, top + r);
-                    ctx.arcTo(left, top, left + r, top, r);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.restore();
-                });
-            }
-        };
-
-        // Bubble nilai di puncak bar (dengan halo)
-        const valueBubblePlugin = {
-            id: "valueBubble",
-            afterDatasetsDraw(chart, args, opts) {
-                const { ctx } = chart;
-                const dataset = chart.data.datasets[0];
-                const meta = chart.getDatasetMeta(0);
-                if (!meta?.data?.length) return;
-
-                ctx.save();
-                meta.data.forEach((bar, i) => {
-                    const val = dataset.data[i];
-                    if (val == null || isNaN(val)) return;
-
-                    const props = bar.getProps(["x","y","base"], true);
-                    const x = props.x;
-                    const yTop = Math.min(props.y, props.base);
-                    const cy = yTop + 2; // sedikit overlap
-                    const rgb = hexToRgb((dataset.baseColors && dataset.baseColors[i]) || "#2b7cff");
-
-                    // halo
-                    ctx.beginPath();
-                    ctx.fillStyle = rgba(rgb, 0.18);
-                    ctx.arc(x, cy, 20, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // bubble putih
-                    ctx.beginPath();
-                    ctx.fillStyle = "#fff";
-                    ctx.arc(x, cy, 14, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    // nilai (format ribuan)
-                    ctx.fillStyle = rgba(rgb, 0.9);
-                    ctx.font = "bold 12px system-ui, -apple-system, Segoe UI, Arial";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(nfID.format(val), x, cy);
-                });
-                ctx.restore();
-            }
-        };
-
-        let barChart, barChartSurabaya, barChartGresik;
-
-        function buildChart(ctx, labelText) {
-            return new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: labelText,
-                        data: [],
-                        // Gradient per bar via scriptable
-                        backgroundColor: (c) => getBarGradient(c, (c.dataset.baseColors && c.dataset.baseColors[c.dataIndex]) || "#2b7cff"),
-                        borderColor: "transparent",
-                        borderWidth: 0,
-                        // Capsule look
-                        borderRadius: 30,
-                        borderSkipped: false,
-                        // Ketebalan & jarak bar
-                        barPercentage: 0.55,
-                        categoryPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: { display: false }, // gunakan valueBubblePlugin
-                        barShadow: {
-                            shadowColor: "rgba(0,0,0,0.22)",
-                            blur: 8,
-                            offsetY: 5
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (ttx) => {
-                                    const v = ttx.parsed.y;
-                                    return nfID.format(v);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            title: { display: true, text: "Month" },
-                            ticks: { maxRotation: 90, minRotation: 90 } // vertikal
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: "Value" },
-                            grid: { color: "rgba(0,0,0,0.06)" }
-                        }
-                    }
-                },
-                // Tambah plugin baru
-                plugins: [ChartDataLabels, barTrackPlugin, barShadowPlugin, valueBubblePlugin]
-            });
-        }
-
-        function randomColors(n) {
-            return Array.from({ length: n }, (_, i) => {
-                const h = (i * 360 / n);
-                return {
-                    bg: `hsl(${h},70%,60%)`,
-                    br: `hsl(${h},70%,40%)`
-                };
-            });
-        }
-
-        // Palet warna Materialize (dibedakan per chart)
-        const MATERIAL_PALETTES = {
-            overall: [
-                "#e53935","#d81b60","#8e24aa","#5e35b1","#3949ab",
-                "#1e88e5","#1976d2","#1565c0","#0d47a1",
-                "#0288d1","#0277bd","#01579b"
-            ],
-            surabaya: [
-                "#1e88e5","#1976d2","#1565c0","#0d47a1",
-                "#0288d1","#0277bd","#01579b"
-            ],
-            gresik: [
-                "#43a047","#2e7d32","#1b5e20",
-                "#66bb6a","#9ccc65","#d4e157","#c0ca33"
-            ]
-        };
-
-        function pickColors(type, count) {
-            const base = MATERIAL_PALETTES[type] || MATERIAL_PALETTES.overall;
-            const bg = [];
-            const br = [];
-            for (let i = 0; i < count; i++) {
-                const c = base[i % base.length];
-                bg.push(c);
-                br.push(c);
-            }
-            return { bg, br };
-        }
-
-        // Ubah: tambah parameter colorKey
-        function updateChart(chart, labels, values, labelText, colorKey) {
-            chart.data.labels = labels;
-            chart.data.datasets[0].label = labelText;
-            chart.data.datasets[0].data = values;
-
-            const palette = pickColors(colorKey, labels.length);
-            // simpan base colors untuk gradient & bubble
-            chart.data.datasets[0].baseColors = palette.bg;
-
-            // borderColor sudah transparent; backgroundColor ditangani oleh scriptable
-            chart.update();
-        }
-
-        function updateAllCharts(filterKey = "ALL") {
-            const overall = aggregateByMonth(globalData, filterKey);
-            const sub = aggregateByMonth(globalData, filterKey, "SURABAYA");
-            const gre = aggregateByMonth(globalData, filterKey, "GRESIK");
-            updateChart(barChart, overall.labels, overall.values, "Departures per Month", "overall");
-            updateChart(barChartSurabaya, sub.labels, sub.values, "Surabaya per Month", "surabaya");
-            updateChart(barChartGresik, gre.labels, gre.values, "Gresik per Month", "gresik");
-        }
-
-        function updateCardCounts(data) {
-            const totalSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalDalamNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalDalamNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.DN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalLuarNegeriSurabaya = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDSUB")).length;
-            const totalLuarNegeriGresik = data.filter(row => row["no_pkk_inaportnet"]?.includes("PKK.LN") && row["no_pkk_inaportnet"]?.includes("IDGRE")).length;
-            const totalOutstanding = data.length;
-
-            document.getElementById("totalSurabaya").textContent = totalSurabaya;
-            document.getElementById("totalGresik").textContent = totalGresik;
-            document.getElementById("totalDalamNegeriSurabaya").textContent = totalDalamNegeriSurabaya;
-            document.getElementById("totalDalamNegeriGresik").textContent = totalDalamNegeriGresik;
-            document.getElementById("totalLuarNegeriSurabaya").textContent = totalLuarNegeriSurabaya;
-            document.getElementById("totalLuarNegeriGresik").textContent = totalLuarNegeriGresik;
-            document.getElementById("totalOutstanding").textContent = totalOutstanding;
-        }
-
-        function downloadTableAsExcel(headers, data) {
-            const workbook = XLSX.utils.book_new();
-            const worksheetData = [headers, ...data.map(row => headers.map(header => row[header] || ""))];
-            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Outstanding Data");
-            XLSX.writeFile(workbook, "outstanding_data.xlsx");
-        }
-
-        document.getElementById("downloadExcel").addEventListener("click", () => {
-            downloadTableAsExcel(globalHeaders, globalData);
-        });
-
-        function searchTable(query, headers, data) {
-            const filteredData = data.filter(row => {
-                return headers.some(header => {
-                    const cellValue = row[header] || "";
-                    return cellValue.toLowerCase().includes(query.toLowerCase());
-                });
-            });
-            populateTable(headers, filteredData);
-        }
-
-        document.getElementById("searchInput").addEventListener("input", (event) => {
-            const query = event.target.value;
-            searchTable(query, globalHeaders, globalData);
-        });
-
-        function filterTableByCardFilterKey(filterKey) {
-            const filtered = globalData.filter(row => applyFilter(row, filterKey));
-            populateTable(globalHeaders, filtered);
-        }
-
-        function initCardClicks() {
-            document.querySelectorAll(".card").forEach(card => {
-                card.addEventListener("click", () => {
-                    const title = card.querySelector(".card-title").textContent.trim();
-                    currentFilterKey = normalizeFilter(title);
-                    currentMonth = null;
-                    forcedPort = null;
-                    refreshTableOnly();
-                    updateAllCharts(currentFilterKey);
-                });
-            });
-        }
-
-        // Ganti logika klik: gunakan mode "index" + intersect:false agar area klik lebih luas
-        function addBarChartClickListener(chart, headers, data, port = null) {
-            chart.canvas.addEventListener("click", evt => {
-                const points = chart.getElementsAtEventForMode(
-                    evt,
-                    "index",
-                    { intersect: false },  // sebelumnya "nearest", {intersect:true}
-                    false
-                );
-                if (!points.length) {
-                    // Debug optional
-                    // console.log("Tidak ada bar terdeteksi pada posisi klik");
-                    return;
-                }
-                const idx = points[0].index;
-                const monthLabel = chart.data.labels[idx];
-                if (!monthLabel) return;
-                currentMonth = monthLabel;
-                forcedPort = port || null;
-                console.log("Filter bulan dipilih:", currentMonth, "Port paksa:", forcedPort);
-                refreshTableOnly();
-                // Opsional: scroll ke tabel supaya langsung terlihat
-                document.getElementById("tableContainer")?.scrollIntoView({ behavior: "smooth" });
-            });
-        }
-
-        function describeFilter() {
-            const keyMap = {
-                ALL: "Semua Data",
-                SURABAYA: "Pelabuhan Surabaya",
-                GRESIK: "Pelabuhan Gresik",
-                DN_SUB: "Dalam Negeri Surabaya",
-                DN_GRE: "Dalam Negeri Gresik",
-                LN_SUB: "Luar Negeri Surabaya",
-                LN_GRE: "Luar Negeri Gresik"
-            };
-            let parts = [];
-            if (currentFilterKey !== "ALL") parts.push(keyMap[currentFilterKey] || currentFilterKey);
-            if (forcedPort && !/SURABAYA|GRESIK/.test(currentFilterKey)) parts.push("Port: " + forcedPort);
-            if (currentMonth) parts.push("Bulan: " + currentMonth);
-            return parts.length ? parts.join(" | ") : "Tidak ada filter aktif";
-        }
-
-        function updateActiveFilterUI() {
-            const box = document.getElementById("activeFilterContainer");
-            const text = document.getElementById("activeFilterText");
-            if (currentFilterKey === "ALL" && !currentMonth && !forcedPort) {
-                box.style.display = "none";
-            } else {
-                text.textContent = describeFilter();
-                box.style.display = "block";
-            }
-        }
-
-        function computeFilteredData() {
-            return globalData.filter(row => {
-                if (!applyFilter(row, currentFilterKey)) return false;
-                if (forcedPort) {
-                    const pel = row["no_pkk_inaportnet"]?.includes("IDSUB") ? "SURABAYA" :
-                                row["no_pkk_inaportnet"]?.includes("IDGRE") ? "GRESIK" : null;
-                    if (pel !== forcedPort) return false;
-                }
-                if (currentMonth) {
-                    const key = row["waktu_tolak"] ? row["waktu_tolak"].slice(0,7) : null;
-                    if (key !== currentMonth) return false;
-                }
-                return true;
-            });
-        }
-
-        function refreshTableOnly() {
-            const filtered = computeFilteredData();
-            populateTable(globalHeaders, filtered);
-            updateActiveFilterUI();
-        }
-
-        document.addEventListener("click", e => {
-            if (e.target && e.target.id === "clearFilterBtn") {
-                currentFilterKey = "ALL";
-                currentMonth = null;
-                forcedPort = null;
-                refreshTableOnly();
-                updateAllCharts("ALL");
-            }
-        });
+	return chart;
+}
 
         let globalData = [];
         let globalHeaders = [];
-        let currentFilterKey = "ALL";
-        let currentMonth = null;
-        let forcedPort = null;
+        let barChart;
+
+        function populatePelabuhanFilter(data) {
+            let pelabuhanKey = "PELABUHAN";
+            if (!globalHeaders.includes("PELABUHAN")) {
+                if (globalHeaders.includes("name_branch")) {
+                    pelabuhanKey = "name_branch";
+                } else {
+                    pelabuhanKey = globalHeaders.find(h => h.toLowerCase().includes("pelabuhan")) || globalHeaders[0];
+                }
+            }
+            const pelabuhanSet = new Set(data.map(row => row[pelabuhanKey]).filter(Boolean));
+            const pelabuhanFilter = document.getElementById("pelabuhanFilter");
+
+            pelabuhanFilter.innerHTML = '<option value="ALL">Semua Pelabuhan</option>';
+
+            pelabuhanSet.forEach(pelabuhan => {
+                const option = document.createElement("option");
+                option.value = pelabuhan;
+                option.textContent = pelabuhan;
+                pelabuhanFilter.appendChild(option);
+            });
+        }
+
+        // Populate year combobox from departure_date (unique years)
+        function populateYearFilter(data) {
+		const years = new Set();
+		data.forEach(row => {
+			const d = row["departure_date"];
+			if (d && d.length >= 4) years.add(d.slice(0, 4));
+		});
+		const yearFilter = document.getElementById("yearFilter");
+		yearFilter.innerHTML = '<option value="ALL">Semua Tahun</option>';
+		Array.from(years).sort().forEach(y => {
+			const opt = document.createElement("option");
+			opt.value = y;
+			opt.textContent = y;
+			yearFilter.appendChild(opt);
+		});
+	}
+
+        // Unified filter: pelabuhan + year (+ optional month)
+        function filterByPelabuhanAndYear() {
+            const pelabuhan = document.getElementById("pelabuhanFilter").value || "ALL";
+            const year = document.getElementById("yearFilter") ? document.getElementById("yearFilter").value : "ALL";
+            let pelabuhanKey = "PELABUHAN";
+            if (!globalHeaders.includes("PELABUHAN")) {
+                if (globalHeaders.includes("name_branch")) pelabuhanKey = "name_branch";
+                else pelabuhanKey = globalHeaders.find(h => h.toLowerCase().includes("pelabuhan")) || globalHeaders[0];
+            }
+
+            let filtered = globalData.slice();
+
+            if (pelabuhan !== "ALL") filtered = filtered.filter(r => (r[pelabuhanKey] || "") === pelabuhan);
+            if (year !== "ALL") filtered = filtered.filter(r => (r["departure_date"] || "").startsWith(year));
+            if (selectedMonth) filtered = filtered.filter(r => (r["departure_date"] || "").slice(0,7) === selectedMonth);
+
+            populateTable(globalHeaders, filtered);
+            updateBarChart(filtered);
+        }
+
+        function clearAllFilters() {
+            // Reset combobox
+            document.getElementById("pelabuhanFilter").value = "ALL";
+            document.getElementById("yearFilter").value = "ALL";
+            // Reset selected month
+            selectedMonth = null;
+            // Show all data in table and chart
+            populateTable(globalHeaders, globalData);
+            updateBarChart(globalData);
+        }
+
+        // Update attachPelabuhanFilterListener to use unified filter
+        function attachPelabuhanFilterListener() {
+            const pelabuhanFilter = document.getElementById("pelabuhanFilter");
+            pelabuhanFilter.addEventListener("change", () => {
+                selectedMonth = null;
+                filterByPelabuhanAndYear();
+            });
+
+            // Tambahkan event listener untuk tombol clear filter
+            document.getElementById("clearFilterBtn").addEventListener("click", clearAllFilters);
+        }
+
+        // Year filter listener
+        function attachYearFilterListener() {
+		const yearFilter = document.getElementById("yearFilter");
+		yearFilter.addEventListener("change", () => {
+			selectedMonth = null;
+			filterByPelabuhanAndYear();
+		});
+	}
+
+        function updateBarChart(filteredData) {
+            const { labels, values } = aggregateByMonth(filteredData);
+            if (!barChart) return;
+
+            // Update labels
+            barChart.data.labels = labels;
+
+            // ghost dataset should be larger than max to create background columns
+            const maxVal = Math.max(...values, 1);
+            const ghostValues = labels.map(() => Math.ceil(maxVal * 1.25));
+
+            if (barChart.data.datasets && barChart.data.datasets.length >= 2) {
+                // dataset[0] = ghost/background, dataset[1] = foreground actual values
+                barChart.data.datasets[0].data = ghostValues;
+                barChart.data.datasets[1].data = values;
+            } else if (barChart.data.datasets && barChart.data.datasets.length === 1) {
+                // fallback: single dataset present
+                barChart.data.datasets[0].data = values;
+            }
+
+            barChart.update();
+        }
+
+        /* Updated renderPelabuhanCards: append stat-card directly into grid, improved structure */
+function renderPelabuhanCards(data) {
+	let pelabuhanKey = "PELABUHAN";
+	if (!globalHeaders.includes("PELABUHAN")) {
+		if (globalHeaders.includes("name_branch")) pelabuhanKey = "name_branch";
+		else pelabuhanKey = globalHeaders.find(h => h.toLowerCase().includes("pelabuhan")) || globalHeaders[0];
+	}
+
+	// Hitung jumlah data per pelabuhan
+	const pelabuhanCounts = {};
+	data.forEach(row => {
+		const key = row[pelabuhanKey] || "Unknown";
+		if (key) pelabuhanCounts[key] = (pelabuhanCounts[key] || 0) + 1;
+	});
+
+	const colors = [
+		{bg: "linear-gradient(135deg,#ff7e7e,#ffb199)", circle: "rgba(255,255,255,0.18)"},
+		{bg: "linear-gradient(135deg,#6a9bff,#8dc2ff)", circle: "rgba(255,255,255,0.16)"},
+		{bg: "linear-gradient(135deg,#7fe7c9,#4fbfa6)", circle: "rgba(255,255,255,0.14)"},
+		{bg: "linear-gradient(135deg,#7fd3ff,#5aa4ff)", circle: "rgba(255,255,255,0.12)"},
+		{bg: "linear-gradient(135deg,#c8a3ff,#ff80bf)", circle: "rgba(255,255,255,0.14)"},
+		{bg: "linear-gradient(135deg,#ffd56b,#ff8a5b)", circle: "rgba(255,255,255,0.12)"},
+		{bg: "linear-gradient(135deg,#b089ff,#6ae0ff)", circle: "rgba(255,255,255,0.10)"}
+	];
+
+	const rowDiv = document.getElementById("pelabuhanCardsRow");
+	rowDiv.innerHTML = "";
+
+	Object.entries(pelabuhanCounts).forEach(([pelabuhan, count], idx) => {
+		const card = document.createElement("div");
+		card.className = "stat-card";
+		const c = colors[idx % colors.length];
+		card.style.background = c.bg;
+
+		// header with title and small spacer (value positioned below-right)
+		const header = document.createElement("div");
+		header.className = "stat-header";
+
+		const title = document.createElement("div");
+		title.className = "stat-title";
+		title.textContent = pelabuhan;
+
+		// place value separately to allow right alignment and big size
+		const value = document.createElement("div");
+		value.className = "stat-value";
+		value.textContent = count;
+
+		header.appendChild(title);
+		// leave space on right by appending an empty flexible element if needed
+		const spacer = document.createElement("div");
+		spacer.style.flex = "1 1 auto";
+		header.appendChild(spacer);
+
+		card.appendChild(header);
+		card.appendChild(value);
+
+		// decorative circle
+		const circle = document.createElement("div");
+		circle.className = "card-circle";
+		circle.style.background = c.circle;
+		card.appendChild(circle);
+
+		rowDiv.appendChild(card);
+	});
+}
 
         async function main() {
             const csvText = await fetchCSV("gabung.csv");
@@ -1067,43 +915,27 @@
             globalHeaders = headers;
             globalData = data;
 
+            renderPelabuhanCards(data); // <-- Tambahkan ini
             populateTable(headers, data);
-            updateCardCounts(data);
-            updateActiveFilterUI();
+            populatePelabuhanFilter(data);
+            populateYearFilter(data);             // <-- add this
+            attachPelabuhanFilterListener();
+            attachYearFilterListener();           // <-- add this
 
-            barChart = buildChart(document.getElementById("barChart").getContext("2d"), "Departures per Month");
-            barChartSurabaya = buildChart(document.getElementById("barChartSurabaya").getContext("2d"), "Surabaya per Month");
-            barChartGresik = buildChart(document.getElementById("barChartGresik").getContext("2d"), "Gresik per Month");
-
-            updateAllCharts("ALL");
-
-            addBarChartClickListener(barChart, headers, data);
-            addBarChartClickListener(barChartSurabaya, headers, data, "SURABAYA");
-            addBarChartClickListener(barChartGresik, headers, data, "GRESIK");
-
-            setTimeout(() => {
-                barChart.resize();
-                barChartSurabaya.resize();
-                barChartGresik.resize();
-            }, 0);
-
-            initCardClicks();
+            const { labels, values } = aggregateByMonth(data);
+            const ctx = document.getElementById("barChart").getContext("2d");
+            barChart = buildBarChart(ctx, labels, values);
         }
-
-        // Formatter ribuan (id-ID)
-        const nfID = new Intl.NumberFormat('id-ID');
 
         main();
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script>
   // Enforce session + 30-minute inactivity logout
   if (typeof enforceAuth === 'function') {
     enforceAuth();
   }
-</script>
-</body>
-</html>
 </script>
 </body>
 </html>
