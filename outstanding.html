@@ -451,6 +451,72 @@
 			.page-header .header-title { font-size: clamp(1.0rem, 5.0vw, 1.6rem); padding: 6px 12px; }
 		}
 
+		/* Chart hero: decorative background left/right with diagonal pattern */
+		.chart-hero {
+			position: relative;
+			background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,255,0.98));
+			padding: 28px 0;
+			overflow: visible;
+		}
+		/* Center inner area that keeps chart content readable */
+		.chart-hero .chart-inner {
+			position: relative;
+			max-width: 1200px;
+			margin: 0 auto;
+			padding: 8px 20px;
+			box-sizing: border-box;
+		}
+
+		/* Decorative left / right panels using diagonal repeating gradients */
+		.chart-hero::before,
+		.chart-hero::after {
+			content: "";
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			width: 36%;
+			pointer-events: none;
+			opacity: 0.92;
+			z-index: 0;
+		}
+		.chart-hero::before {
+			left: 0;
+			background:
+				repeating-linear-gradient(135deg,
+					rgba(29, 186, 183, 0.12) 0 36px,
+					rgba(255,255,255,0) 36px 72px),
+				linear-gradient(135deg, rgba(29,186,183,0.06), rgba(29,186,183,0.02));
+			transform-origin: left center;
+		}
+		.chart-hero::after {
+			right: 0;
+			background:
+				repeating-linear-gradient(225deg,
+					rgba(122, 61, 160, 0.10) 0 36px,
+					rgba(255,255,255,0) 36px 72px),
+				linear-gradient(225deg, rgba(122,61,160,0.04), rgba(122,61,160,0.01));
+			transform-origin: right center;
+		}
+		/* Make the chart-card stand above decorative panels */
+		.chart-hero .chart-card {
+			position: relative;
+			z-index: 10;
+			/* slightly lifted look */
+			margin: 0 auto;
+			box-shadow: 0 20px 40px rgba(6,36,49,0.06);
+		}
+
+		/* Responsive tweaks so patterns don't crowd small screens */
+		@media (max-width: 900px) {
+			.chart-hero::before,
+			.chart-hero::after { width: 28%; }
+		}
+		@media (max-width: 576px) {
+			.chart-hero::before,
+			.chart-hero::after { width: 20%; opacity: 0.9; }
+			.chart-hero { padding: 18px 0; }
+		}
+
     </style>
 </head>
 <body>
@@ -470,15 +536,18 @@
 		<div id="pelabuhanCardsRow" class="cards-grid"></div>
 	</div>
 </div>
-    <div class="container mb-5">
-        <h5 id="chartTitle" class="text-center">Departures per Month</h5>
-        <div class="chart-card">
-            <!-- responsive wrapper kept inside chart-card -->
-            <div class="chart-wrapper">
-                <canvas id="barChart"></canvas>
+
+    <!-- Chart section with decorative diagonal panels -->
+    <section class="chart-hero" aria-label="Chart banner">
+        <div class="chart-inner">
+            <h5 id="chartTitle" class="text-center" style="position:relative; z-index:12; margin-bottom:8px;">Departures per Month</h5>
+            <div class="chart-card">
+                <div class="chart-wrapper">
+                    <canvas id="barChart"></canvas>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
     <div class="container mb-3 d-flex align-items-end" style="gap:8px;">
 	<div>
@@ -1033,16 +1102,6 @@ function renderPelabuhanCards(data) {
 
         main();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-    <script>
-  // Enforce session + 30-minute inactivity logout
-  if (typeof enforceAuth === 'function') {
-    enforceAuth();
-  }
-</script>
-</body>
-</html>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script>
