@@ -17,67 +17,6 @@
             vertical-align: middle;
         }
 
-        /* Judul untuk section card (diperbarui: center + animasi light & shadow) */
-        .cards-section-title {
-            display: inline-block;
-            position: relative;
-            font-size: 4rem; /* lebih besar */
-            line-height: 1;
-            font-weight: 900;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin: 0 auto 18px;
-            text-align: center;
-            padding: 12px 28px;
-            border-radius: 12px;
-            color: transparent;
-            background: linear-gradient(90deg, #00fff0 0%, #7a00ff 50%, #ff0066 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            /* neon glow */
-            text-shadow:
-                0 2px 8px rgba(0,255,240,0.08),
-                0 8px 24px rgba(122,0,255,0.08),
-                0 18px 40px rgba(255,0,102,0.04);
-            /* outer subtle glow box to enhance futuristik feel */
-            box-shadow: 0 8px 40px rgba(122,0,255,0.06), inset 0 -6px 24px rgba(0,255,240,0.02);
-            animation: neonPulse 3s ease-in-out infinite;
-            overflow: visible;
-        }
-
-        .cards-section-title::after {
-            content: "";
-            position: absolute;
-            top: -10%;
-            left: -140%;
-            width: 80%;
-            height: 120%;
-            pointer-events: none;
-            background: linear-gradient(90deg, rgba(0,255,240,0) 0%, rgba(255,255,255,0.85) 50%, rgba(122,0,255,0) 100%);
-            transform: skewX(-30deg);
-            opacity: 0.9;
-            filter: blur(14px);
-            animation: sweep 3s linear infinite;
-        }
-
-        @keyframes neonPulse {
-            0%   { filter: drop-shadow(0 0 0 rgba(122,0,255,0)); transform: scale(1); }
-            50%  { filter: drop-shadow(0 16px 48px rgba(0,255,240,0.12)); transform: scale(1.02); }
-            100% { filter: drop-shadow(0 0 0 rgba(122,0,255,0)); transform: scale(1); }
-        }
-
-        @keyframes sweep {
-            0%   { left: -140%; opacity: 0; }
-            20%  { opacity: 0.9; }
-            60%  { left: 120%; opacity: 0.6; }
-            100% { left: 120%; opacity: 0; }
-        }
-
-        /* responsive: reduce size on small screens */
-        @media (max-width: 576px) {
-            .cards-section-title { font-size: 2rem; padding: 8px 12px; }
-        }
-
         /* Chart responsive: jangan melewati page, sejajar dengan tabel (.container) */
         .chart-wrapper {
             width: 100%;
@@ -401,13 +340,130 @@
 			background: transparent;
 			display: block;
 		}
+
+		/* New header banner (curved gradients like sample) */
+		.page-header {
+			position: relative;
+			width: 100%;
+			height: 92px;         /* smaller, more proportional */
+			max-height: 14vh;
+			min-height: 72px;
+			margin: 8px 0 14px;
+			overflow: visible;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: transparent;
+		}
+		.page-header .header-ribbon {
+			position: absolute;
+			left: 6%;
+			right: 6%;
+			top: 8px;
+			bottom: 8px;
+			border-radius: 28px;
+			overflow: visible;
+			display: block;
+			/* subtle shadow like sample */
+			box-shadow: 0 12px 22px rgba(6,36,49,0.06), 0 5px 10px rgba(6,36,49,0.03) inset;
+		}
+		/* center blue ribbon */
+		.page-header .ribbon-center {
+			position: absolute;
+			left: 13%;
+			right: 22%;
+			top: 8px;
+			bottom: 10px;
+			border-radius: 22px;
+			background: linear-gradient(90deg,#60bffb 0%, #49c6f6 40%, #2db6ff 70%, #8fd9ff 100%);
+			box-shadow: inset 0 -12px 36px rgba(0,0,0,0.03);
+			transform: skewX(-6deg);
+		}
+		/* left purple cap */
+		.page-header .ribbon-left {
+			position: absolute;
+			left: 4%;
+			width: 20%;
+			top: 2%;
+			bottom: 2%;
+			border-radius: 22px;
+			background: linear-gradient(135deg,#8e3dbf 0%, #d05aa9 60%);
+			transform: translateX(-6%) skewX(-6deg);
+			box-shadow: inset 0 -14px 30px rgba(0,0,0,0.03);
+		}
+		/* right magenta cap */
+		.page-header .ribbon-right {
+			position: absolute;
+			right: 4%;
+			width: 24%;
+			top: 2%;
+			bottom: 2%;
+			border-radius: 22px;
+			background: linear-gradient(135deg,#a13399 0%, #ff7bbf 60%);
+			transform: translateX(6%) skewX(-6deg);
+			box-shadow: inset 0 -14px 30px rgba(0,0,0,0.03);
+		}
+		.page-header .header-accent {
+			position: absolute;
+			left: 8%;
+			right: 8%;
+			top: 6px;
+			bottom: 12px;
+			pointer-events: none;
+			border-radius: 28px;
+			/* thin white outline highlight */
+			box-shadow: 0 0 0 4px rgba(255,255,255,0.02) inset;
+		}
+		.page-header .header-title {
+			position: relative;
+			z-index: 40;
+			font-weight: 900;
+			letter-spacing: .06em;
+			text-transform: uppercase;
+			font-size: clamp(1.2rem, 3.2vw, 2.2rem); /* reduced */
+			color: white;
+			-webkit-text-stroke: 0.5px rgba(0,0,0,0.06);
+			text-shadow: 0 5px 12px rgba(0,0,0,0.14);
+			font-family: 'Arial Black', Arial, sans-serif;
+			padding: 8px 18px;
+		}
+		/* small decorative curve overlay */
+		.page-header::before {
+			content: "";
+			position: absolute;
+			left: 2%;
+			right: 2%;
+			bottom: -6px;
+			height: 12px;
+			border-radius: 50%;
+			background: linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.00));
+			filter: blur(5px);
+			opacity: 0.6;
+			z-index: 1;
+		}
+
+		@media (max-width: 576px) {
+			.page-header { height: 78px; margin: 6px 0 10px; }
+			.page-header .ribbon-left { width: 28%; left: 2%; }
+			.page-header .ribbon-right { width: 34%; right: 2%; }
+			.page-header .ribbon-center { left: 18%; right: 28%; }
+			.cards-section-title { display:none; } /* kept for legacy if present */
+			.page-header .header-title { font-size: clamp(1.0rem, 5.0vw, 1.6rem); padding: 6px 12px; }
+		}
+
     </style>
 </head>
 <body>
-    <!-- Tambahkan judul ini tepat sebelum div kartu -->
-	<div class="container mb-2 text-center">
-		<div class="cards-section-title">OUTSTANDING WILAYAH 3</div>
-	</div>
+    <!-- New decorative header (approximation of provided sample) -->
+    <header class="page-header" role="banner" aria-label="Header banner">
+        <span class="header-ribbon" aria-hidden="true">
+            <span class="ribbon-left"></span>
+            <span class="ribbon-center"></span>
+            <span class="ribbon-right"></span>
+            <span class="header-accent"></span>
+        </span>
+        <div class="header-title">OUTSTANDING WILAYAH 3</div>
+    </header>
 
     <div class="container mb-4">
 	<div class="cards-panel">
@@ -977,6 +1033,16 @@ function renderPelabuhanCards(data) {
 
         main();
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    <script>
+  // Enforce session + 30-minute inactivity logout
+  if (typeof enforceAuth === 'function') {
+    enforceAuth();
+  }
+</script>
+</body>
+</html>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
     <script>
