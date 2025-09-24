@@ -2,7 +2,7 @@ name: Update gabung.csv
 
 on:
   schedule:
-    - cron: "0 */2 * * *"   # jalan otomatis tiap 2 jam UTC
+    - cron: "0 */4 * * *"   # jalan otomatis tiap 2 jam UTC
   workflow_dispatch:       # bisa manual jalanin workflow
 
 jobs:
