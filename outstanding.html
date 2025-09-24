@@ -933,27 +933,46 @@ function renderPelabuhanCards(data) {
         }
 
         // New: download gabung.csv by fetching as blob then triggering a download
-        function downloadGabung() {
-            const url = "gabung.csv";
-            fetch(url, { cache: "no-store" })
-                .then(response => {
-                    if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
-                    return response.blob();
-                })
-                .then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
+        async function downloadGabung() {
+            const btn = document.getElementById("downloadGabungBtn");
+            if (btn) btn.disabled = true;
+            try {
+                // Try XLSX first
+                try {
+                    const resp = await fetch("gabung.xlsx", { cache: "no-store" });
+                    if (!resp.ok) throw new Error("gabung.xlsx not available");
+                    const blob = await resp.blob();
+                    const url = URL.createObjectURL(blob);
                     const a = document.createElement("a");
-                    a.href = blobUrl;
-                    a.download = "gabung.csv";
+                    a.href = url;
+                    a.download = "gabung.xlsx";
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
-                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
-                })
-                .catch(err => {
-                    console.error("Download gabung.csv failed:", err);
-                    alert("Gagal mendownload gabung.csv. Periksa apakah file gabung.csv ada dan server mengizinkan akses.");
-                });
+                    setTimeout(() => URL.revokeObjectURL(url), 1500);
+                    return;
+                } catch (errX) {
+                    console.warn("gabung.xlsx not found, falling back to gabung.csv:", errX);
+                }
+
+                // Fallback to CSV
+                const respCsv = await fetch("gabung.csv", { cache: "no-store" });
+                if (!respCsv.ok) throw new Error("gabung.csv not available");
+                const blobCsv = await respCsv.blob();
+                const urlCsv = URL.createObjectURL(blobCsv);
+                const aCsv = document.createElement("a");
+                aCsv.href = urlCsv;
+                aCsv.download = "gabung.csv";
+                document.body.appendChild(aCsv);
+                aCsv.click();
+                aCsv.remove();
+                setTimeout(() => URL.revokeObjectURL(urlCsv), 1500);
+            } catch (err) {
+                console.error("Download gabung failed:", err);
+                alert("Gagal mendownload gabung.xlsx atau gabung.csv. Periksa file dan hak akses server.");
+            } finally {
+                if (btn) btn.disabled = false;
+            }
         }
 
         main();
