@@ -441,7 +441,8 @@
 			</select>
 		</div>
 	</div>
-	<div class="ms-auto">
+	<div class="ms-auto" style="display:flex; gap:8px; align-items:center;">
+		<button id="downloadGabungBtn" class="neo-button" type="button">Download Data</button>
 		<button id="clearFilterBtn" class="neo-button" type="button">Clear Filter</button>
 	</div>
 </div>
@@ -652,7 +653,7 @@
 				legend: { display: false },
 				title: {
 					display: true,
-					text: "Bar Chart Keseluruhan",
+					text: "Chart Semua Unit",
 					align: "center",
 					font: { size: 18, weight: "700" }
 				},
@@ -808,6 +809,10 @@
 
             // Tambahkan event listener untuk tombol clear filter
             document.getElementById("clearFilterBtn").addEventListener("click", clearAllFilters);
+
+            // New: download gabung.csv button
+            const dlGabung = document.getElementById("downloadGabungBtn");
+            if (dlGabung) dlGabung.addEventListener("click", downloadGabung);
         }
 
         // Year filter listener
@@ -925,6 +930,30 @@ function renderPelabuhanCards(data) {
             const { labels, values } = aggregateByMonth(data);
             const ctx = document.getElementById("barChart").getContext("2d");
             barChart = buildBarChart(ctx, labels, values);
+        }
+
+        // New: download gabung.csv by fetching as blob then triggering a download
+        function downloadGabung() {
+            const url = "gabung.csv";
+            fetch(url, { cache: "no-store" })
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status} ${response.statusText}`);
+                    return response.blob();
+                })
+                .then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = blobUrl;
+                    a.download = "gabung.csv";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+                })
+                .catch(err => {
+                    console.error("Download gabung.csv failed:", err);
+                    alert("Gagal mendownload gabung.csv. Periksa apakah file gabung.csv ada dan server mengizinkan akses.");
+                });
         }
 
         main();
