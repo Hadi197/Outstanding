@@ -147,10 +147,35 @@ def main(argv: list[str]) -> int:
     if "_merge" in merged.columns:
         merged = merged.drop(columns=["_merge"])
 
-    # Save
+    # Save both CSV and Excel (same stem)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    # 1) CSV
     merged.to_csv(out_path, index=False)
-    print(f"Tersimpan: {out_path}")
+
+    # 2) XLSX (same stem as out_path)
+    excel_path = out_path.with_suffix(".xlsx")
+    try:
+        # Make a copy and normalize timezone-aware datetimes (if any) for Excel compatibility
+        df_xlsx = merged.copy()
+        # Use pandas type utilities to detect datetime columns robustly
+        from pandas.api import types as pdt
+        for col in df_xlsx.columns:
+            try:
+                if pdt.is_datetime64_any_dtype(df_xlsx[col]):
+                    # If tz-aware, convert to naive; otherwise leave as-is
+                    if pdt.is_datetime64tz_dtype(df_xlsx[col]):
+                        df_xlsx[col] = df_xlsx[col].dt.tz_convert(None)
+            except Exception:
+                # Ignore conversion errors for safety (keep original data)
+                pass
+        # Write Excel (pandas will use openpyxl if available)
+        df_xlsx.to_excel(excel_path, index=False, engine="openpyxl")
+        print(f"Tersimpan: {out_path}")
+        print(f"Tersimpan: {excel_path}")
+    except Exception as e:
+        # If Excel write fails, keep CSV and warn
+        print(f"Warning: gagal menyimpan Excel ({excel_path}): {e}", file=sys.stderr)
+        print(f"Hanya CSV tersimpan: {out_path}")
 
     return 0
 
