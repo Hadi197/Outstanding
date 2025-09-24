@@ -1,82 +1,109 @@
-import subprocess
 import os
 import sys
-import pandas as pd
+import subprocess
+import csv
+import time
 
-# -----------------------------
-# Fungsi untuk menjalankan script Python lain
-# -----------------------------
-def run_script(script_path):
+def run_script_stream(script_path, cwd, timeout=None):
+    """Run a Python script with the same interpreter, stream its stdout+stderr, return rc."""
+    cmd = [sys.executable, script_path]
+    print(f"\n>>> Running: {' '.join(cmd)} (cwd={cwd})\n")
     try:
-        print(f"🚀 Running {script_path}...")
-        subprocess.run([sys.executable, script_path], check=True)
-        print(f"✅ {os.path.basename(script_path)} executed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to execute {script_path}: {e}")
+        proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     except Exception as e:
-        print(f"⚠️ Kesalahan tidak terduga: {e}")
+        print(f"Failed to start {script_path}: {e}")
+        return 127
 
-# -----------------------------
-# Fungsi untuk membaca CSV dengan path relatif
-# -----------------------------
-def read_csv_relative(base_dir, file_name):
-    file_path = os.path.join(base_dir, file_name)
-    if os.path.exists(file_path):
-        df = pd.read_csv(file_path)
-        print(f"✅ Berhasil membaca {file_name}, shape: {df.shape}")
-        return df
-    else:
-        print(f"❌ File {file_name} tidak ditemukan di {file_path}")
-        return None
+    start = time.time()
+    try:
+        # Stream output line by line
+        for line in proc.stdout:
+            print(line, end="")
+            if timeout and (time.time() - start) > timeout:
+                proc.kill()
+                print(f"\nTimeout reached for {script_path}")
+                return 124
+        proc.wait()
+        return proc.returncode
+    except Exception as e:
+        try:
+            proc.kill()
+        except Exception:
+            pass
+        print(f"Error while running {script_path}: {e}")
+        return 128
 
-# -----------------------------
-# Main function
-# -----------------------------
+def concat_csv_files(input_files, output_file):
+    """Concatenate CSV files vertically, preserving header from the first file."""
+    header_written = False
+    written_rows = 0
+    try:
+        with open(output_file, "w", newline="", encoding="utf-8") as out_f:
+            writer = None
+            for fpath in input_files:
+                if not os.path.exists(fpath):
+                    print(f"Warning: input file not found, skipping: {fpath}")
+                    continue
+                with open(fpath, "r", newline="", encoding="utf-8") as in_f:
+                    reader = csv.reader(in_f)
+                    rows = list(reader)
+                    if not rows:
+                        continue
+                    header = rows[0]
+                    data_rows = rows[1:]
+                    if not header_written:
+                        writer = csv.writer(out_f)
+                        writer.writerow(header)
+                        header_written = True
+                    if data_rows:
+                        writer.writerows(data_rows)
+                        written_rows += len(data_rows)
+        print(f"\nWrote {written_rows} rows to '{output_file}'.")
+        return True
+    except Exception as e:
+        print(f"Error writing '{output_file}': {e}")
+        return False
+
 def main():
-    # Folder tempat run.py berada
     base_dir = os.path.dirname(os.path.abspath(__file__))
-
-    # 1️⃣ Jalankan semua script Python lain
     scripts = ["spb.py", "wasop.py", "lookup.py"]
-    for script in scripts:
-        script_path = os.path.join(base_dir, script)
-        if os.path.exists(script_path):
-            run_script(script_path)
-        else:
-            print(f"❌ Script {script} tidak ditemukan di {base_dir}")
+    expected = {"spb.py": "spb.csv", "wasop.py": "wasop.csv", "lookup.py": "gabung.csv"}
 
-    # 2️⃣ Baca semua CSV di root repo
-    csv_files = ["wasop.csv", "gabung.csv", "spb.csv"]
-    dataframes = {}
-    for csv_file in csv_files:
-        df = read_csv_relative(base_dir, csv_file)
-        if df is not None:
-            dataframes[csv_file] = df
+    # Run scripts sequentially, streaming their output
+    for scr in scripts:
+        scr_path = os.path.join(base_dir, scr)
+        if not os.path.exists(scr_path):
+            print(f"Error: required script not found: {scr_path}")
+            sys.exit(3)
+        rc = run_script_stream(scr_path, cwd=base_dir, timeout=None)
+        if rc != 0:
+            print(f"\nScript {scr} exited with code {rc}. Aborting.")
+            sys.exit(4)
 
-    # 3️⃣ Contoh gabung CSV (wasop.csv + gabung.csv) jika ada kolom 'ID'
-    if "wasop.csv" in dataframes and "gabung.csv" in dataframes:
-        df_wasop = dataframes["wasop.csv"]
-        df_gabung = dataframes["gabung.csv"]
+    # Verify required CSV outputs
+    spb_path = os.path.join(base_dir, "spb.csv")
+    wasop_path = os.path.join(base_dir, "wasop.csv")
+    gabung_path = os.path.join(base_dir, "gabung.csv")
 
-        if "ID" in df_wasop.columns and "ID" in df_gabung.columns:
-            df_merged = pd.merge(df_wasop, df_gabung, on="ID", how="outer")
-            print("\n✅ Hasil gabung wasop.csv + gabung.csv:")
-            print(df_merged.head())
+    missing = [name for name, path in (("spb.csv", spb_path), ("wasop.csv", wasop_path)) if not os.path.exists(path)]
+    if missing:
+        print(f"\nError: expected output files missing: {', '.join(missing)}")
+        sys.exit(5)
 
-            # Simpan hasil gabungan
-            output_file = os.path.join(base_dir, "wasop_gabung.csv")
-            df_merged.to_csv(output_file, index=False)
-            print(f"✅ File gabungan berhasil disimpan: {output_file}")
-        else:
-            print("\n❌ Kolom 'ID' tidak ditemukan di kedua CSV. Tidak bisa gabung otomatis.")
+    # If lookup.py didn't produce gabung.csv, create it by concatenating spb.csv then wasop.csv
+    if not os.path.exists(gabung_path):
+        print("\ngabung.csv not found after running scripts — creating gabung.csv by concatenating spb.csv and wasop.csv")
+        ok = concat_csv_files([spb_path, wasop_path], gabung_path)
+        if not ok:
+            print("Failed to create gabung.csv")
+            sys.exit(6)
     else:
-        print("\n❌ Salah satu file CSV untuk gabung tidak ditemukan.")
+        print("\ngabung.csv produced by lookup.py")
 
-if __name__ == "__main__":
-    main()
-        output_file = os.path.join(base_dir, "trafik.csv")
-        dataframes["trafik.csv"].to_csv(output_file, index=False)
-        print(f"✅ File trafik.csv berhasil di-overwrite: {output_file}")
+    print("\nAll done. Outputs available:")
+    print(f" - {wasop_path}")
+    print(f" - {spb_path}")
+    print(f" - {gabung_path}")
 
 if __name__ == "__main__":
     main()
