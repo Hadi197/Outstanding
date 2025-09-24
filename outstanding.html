@@ -991,7 +991,7 @@
             barChart.update();
         }
 
-        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count */
+        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count with percentage */
 function renderPelabuhanCards(data) {
 	let pelabuhanKey = "PELABUHAN";
 	if (!globalHeaders.includes("PELABUHAN")) {
@@ -1046,14 +1046,19 @@ function renderPelabuhanCards(data) {
 
 		// PKK Manual: count of rows with empty no_pkk_inaportnet for this pelabuhan
 		const manualCount = manualCounts[pelabuhan] || 0;
+		// calculate percentage (safe divide)
+		let pct = 0;
+		if (count > 0) pct = (manualCount / count) * 100;
+		// format: integer if whole, otherwise 1 decimal
+		const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
 		const manualLabel = document.createElement("div");
 		manualLabel.className = "pkk-manual";
-		manualLabel.textContent = `PKK Manual: ${manualCount}`;
+		manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
 
 		titleWrap.appendChild(title);
 		titleWrap.appendChild(manualLabel);
 
-		// place value separately to allow right alignment and big size
+		// place value separately to allow right alignment and adjusted size
 		const value = document.createElement("div");
 		value.className = "stat-value";
 		value.textContent = count;
