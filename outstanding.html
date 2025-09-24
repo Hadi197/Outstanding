@@ -1041,21 +1041,52 @@ function renderPelabuhanCards(data) {
         async function main() {
             const csvText = await fetchCSV("gabung.csv");
             if (!csvText) return;
-            const { headers, data } = parseCSV(csvText);
+            const { headers, data: rawData } = parseCSV(csvText);
+
+            // Try to fetch abai.csv and build a set of PKK values to ignore
+            let abaiSet = new Set();
+            try {
+                const abaiText = await fetchCSV("abai.csv");
+                if (abaiText) {
+                    const lines = abaiText.split("\n").map(l => l.trim()).filter(Boolean);
+                    if (lines.length) {
+                        // Remove header line if it contains header name
+                        if (/no_pkk_inaportnet/i.test(lines[0])) lines.shift();
+                        lines.forEach(line => {
+                            // support values separated by commas and extra commas/empty items
+                            line.split(",").forEach(v => {
+                                const t = (v || "").trim();
+                                if (t) abaiSet.add(t);
+                            });
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not load abai.csv — proceeding without exclusions.", e);
+            }
+
+            // Filter out rows whose no_pkk_inaportnet appears in abaiSet
+            const filtered = rawData.filter(r => {
+                const key = (r["no_pkk_inaportnet"] || "").trim();
+                return !key || !abaiSet.has(key);
+            });
+            const removedCount = rawData.length - filtered.length;
+            if (removedCount > 0) console.info(`Excluded ${removedCount} rows based on abai.csv`);
+
             globalHeaders = headers;
-            globalData = data;
+            globalData = filtered;
 
-            renderPelabuhanCards(data); // <-- Tambahkan ini
-            populateTable(headers, data);
-            populatePelabuhanFilter(data);
-            populateYearFilter(data);             // <-- add this
+            renderPelabuhanCards(filtered);
+            populateTable(headers, filtered);
+            populatePelabuhanFilter(filtered);
+            populateYearFilter(filtered);
             attachPelabuhanFilterListener();
-            attachYearFilterListener();           // <-- add this
+            attachYearFilterListener();
 
-            const { labels, values } = aggregateByMonth(data);
+            const { labels, values } = aggregateByMonth(filtered);
             const ctx = document.getElementById("barChart").getContext("2d");
             barChart = buildBarChart(ctx, labels, values);
-        }
+         }
 
         // New: download gabung.csv by fetching as blob then triggering a download
         async function downloadGabung() {
