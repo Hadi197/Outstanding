@@ -991,7 +991,7 @@
             barChart.update();
         }
 
-        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count with percentage */
+        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count with percentage, sorted by count desc */
 function renderPelabuhanCards(data) {
 	let pelabuhanKey = "PELABUHAN";
 	if (!globalHeaders.includes("PELABUHAN")) {
@@ -1003,7 +1003,7 @@ function renderPelabuhanCards(data) {
 	const pelabuhanCounts = {};
 	const manualCounts = {};
 	data.forEach(row => {
-		const key = row[pelabuhanKey] || "Unknown";
+		const key = (row[pelabuhanKey] || "Unknown");
 		if (!pelabuhanCounts[key]) pelabuhanCounts[key] = 0;
 		pelabuhanCounts[key] += 1;
 
@@ -1012,6 +1012,9 @@ function renderPelabuhanCards(data) {
 			manualCounts[key] = (manualCounts[key] || 0) + 1;
 		}
 	});
+
+	// Convert counts to array and sort descending by count
+	const entries = Object.entries(pelabuhanCounts).sort((a, b) => b[1] - a[1]);
 
 	const colors = [
 		{bg: "linear-gradient(135deg,#ff7e7e,#ffb199)", circle: "rgba(255,255,255,0.18)"},
@@ -1026,7 +1029,7 @@ function renderPelabuhanCards(data) {
 	const rowDiv = document.getElementById("pelabuhanCardsRow");
 	rowDiv.innerHTML = "";
 
-	Object.entries(pelabuhanCounts).forEach(([pelabuhan, count], idx) => {
+	entries.forEach(([pelabuhan, count], idx) => {
 		const card = document.createElement("div");
 		card.className = "stat-card";
 		const c = colors[idx % colors.length];

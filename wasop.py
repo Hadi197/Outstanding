@@ -24,7 +24,7 @@ def scrape_data(page=1, record=100000):
     params = {
         "page": page,
         "record": record,
-        "data": ""
+        "data":""
     }
     try:
         response = requests.get(API_URL, headers=HEADERS, params=params, timeout=(10, 60))
