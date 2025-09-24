@@ -103,27 +103,25 @@
             gap: 8px;
         }
         .stat-title {
-            /* responsive font, allow wrapping up to 2 lines */
-            font-size: clamp(0.75rem, 1.2vw, 0.95rem);
+            /* single-line title: no wrapping, truncate with ellipsis */
+            font-size: clamp(0.55rem, 0.8vw, 0.70rem);
             font-weight: 700;
             opacity: 0.95;
-            max-width: 70%;
+            max-width: 100%;
+            white-space: nowrap !important;
             overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2; /* limit to 2 lines */
-            line-clamp: 2; /* standard property (added for compatibility) */
-            -webkit-box-orient: vertical;
-            word-break: break-word;
+            text-overflow: ellipsis;
+            display: block;
             line-height: 1.1;
         }
         .stat-value {
-            /* responsive value size, stays readable but not overflowing */
-            font-size: clamp(1.1rem, 3.2vw, 2.2rem);
+            /* smaller numeric value for compact card layout */
+            font-size: clamp(0.95rem, 2.2vw, 1.4rem);
             font-weight: 900;
             line-height: 1;
             text-align: right;
             white-space: nowrap;
-            min-width: 3.2em; /* keep enough space for number */
+            min-width: 2.6em; /* keep enough space for number */
         }
 
         /* decorative circle positioned bottom-right for subtle effect */
@@ -143,8 +141,10 @@
         /* responsive adjustments */
         @media (max-width: 600px) {
             .stat-card { min-height: 100px; padding: 12px; }
-            .stat-value { font-size: clamp(0.95rem, 5.5vw, 1.6rem); }
-            .stat-title { font-size: clamp(0.7rem, 2.6vw, 0.85rem); }
+            /* smaller value on mobile */
+            .stat-value { font-size: clamp(0.85rem, 4.2vw, 1.2rem); }
+            /* make mobile title even smaller */
+            .stat-title { font-size: clamp(0.5rem, 2.2vw, 0.66rem); }
         }
 
         /* Hide the specific filter labels */
@@ -426,6 +426,9 @@
 			text-shadow: 0 5px 12px rgba(0,0,0,0.14);
 			font-family: 'Arial Black', Arial, sans-serif;
 			padding: 8px 18px;
+			white-space: nowrap;           /* keep header on one line */
+			overflow: hidden;
+			text-overflow: ellipsis;
 		}
 		/* small decorative curve overlay */
 		.page-header::before {
@@ -515,6 +518,22 @@
 			.chart-hero::before,
 			.chart-hero::after { width: 20%; opacity: 0.9; }
 			.chart-hero { padding: 18px 0; }
+		}
+
+		/* PKK Manual small label for cards */
+		.pkk-manual {
+			font-size: 0.78rem;
+			font-weight: 800;
+			margin-top: 6px;
+			color: rgba(255,255,255,0.95); /* white-on-gradient for visibility */
+			text-shadow: 0 3px 10px rgba(0,0,0,0.12);
+			letter-spacing: 0.02em;
+		}
+
+		/* If card background is light/dark make a fallback darker label */
+		.stat-card.light .pkk-manual {
+			color: rgba(6,36,49,0.9);
+			text-shadow: none;
 		}
 
     </style>
@@ -972,7 +991,7 @@
             barChart.update();
         }
 
-        /* Updated renderPelabuhanCards: append stat-card directly into grid, improved structure */
+        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count */
 function renderPelabuhanCards(data) {
 	let pelabuhanKey = "PELABUHAN";
 	if (!globalHeaders.includes("PELABUHAN")) {
@@ -980,11 +999,18 @@ function renderPelabuhanCards(data) {
 		else pelabuhanKey = globalHeaders.find(h => h.toLowerCase().includes("pelabuhan")) || globalHeaders[0];
 	}
 
-	// Hitung jumlah data per pelabuhan
+	// Count total and PKK-manual (empty no_pkk_inaportnet) per pelabuhan
 	const pelabuhanCounts = {};
+	const manualCounts = {};
 	data.forEach(row => {
 		const key = row[pelabuhanKey] || "Unknown";
-		if (key) pelabuhanCounts[key] = (pelabuhanCounts[key] || 0) + 1;
+		if (!pelabuhanCounts[key]) pelabuhanCounts[key] = 0;
+		pelabuhanCounts[key] += 1;
+
+		const pkk = (row["no_pkk_inaportnet"] || "").trim();
+		if (!pkk) {
+			manualCounts[key] = (manualCounts[key] || 0) + 1;
+		}
 	});
 
 	const colors = [
@@ -1006,21 +1032,34 @@ function renderPelabuhanCards(data) {
 		const c = colors[idx % colors.length];
 		card.style.background = c.bg;
 
-		// header with title and small spacer (value positioned below-right)
+		// header with title and small spacer
 		const header = document.createElement("div");
 		header.className = "stat-header";
+
+		const titleWrap = document.createElement("div");
+		titleWrap.style.display = "flex";
+		titleWrap.style.flexDirection = "column";
 
 		const title = document.createElement("div");
 		title.className = "stat-title";
 		title.textContent = pelabuhan;
+
+		// PKK Manual: count of rows with empty no_pkk_inaportnet for this pelabuhan
+		const manualCount = manualCounts[pelabuhan] || 0;
+		const manualLabel = document.createElement("div");
+		manualLabel.className = "pkk-manual";
+		manualLabel.textContent = `PKK Manual: ${manualCount}`;
+
+		titleWrap.appendChild(title);
+		titleWrap.appendChild(manualLabel);
 
 		// place value separately to allow right alignment and big size
 		const value = document.createElement("div");
 		value.className = "stat-value";
 		value.textContent = count;
 
-		header.appendChild(title);
-		// leave space on right by appending an empty flexible element if needed
+		header.appendChild(titleWrap);
+		// spacer to push value to right
 		const spacer = document.createElement("div");
 		spacer.style.flex = "1 1 auto";
 		header.appendChild(spacer);
