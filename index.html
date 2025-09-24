@@ -178,6 +178,50 @@
 				errBox.textContent = 'Kredensial tidak valid.';
 			}
 		});
+
+		// Inactivity auto-logout: if no activity for 30 minutes, clear session and redirect to login
+		(function() {
+			const INACTIVITY_MS = 30 * 60 * 1000; // 30 minutes
+			const LAST_KEY = 'auth_last_activity';
+
+			function updateLastActivity() {
+				try {
+					localStorage.setItem(LAST_KEY, String(Date.now()));
+				} catch (e) { /* ignore storage errors */ }
+			}
+
+			function clearAndRedirect() {
+				clearSession();
+				// If we're not on the login page already, go to it
+				if (!/index\.html$/.test(window.location.pathname) && window.location.pathname !== '/' ) {
+					window.location.replace('index.html');
+				} else {
+					// If already on login page, just show a notice
+					errBox.textContent = 'Anda telah keluar karena tidak aktif selama 30 menit.';
+				}
+			}
+
+			// Update activity on common interactions
+			['mousemove','mousedown','keydown','touchstart','scroll','click'].forEach(evt => {
+				window.addEventListener(evt, updateLastActivity, { passive: true });
+			});
+
+			// Initialize last activity if missing
+			if (!localStorage.getItem(LAST_KEY)) updateLastActivity();
+
+			// Check periodically (every minute)
+			setInterval(() => {
+				try {
+					const last = parseInt(localStorage.getItem(LAST_KEY) || '0', 10);
+					if (!last) return;
+					if (Date.now() - last > INACTIVITY_MS) {
+						clearAndRedirect();
+					}
+				} catch (e) {
+					// ignore errors
+				}
+			}, 60 * 1000);
+		})();
 	</script>
 </body>
 </html>
