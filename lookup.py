@@ -3,7 +3,8 @@ import argparse
 from pathlib import Path
 import sys
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import pytz
 
 
 def resolve_path(p: str | None, default_names: list[str], search_dir: Path) -> Path:
@@ -159,6 +160,29 @@ def main(argv: list[str]) -> int:
                 return False
             return True
         merged = merged[merged.apply(_row_keep, axis=1)]
+
+    # Setelah proses filter, sebelum simpan ke CSV/Excel, format departure_date ke "YYYY-MM-DD HH:MM"
+    date_col = None
+    for col in merged.columns:
+        if "departure_date" in col.lower() or "keberangkatan" in col.lower():
+            date_col = col
+            break
+    if date_col and date_col in merged.columns:
+        def format_datetime(val):
+            try:
+                # Jika sudah dalam format ISO8601 dengan offset, gunakan strptime
+                dt = None
+                if isinstance(val, str) and "T" in val and "+" in val:
+                    dt = datetime.strptime(val, "%Y-%m-%dT%H:%M:%S%z")
+                else:
+                    # fallback: parse pakai pandas
+                    dt = pd.to_datetime(val)
+                if pd.isnull(dt):
+                    return ""
+                return dt.strftime("%Y-%m-%d %H:%M")
+            except Exception:
+                return val
+        merged[date_col] = merged[date_col].apply(format_datetime)
 
     # Save both CSV and Excel (same stem)
     out_path.parent.mkdir(parents=True, exist_ok=True)
