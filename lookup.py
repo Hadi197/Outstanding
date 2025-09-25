@@ -3,6 +3,7 @@ import argparse
 from pathlib import Path
 import sys
 import pandas as pd
+from datetime import datetime, timedelta
 
 
 def resolve_path(p: str | None, default_names: list[str], search_dir: Path) -> Path:
@@ -125,6 +126,39 @@ def main(argv: list[str]) -> int:
         merged[lhgk_key_col] = normalize_key_series(merged[lhgk_key_col])
 
     print(f"Hasil merge final: {len(merged):,} baris")
+
+    # Filter: jangan tampilkan data hari ini dikurangi 7 hari sebelumnya, 
+    # kecuali kolom nomor_spb tidak kosong
+    today = datetime.now().date()
+    cutoff = today - timedelta(days=7)
+    # Cari kolom tanggal (departure_date, keberangkatan, atau yang mirip)
+    date_col = None
+    for col in merged.columns:
+        if "departure_date" in col.lower() or "keberangkatan" in col.lower():
+            date_col = col
+            break
+    nomor_spb_col = None
+    for col in merged.columns:
+        if "nomor_spb" in col.lower():
+            nomor_spb_col = col
+            break
+    if date_col:
+        def _row_keep(row):
+            val = row.get(date_col, "")
+            try:
+                d = pd.to_datetime(val).date()
+            except Exception:
+                return True
+            if d >= cutoff:
+                # Hanya tampilkan jika nomor_spb tidak kosong
+                if nomor_spb_col:
+                    nomor_spb_val = row.get(nomor_spb_col, "")
+                    # Pastikan selalu string sebelum strip
+                    if pd.notnull(nomor_spb_val) and str(nomor_spb_val).strip():
+                        return True
+                return False
+            return True
+        merged = merged[merged.apply(_row_keep, axis=1)]
 
     # Save both CSV and Excel (same stem)
     out_path.parent.mkdir(parents=True, exist_ok=True)
