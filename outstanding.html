@@ -81,9 +81,9 @@
         }
 
         .stat-card {
-            min-height: 120px;           /* uniform height */
-            padding: 16px 18px;
-            border-radius: 12px;
+            min-height: 96px;           /* 20% smaller than 120px */
+            padding: 12.8px 14.4px;     /* 20% smaller than 16px 18px */
+            border-radius: 9.6px;       /* 20% smaller than 12px */
             color: #fff;
             position: relative;
             overflow: hidden;
@@ -104,7 +104,7 @@
         }
         .stat-title {
             /* single-line title: no wrapping, truncate with ellipsis */
-            font-size: clamp(0.55rem, 0.8vw, 0.70rem);
+            font-size: clamp(0.44rem, 0.64vw, 0.56rem); /* 20% smaller */
             font-weight: 700;
             opacity: 0.95;
             max-width: 100%;
@@ -116,22 +116,22 @@
         }
         .stat-value {
             /* smaller numeric value for compact card layout */
-            font-size: clamp(0.95rem, 2.2vw, 1.4rem);
+            font-size: clamp(0.76rem, 1.76vw, 1.12rem); /* 20% smaller */
             font-weight: 900;
             line-height: 1;
             text-align: right;
             white-space: nowrap;
-            min-width: 2.6em; /* keep enough space for number */
+            min-width: 2.08em; /* 20% smaller than 2.6em */
         }
 
         /* decorative circle positioned bottom-right for subtle effect */
         .stat-card .card-circle {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            width: 96px;   /* 20% smaller than 120px */
+            height: 96px;
             border-radius: 50%;
-            right: -30px;
-            bottom: -30px;
+            right: -24px;  /* 20% smaller than -30px */
+            bottom: -24px;
             opacity: 0.12;
             filter: blur(8px);
             pointer-events: none;
@@ -140,11 +140,11 @@
         /* sample gradient presets (used inline as style in JS) */
         /* responsive adjustments */
         @media (max-width: 600px) {
-            .stat-card { min-height: 100px; padding: 12px; }
+            .stat-card { min-height: 80px; padding: 9.6px; }
             /* smaller value on mobile */
-            .stat-value { font-size: clamp(0.85rem, 4.2vw, 1.2rem); }
+            .stat-value { font-size: clamp(0.68rem, 3.36vw, 0.96rem); }
             /* make mobile title even smaller */
-            .stat-title { font-size: clamp(0.5rem, 2.2vw, 0.66rem); }
+            .stat-title { font-size: clamp(0.4rem, 1.76vw, 0.53rem); }
         }
 
         /* Hide the specific filter labels */
@@ -661,7 +661,8 @@
             vessel_name: "NAMA KAPAL",
             NO: "NO",
             PELABUHAN: "PELABUHAN",
-            PELAYARAN: "PELAYARAN"
+            PELAYARAN: "PELAYARAN",
+            zone: "ZONA",
         };
 
         function populateTable(headers, data) {
@@ -672,8 +673,12 @@
             tableHeader.innerHTML = "";
             tableBody.innerHTML = "";
 
-            // Sembunyikan kolom name_branch (diganti PELABUHAN), no_pkk_wasop, dan waktu_tolak (TGL/JAM)
-            const hiddenCols = new Set(["name_branch", "no_pkk_wasop", "waktu_tolak"]);
+            // Kolom yang ingin disembunyikan
+            const hiddenCols = new Set([
+                "name_branch", "no_pkk_wasop", "waktu_tolak",
+                "zone_lhgk", "no_pkk_lhgk", "PKK", "no_pkk",
+                "status_nota" // hide status_nota column
+            ]);
             const updatedHeaders = [
                 "NO",
                 ...headers.filter(h => !hiddenCols.has(h)),
@@ -993,96 +998,99 @@
 
         /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count with percentage, sorted by count desc */
 function renderPelabuhanCards(data) {
-	let pelabuhanKey = "PELABUHAN";
-	if (!globalHeaders.includes("PELABUHAN")) {
-		if (globalHeaders.includes("name_branch")) pelabuhanKey = "name_branch";
-		else pelabuhanKey = globalHeaders.find(h => h.toLowerCase().includes("pelabuhan")) || globalHeaders[0];
-	}
+    // Gunakan kolom zone sebagai referensi utama (case-insensitive: cari 'zone')
+    let zoneKey = null;
+    let branchKey = null;
+    for (const h of globalHeaders) {
+        if (h.toLowerCase() === "zone" || h.toLowerCase().includes("zone")) {
+            zoneKey = h;
+        }
+        if (h.toLowerCase() === "name_branch" || h.toLowerCase().includes("name_branch")) {
+            branchKey = h;
+        }
+    }
+    if (!zoneKey) zoneKey = globalHeaders[0];
+    if (!branchKey) branchKey = "name_branch";
 
-	// Count total and PKK-manual (empty no_pkk_inaportnet) per pelabuhan
-	const pelabuhanCounts = {};
-	const manualCounts = {};
-	data.forEach(row => {
-		const key = (row[pelabuhanKey] || "Unknown");
-		if (!pelabuhanCounts[key]) pelabuhanCounts[key] = 0;
-		pelabuhanCounts[key] += 1;
+    // Kelompokkan data berdasarkan zone, jika kosong gunakan name_branch
+    const zoneGroups = {};
+    data.forEach(row => {
+        let key = (row[zoneKey] || "").trim();
+        if (!key && branchKey && row[branchKey]) {
+            key = (row[branchKey] || "Unknown").trim();
+        }
+        if (!key) key = "Unknown";
+        if (!zoneGroups[key]) zoneGroups[key] = [];
+        zoneGroups[key].push(row);
+    });
 
-		const pkk = (row["no_pkk_inaportnet"] || "").trim();
-		if (!pkk) {
-			manualCounts[key] = (manualCounts[key] || 0) + 1;
-		}
-	});
+    const colors = [
+        {bg: "linear-gradient(135deg,#ff7e7e,#ffb199)", circle: "rgba(255,255,255,0.18)"},
+        {bg: "linear-gradient(135deg,#6a9bff,#8dc2ff)", circle: "rgba(255,255,255,0.16)"},
+        {bg: "linear-gradient(135deg,#7fe7c9,#4fbfa6)", circle: "rgba(255,255,255,0.14)"},
+        {bg: "linear-gradient(135deg,#7fd3ff,#5aa4ff)", circle: "rgba(255,255,255,0.12)"},
+        {bg: "linear-gradient(135deg,#c8a3ff,#ff80bf)", circle: "rgba(255,255,255,0.14)"},
+        {bg: "linear-gradient(135deg,#ffd56b,#ff8a5b)", circle: "rgba(255,255,255,0.12)"},
+        {bg: "linear-gradient(135deg,#b089ff,#6ae0ff)", circle: "rgba(255,255,255,0.10)"}
+    ];
 
-	// Convert counts to array and sort descending by count
-	const entries = Object.entries(pelabuhanCounts).sort((a, b) => b[1] - a[1]);
+    const rowDiv = document.getElementById("pelabuhanCardsRow");
+    rowDiv.innerHTML = "";
 
-	const colors = [
-		{bg: "linear-gradient(135deg,#ff7e7e,#ffb199)", circle: "rgba(255,255,255,0.18)"},
-		{bg: "linear-gradient(135deg,#6a9bff,#8dc2ff)", circle: "rgba(255,255,255,0.16)"},
-		{bg: "linear-gradient(135deg,#7fe7c9,#4fbfa6)", circle: "rgba(255,255,255,0.14)"},
-		{bg: "linear-gradient(135deg,#7fd3ff,#5aa4ff)", circle: "rgba(255,255,255,0.12)"},
-		{bg: "linear-gradient(135deg,#c8a3ff,#ff80bf)", circle: "rgba(255,255,255,0.14)"},
-		{bg: "linear-gradient(135deg,#ffd56b,#ff8a5b)", circle: "rgba(255,255,255,0.12)"},
-		{bg: "linear-gradient(135deg,#b089ff,#6ae0ff)", circle: "rgba(255,255,255,0.10)"}
-	];
+    // Urutkan zone/branch berdasarkan jumlah data terbanyak
+    const sortedZone = Object.entries(zoneGroups).sort((a, b) => b[1].length - a[1].length);
 
-	const rowDiv = document.getElementById("pelabuhanCardsRow");
-	rowDiv.innerHTML = "";
+    sortedZone.forEach(([zone, rows], idx) => {
+        const count = rows.length;
+        // Hitung PKK manual (no_pkk_inaportnet kosong)
+        const manualCount = rows.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
+        let pct = 0;
+        if (count > 0) pct = (manualCount / count) * 100;
+        const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
 
-	entries.forEach(([pelabuhan, count], idx) => {
-		const card = document.createElement("div");
-		card.className = "stat-card";
-		const c = colors[idx % colors.length];
-		card.style.background = c.bg;
+        const card = document.createElement("div");
+        card.className = "stat-card";
+        const c = colors[idx % colors.length];
+        card.style.background = c.bg;
 
-		// header with title and small spacer
-		const header = document.createElement("div");
-		header.className = "stat-header";
+        // header with title and small spacer
+        const header = document.createElement("div");
+        header.className = "stat-header";
 
-		const titleWrap = document.createElement("div");
-		titleWrap.style.display = "flex";
-		titleWrap.style.flexDirection = "column";
+        const titleWrap = document.createElement("div");
+        titleWrap.style.display = "flex";
+        titleWrap.style.flexDirection = "column";
 
-		const title = document.createElement("div");
-		title.className = "stat-title";
-		title.textContent = pelabuhan;
+        const title = document.createElement("div");
+        title.className = "stat-title";
+        title.textContent = zone;
 
-		// PKK Manual: count of rows with empty no_pkk_inaportnet for this pelabuhan
-		const manualCount = manualCounts[pelabuhan] || 0;
-		// calculate percentage (safe divide)
-		let pct = 0;
-		if (count > 0) pct = (manualCount / count) * 100;
-		// format: integer if whole, otherwise 1 decimal
-		const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
-		const manualLabel = document.createElement("div");
-		manualLabel.className = "pkk-manual";
-		manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
+        const manualLabel = document.createElement("div");
+        manualLabel.className = "pkk-manual";
+        manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
 
-		titleWrap.appendChild(title);
-		titleWrap.appendChild(manualLabel);
+        titleWrap.appendChild(title);
+        titleWrap.appendChild(manualLabel);
 
-		// place value separately to allow right alignment and adjusted size
-		const value = document.createElement("div");
-		value.className = "stat-value";
-		value.textContent = count;
+        const value = document.createElement("div");
+        value.className = "stat-value";
+        value.textContent = count;
 
-		header.appendChild(titleWrap);
-		// spacer to push value to right
-		const spacer = document.createElement("div");
-		spacer.style.flex = "1 1 auto";
-		header.appendChild(spacer);
+        header.appendChild(titleWrap);
+        const spacer = document.createElement("div");
+        spacer.style.flex = "1 1 auto";
+        header.appendChild(spacer);
 
-		card.appendChild(header);
-		card.appendChild(value);
+        card.appendChild(header);
+        card.appendChild(value);
 
-		// decorative circle
-		const circle = document.createElement("div");
-		circle.className = "card-circle";
-		circle.style.background = c.circle;
-		card.appendChild(circle);
+        const circle = document.createElement("div");
+        circle.className = "card-circle";
+        circle.style.background = c.circle;
+        card.appendChild(circle);
 
-		rowDiv.appendChild(card);
-	});
+        rowDiv.appendChild(card);
+    });
 }
 
         async function main() {
@@ -1189,4 +1197,5 @@ function renderPelabuhanCards(data) {
   }
 </script>
 </body>
+</html>
 </html>
