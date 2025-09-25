@@ -597,6 +597,9 @@
                 <tr id="table-header">
                     <!-- Table headers will be dynamically inserted here -->
                 </tr>
+                <tr id="table-filter-row">
+                    <!-- Filter inputs will be dynamically inserted here -->
+                </tr>
             </thead>
             <tbody id="table-body">
                 <!-- Table rows will be dynamically inserted here -->
@@ -666,54 +669,97 @@
         };
 
         function populateTable(headers, data) {
-            const tableHeader = document.getElementById("table-header");
-            const tableBody = document.getElementById("table-body");
+        const tableHeader = document.getElementById("table-header");
+        const tableBody = document.getElementById("table-body");
+        const tableFilterRow = document.getElementById("table-filter-row");
 
-            // Clear existing table content
-            tableHeader.innerHTML = "";
-            tableBody.innerHTML = "";
+        // Clear existing table content
+        tableHeader.innerHTML = "";
+        tableBody.innerHTML = "";
+        tableFilterRow.innerHTML = "";
 
-            // Kolom yang ingin disembunyikan
-            const hiddenCols = new Set([
-                "name_branch", "no_pkk_wasop", "waktu_tolak",
-                "zone_lhgk", "no_pkk_lhgk", "PKK", "no_pkk",
-                "status_nota" // hide status_nota column
-            ]);
-            const updatedHeaders = [
-                "NO",
-                ...headers.filter(h => !hiddenCols.has(h)),
-                "PELABUHAN",
-                "PELAYARAN"
-            ];
+        // Kolom yang ingin disembunyikan
+        const hiddenCols = new Set([
+            "name_branch", "no_pkk_wasop", "waktu_tolak",
+            "zone_lhgk", "no_pkk_lhgk", "PKK", "no_pkk",
+            "status_nota"
+        ]);
+        const updatedHeaders = [
+            "NO",
+            ...headers.filter(h => !hiddenCols.has(h)),
+            "PELABUHAN",
+            "PELAYARAN"
+        ];
 
-            // Populate table headers (pakai label tampilan)
-            updatedHeaders.forEach(header => {
-                const th = document.createElement("th");
-                th.textContent = HEADER_MAP[header] || header;
-                tableHeader.appendChild(th);
-            });
+        // Populate table headers (pakai label tampilan)
+        updatedHeaders.forEach(header => {
+            const th = document.createElement("th");
+            th.textContent = HEADER_MAP[header] || header;
+            tableHeader.appendChild(th);
+        });
 
-            // Populate table rows (tetap pakai key asli untuk ambil data)
-            data.forEach((row, index) => {
-                const tr = document.createElement("tr");
-                updatedHeaders.forEach(header => {
-                    const td = document.createElement("td");
-                    if (header === "NO") {
-                        td.textContent = index + 1;
-                    } else if (header === "PELABUHAN") {
-                        td.textContent = row["name_branch"] || "";
-                    } else if (header === "PELAYARAN") {
-                        if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
-                        else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
-                        else td.textContent = "";
-                    } else {
-                        td.textContent = row[header] || "";
-                    }
-                    tr.appendChild(td);
+        // --- Filter row ---
+        updatedHeaders.forEach(header => {
+            const th = document.createElement("th");
+            if (header === "NO") {
+                th.innerHTML = "";
+            } else {
+                const input = document.createElement("input");
+                input.type = "text";
+                input.className = "form-control form-control-sm";
+                input.style.minWidth = "60px";
+                input.placeholder = "Filter";
+                input.addEventListener("input", function() {
+                    filterTableByHeader();
                 });
-                tableBody.appendChild(tr);
+                th.appendChild(input);
+            }
+            tableFilterRow.appendChild(th);
+        });
+
+        // Populate table rows (tetap pakai key asli untuk ambil data)
+        data.forEach((row, index) => {
+            const tr = document.createElement("tr");
+            updatedHeaders.forEach(header => {
+                const td = document.createElement("td");
+                if (header === "NO") {
+                    td.textContent = index + 1;
+                } else if (header === "PELABUHAN") {
+                    td.textContent = row["name_branch"] || "";
+                } else if (header === "PELAYARAN") {
+                    if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
+                    else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
+                    else td.textContent = "";
+                } else {
+                    td.textContent = row[header] || "";
+                }
+                tr.appendChild(td);
             });
-        }
+            tableBody.appendChild(tr);
+        });
+    }
+
+    // Filter table by filter row input
+    function filterTableByHeader() {
+        const tableBody = document.getElementById("table-body");
+        const tableFilterRow = document.getElementById("table-filter-row");
+        const filterInputs = Array.from(tableFilterRow.querySelectorAll("input"));
+        const trs = Array.from(tableBody.querySelectorAll("tr"));
+
+        trs.forEach(tr => {
+            let show = true;
+            filterInputs.forEach((input, idx) => {
+                const val = input.value.trim().toLowerCase();
+                if (val) {
+                    const td = tr.children[idx + 1]; // skip NO column
+                    if (td && !td.textContent.toLowerCase().includes(val)) {
+                        show = false;
+                    }
+                }
+            });
+            tr.style.display = show ? "" : "none";
+        });
+    }
 
         function aggregateByMonth(data) {
             const monthCounts = {};
