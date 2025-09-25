@@ -4,39 +4,60 @@ import subprocess
 import csv
 import time
 
-def run_script_stream(script_path, cwd, timeout=None):
-    """Run a Python script with the same interpreter, stream its stdout+stderr, return rc."""
-    cmd = [sys.executable, script_path]
-    print(f"\n>>> Running: {' '.join(cmd)} (cwd={cwd})\n")
-    try:
-        proc = subprocess.Popen(cmd, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    except Exception as e:
-        print(f"Failed to start {script_path}: {e}")
-        return 127
+def run_script(script_name, base_dir, timeout=600):
+    """Run a Python script and stream its output. Return exit code."""
+    script_path = os.path.join(base_dir, script_name)
+    if not os.path.exists(script_path):
+        print(f"Error: required script not found: {script_path}")
+        sys.exit(3)
 
-    start = time.time()
+    # Gunakan unbuffered mode (-u) agar output langsung tampil realtime
+    cmd = [sys.executable, "-u", script_path]
+    print(f"\n>>> Running {script_name} ... (cwd={base_dir})\n")
+    sys.stdout.flush()
+
     try:
-        for line in iter(proc.stdout.readline, ''):
-            if not line:
+        proc = subprocess.Popen(
+            cmd,
+            cwd=base_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1
+        )
+        start = time.time()
+        last_output = time.time()
+
+        while True:
+            line = proc.stdout.readline()
+            if line:
+                print(line, end="")
+                sys.stdout.flush()
+                last_output = time.time()
+            elif proc.poll() is not None:
                 break
-            print(line, end="")
+            else:
+                # Kalau 5 detik tidak ada output, kasih progress dot
+                if time.time() - last_output > 5:
+                    print(".", end="", flush=True)
+                    last_output = time.time()
+
             if timeout and (time.time() - start) > timeout:
                 proc.kill()
-                print(f"\nTimeout reached for {script_path}")
+                print(f"\nTimeout reached for {script_name}")
                 return 124
+
         proc.wait(timeout=timeout)
         return proc.returncode
+
     except subprocess.TimeoutExpired:
         proc.kill()
-        print(f"\nTimeout expired for {script_path}")
+        print(f"\nTimeout expired for {script_name}")
         return 124
     except Exception as e:
-        try:
-            proc.kill()
-        except Exception:
-            pass
-        print(f"Error while running {script_path}: {e}")
+        print(f"Error while running {script_name}: {e}")
         return 128
+
 
 def concat_csv_files(input_files, output_file):
     """Concatenate CSV files vertically, preserving header from the first file."""
@@ -69,20 +90,15 @@ def concat_csv_files(input_files, output_file):
         print(f"Error writing '{output_file}': {e}")
         return False
 
+
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    # Urutan eksekusi: spb.py, wasop.py, lhgk.py, lookup.py
-    scripts = ["spb.py", "wasop.py", "lhgk.py", "lookup.py"]
-    expected = {"spb.py": "spb.csv", "wasop.py": "wasop.csv", "lhgk.py": "lhgk.csv", "lookup.py": "gabung.csv"}
-
-    SCRIPT_TIMEOUT = 600
+    # Urutan eksekusi sesuai permintaan
+    scripts = ["lhgk.py", "wasop.py", "spb.py", "lookup.py"]
+    SCRIPT_TIMEOUT = 1500
 
     for scr in scripts:
-        scr_path = os.path.join(base_dir, scr)
-        if not os.path.exists(scr_path):
-            print(f"Error: required script not found: {scr_path}")
-            sys.exit(3)
-        rc = run_script_stream(scr_path, cwd=base_dir, timeout=SCRIPT_TIMEOUT)
+        rc = run_script(scr, base_dir, timeout=SCRIPT_TIMEOUT)
         if rc == 124:
             print(f"\nScript {scr} timeout after {SCRIPT_TIMEOUT} seconds. Aborting.")
             sys.exit(7)
@@ -96,7 +112,14 @@ def main():
     gabung_path = os.path.join(base_dir, "gabung.csv")
     lhgk_path = os.path.join(base_dir, "lhgk.csv")
 
-    missing = [name for name, path in (("lhgk.csv", lhgk_path), ("spb.csv", spb_path), ("wasop.csv", wasop_path)) if not os.path.exists(path)]
+    missing = [
+        name for name, path in (
+            ("lhgk.csv", lhgk_path),
+            ("spb.csv", spb_path),
+            ("wasop.csv", wasop_path)
+        )
+        if not os.path.exists(path)
+    ]
     if missing:
         print(f"\nError: expected output files missing: {', '.join(missing)}")
         sys.exit(5)
@@ -116,6 +139,6 @@ def main():
     print(f" - {spb_path}")
     print(f" - {gabung_path}")
 
+
 if __name__ == "__main__":
     main()
-
