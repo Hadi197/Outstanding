@@ -103,16 +103,17 @@
             gap: 8px;
         }
         .stat-title {
-            /* single-line title: no wrapping, truncate with ellipsis */
-            font-size: clamp(0.44rem, 0.64vw, 0.56rem); /* 20% smaller */
+            /* 25% lebih besar dari sebelumnya, dan wrap jika lebih dari 2 kata */
+            font-size: clamp(0.69rem, 1vw, 0.88rem); /* naik 25% dari 0.55rem/0.8vw/0.7rem */
             font-weight: 700;
             opacity: 0.95;
             max-width: 100%;
-            white-space: nowrap !important;
-            overflow: hidden;
+            white-space: normal !important; /* allow wrapping */
+            overflow-wrap: break-word;
+            word-break: break-word;
             text-overflow: ellipsis;
             display: block;
-            line-height: 1.1;
+            line-height: 1.15;
         }
         .stat-value {
             /* smaller numeric value for compact card layout */
