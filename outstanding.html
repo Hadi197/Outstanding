@@ -536,7 +536,15 @@
 			color: rgba(6,36,49,0.9);
 			text-shadow: none;
 		}
-
+		.pelayaran-stats {
+    font-size: 0.62rem;
+    font-weight: 600;
+    line-height: 1.05;
+    margin-top: 2px;
+    color: rgba(255,255,255,0.90);
+    letter-spacing: .3px;
+}
+.stat-card.light .pelayaran-stats { color: #06313f; }
     </style>
 </head>
 <body>
@@ -1086,24 +1094,24 @@ function renderPelabuhanCards(data) {
 
     const rowDiv = document.getElementById("pelabuhanCardsRow");
     rowDiv.innerHTML = "";
-
-    // Urutkan zone/branch berdasarkan jumlah data terbanyak
     const sortedZone = Object.entries(zoneGroups).sort((a, b) => b[1].length - a[1].length);
 
     sortedZone.forEach(([zone, rows], idx) => {
         const count = rows.length;
-        // Hitung PKK manual (no_pkk_inaportnet kosong)
         const manualCount = rows.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
         let pct = 0;
         if (count > 0) pct = (manualCount / count) * 100;
         const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
+
+        // Hitung DN / LN (mapping: DN = PKK.DN, LN = PKK.LN)
+        const dnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
+        const lnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
 
         const card = document.createElement("div");
         card.className = "stat-card";
         const c = colors[idx % colors.length];
         card.style.background = c.bg;
 
-        // header with title and small spacer
         const header = document.createElement("div");
         header.className = "stat-header";
 
@@ -1114,13 +1122,20 @@ function renderPelabuhanCards(data) {
         const title = document.createElement("div");
         title.className = "stat-title";
         title.textContent = zone;
-
-        const manualLabel = document.createElement("div");
-        manualLabel.className = "pkk-manual";
-        manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
-
         titleWrap.appendChild(title);
-        titleWrap.appendChild(manualLabel);
+
+        if (manualCount > 0) {
+            const manualLabel = document.createElement("div");
+            manualLabel.className = "pkk-manual";
+            manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
+            titleWrap.appendChild(manualLabel);
+        }
+
+        // Tambahkan statistik pelayaran DN / LN
+        const pelayaranStats = document.createElement("div");
+        pelayaranStats.className = "pelayaran-stats";
+        pelayaranStats.innerHTML = `DN = ${dnCount}<br>LN = ${lnCount}`;
+        titleWrap.appendChild(pelayaranStats);
 
         const value = document.createElement("div");
         value.className = "stat-value";
@@ -1247,5 +1262,4 @@ function renderPelabuhanCards(data) {
   }
 </script>
 </body>
-</html>
 </html>
