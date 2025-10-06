@@ -56,7 +56,7 @@ def month_range(start_date, end_date):
 
 if __name__ == "__main__":
     # Contoh penggunaan
-    start = "2022-01-01"
+    start = "2023-01-01"
     end = "2025-12-31"
     record = 100000
     all_rows = []
