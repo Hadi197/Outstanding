@@ -23,7 +23,7 @@ HEADERS = {
     "id-zone": ""
 }
 
-def get_month_periods(start_year=2024):
+def get_month_periods(start_year=2025):
     now = datetime.now()
     periods = []
     year = start_year
@@ -78,7 +78,7 @@ def save_to_csv(data, filename="spb.csv"):
 
 def scrape_all_data():
     all_data = []
-    periods = get_month_periods(start_year=2024)
+    periods = get_month_periods(start_year=2025)
     for start, end in periods:
         periode_str = f"{start} s/d {end}"
         print(f"[i] Scraping periode: {periode_str}")
