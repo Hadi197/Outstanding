@@ -123,17 +123,6 @@ def fetch_data(base_url, headers, params):
     except Exception as e:
         print(f"❌ Failed to fetch data: {e}")
         return None
-
-# Hapus kode main() yang tidak selesai/terpotong di bawah ini
-# Mulai dari baris:
-#     base_url = "https://phinnisi.pelindo.co.id:9018/api/monitoring/ina-spb"
-#     headers = { ... }
-#     params = {
-#         "data": "",
-#         "record": 100000,
-#         "page
-
-# Ganti dengan entry point yang benar:
 if __name__ == "__main__":
     all_data = scrape_all_data()
     if all_data:
