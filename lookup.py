@@ -118,6 +118,9 @@ def main(argv: list[str]) -> int:
         indicator=False,
     )
 
+    # Hapus duplikat berdasarkan no_pkk_inaportnet (kolom utama dari WASOP)
+    merged = merged.drop_duplicates(subset=[wasop_key_col], keep="first")
+
     # Normalisasi key di hasil akhir
     if spb_key_col in merged.columns:
         merged[spb_key_col] = normalize_key_series(merged[spb_key_col])

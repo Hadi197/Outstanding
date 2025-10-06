@@ -663,6 +663,7 @@
             loa: "LOA",
             waktu_tolak: "TGL/JAM",
             vessel_name: "NAMA KAPAL",
+            vessel_name_spb: "NAMA KAPAL", // mapping baru
             NO: "NO",
             PELABUHAN: "PELABUHAN",
             PELAYARAN: "PELAYARAN",
@@ -683,7 +684,9 @@
         const hiddenCols = new Set([
             "name_branch", "no_pkk_wasop", "waktu_tolak",
             "zone_lhgk", "no_pkk_lhgk", "PKK", "no_pkk",
-            "status_nota"
+            "status_nota",
+            "nomor_pkk",           // hide kolom nomor_pkk
+            "vessel_name_wasop"    // hide kolom vessel_name_wasop
         ]);
         const updatedHeaders = [
             "NO",
