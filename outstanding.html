@@ -4,619 +4,373 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Outstanding Wilayah 3</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        },
+                        accent: {
+                            500: '#8b5cf6',
+                            600: '#7c3aed'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        table {
-            width: 100%;
-        }
-        table td, table th {
-            font-size: 0.7rem;
-        }
-        #tableContainer thead th {
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        /* Chart responsive: jangan melewati page, sejajar dengan tabel (.container) */
+        /* Chart specific styles for Chart.js */
         .chart-wrapper {
             width: 100%;
-            max-width: 100%; /* tetap dalam container */
-            height: 300px;   /* tinggi tetap */
+            height: 300px;
             margin: 0 auto;
-            box-sizing: border-box;
-            padding: 0 8px; /* beri sedikit padding agar tidak menempel ke tepi layar */
         }
-        /* Pastikan canvas mengikuti lebar wrapper dan menjaga tinggi yang diinginkan */
+        
         #barChart {
             width: 100% !important;
             height: 300px !important;
             display: block;
         }
-        /* Untuk layar kecil, kecilkan tinggi agar tetap proporsional */
-        @media (max-width: 576px) {
-            .chart-wrapper { height: 220px; }
-            #barChart { height: 220px !important; }
+        
+        @media (max-width: 640px) {
+            .chart-wrapper, #barChart { height: 220px !important; }
         }
 
-        /* Hide the chart title */
+        /* Hide chart title */
         #chartTitle { display: none !important; }
 
-        /* Cards panel & card design (updated for proportional layout) */
-        .cards-panel {
-            background: rgba(255,255,255,0.95); /* near-white panel */
-            border: 1px solid rgba(15,40,55,0.06);
-            color: #0b2b3a;
-            box-shadow: 0 8px 20px rgba(10,20,30,0.06);
-            border-radius: 18px;
-            padding: 18px;
-            backdrop-filter: none;
-            margin-bottom: 12px;
-        }
-
-        /* Ensure card text is readable on light background */
-        .stat-title, .stat-value {
-            color: #062431; /* dark blue/teal */
-        }
-
-        /* Table adjustments for light background */
-        .table {
-            background-color: transparent;
-            color: #062431;
-        }
-        .table thead th {
-            background-color: rgba(255,255,255,0.85) !important;
-            color: #062431 !important;
-        }
-        .table tbody td {
-            background-color: rgba(255,255,255,0.95);
-            color: #062431;
-        }
-
-        /* Grid layout: responsive columns that stay proportional */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 16px;
-            align-items: stretch;
-        }
-
-        .stat-card {
-            min-height: 96px;           /* 20% smaller than 120px */
-            padding: 12.8px 14.4px;     /* 20% smaller than 16px 18px */
-            border-radius: 9.6px;       /* 20% smaller than 12px */
-            color: #fff;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 8px 20px rgba(20,30,50,0.06);
-            transition: transform .18s ease, box-shadow .18s ease;
-        }
-        .stat-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(20,30,50,0.12); }
-
-        /* Title left, value right (updated for responsive sizes & wrapping) */
-        .stat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 8px;
-        }
-        .stat-title {
-            /* 25% lebih besar dari sebelumnya, dan wrap jika lebih dari 2 kata */
-            font-size: clamp(0.69rem, 1vw, 0.88rem); /* naik 25% dari 0.55rem/0.8vw/0.7rem */
-            font-weight: 700;
-            opacity: 0.95;
-            max-width: 100%;
-            white-space: normal !important; /* allow wrapping */
-            overflow-wrap: break-word;
-            word-break: break-word;
-            text-overflow: ellipsis;
-            display: block;
-            line-height: 1.15;
-        }
-        .stat-value {
-            /* smaller numeric value for compact card layout */
-            font-size: clamp(0.76rem, 1.76vw, 1.12rem); /* 20% smaller */
-            font-weight: 900;
-            line-height: 1;
-            text-align: right;
-            white-space: nowrap;
-            min-width: 2.08em; /* 20% smaller than 2.6em */
-        }
-
-        /* decorative circle positioned bottom-right for subtle effect */
-        .stat-card .card-circle {
-            position: absolute;
-            width: 96px;   /* 20% smaller than 120px */
-            height: 96px;
-            border-radius: 50%;
-            right: -24px;  /* 20% smaller than -30px */
-            bottom: -24px;
-            opacity: 0.12;
-            filter: blur(8px);
-            pointer-events: none;
-        }
-
-        /* sample gradient presets (used inline as style in JS) */
-        /* responsive adjustments */
-        @media (max-width: 600px) {
-            .stat-card { min-height: 80px; padding: 9.6px; }
-            /* smaller value on mobile */
-            .stat-value { font-size: clamp(0.68rem, 3.36vw, 0.96rem); }
-            /* make mobile title even smaller */
-            .stat-title { font-size: clamp(0.4rem, 1.76vw, 0.53rem); }
-        }
-
-        /* Hide the specific filter labels */
+        /* Hide filter labels */
         label[for="pelabuhanFilter"],
         label[for="yearFilter"] {
             display: none !important;
         }
 
-        /* Page light-blue background + default foreground color */
-        body {
-            background-color: #e6f7ff; /* light blue */
-            color: #0b2b3a; /* dark text for readability */
+        /* Tab styling */
+        .tab-button {
+            position: relative;
+        }
+        
+        .tab-button:hover {
+            background-color: #f9fafb;
+        }
+        
+        .tab-button.active {
+            background-color: #eff6ff !important;
+            color: #2563eb !important;
+        }
+        
+        .tab-content {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-		/* Neo button asset: neon/glass button with improved contrast */
-		.neo-button {
-			--bg: linear-gradient(90deg,#075985 0%, #0b6fb3 60%); /* darker */
-			--glow: rgba(11,111,179,0.28);
-			display: inline-block;
-			padding: 8px 14px;
-			font-weight: 800;
-			font-size: 0.9rem;
-			color: #ffffff;
-			background: var(--bg);
-			border: 1px solid rgba(4,30,60,0.12);
-			border-radius: 10px;
-			position: relative;
-			cursor: pointer;
-			overflow: hidden;
-			transition: transform .12s ease, box-shadow .18s ease;
-			box-shadow: 0 10px 30px rgba(4,30,60,0.18), 0 0 28px rgba(11,111,179,0.10) inset;
-			text-shadow: 0 1px 2px rgba(2,10,18,0.45);
-		}
-		.neo-button:focus { outline: none; box-shadow: 0 12px 36px var(--glow); transform: translateY(-1px); }
-		.neo-button:hover { transform: translateY(-3px); box-shadow: 0 18px 46px var(--glow); }
+        /* Card decorative circle */
+        .stat-card .card-circle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            right: -15px;
+            bottom: -15px;
+            opacity: 0.15;
+            filter: blur(6px);
+            pointer-events: none;
+        }
 
-		/* animated sheen — reduce intensity so it won't wash text */
-		.neo-button::before {
-			content: "";
-			position: absolute;
-			top: -40%;
-			left: -40%;
-			width: 40%;
-			height: 180%;
-			background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.32) 50%, rgba(255,255,255,0) 100%);
-			transform: rotate(-25deg);
-			opacity: 0.6;
-			transition: none;
-			animation: sheen 3.2s linear infinite;
-			pointer-events: none;
-		}
-		@keyframes sheen {
-			0% { left: -40%; opacity: 0; }
-			10% { opacity: 0.9; }
-			50% { left: 120%; opacity: 0.6; }
-			90% { opacity: 0; }
-			100% { left: 120%; opacity: 0; }
-		}
+        /* Card text styling */
+        .stat-title {
+            font-size: clamp(0.7rem, 1vw, 0.9rem);
+            font-weight: 700;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        
+        .stat-value {
+            font-size: clamp(0.8rem, 1.8vw, 1.2rem);
+            font-weight: 900;
+            line-height: 1;
+        }
 
-		/* small inner highlight (bottom edge) */
-		.neo-button::after {
-			content: "";
-			position: absolute;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			height: 6px;
-			background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
-			pointer-events: none;
-			border-bottom-left-radius: 10px;
-			border-bottom-right-radius: 10px;
-			opacity: 0.85;
-		}
+        .pkk-manual {
+            font-size: 0.75rem;
+            font-weight: 800;
+            margin-top: 6px;
+            color: rgba(255,255,255,0.95);
+            text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
 
-		/* accessible reduced motion */
-		@media (prefers-reduced-motion: reduce) {
-			.neo-button::before { animation: none; opacity: 0.35; }
-		}
-
-		/* Brighter neo-select: white / very-light-blue, dark text, subtle inner highlight */
-		.neo-select {
-			--bg: linear-gradient(180deg,#ffffff 0%, #f2fbff 60%);
-			appearance: none;
-			-webkit-appearance: none;
-			-moz-appearance: none;
-			background: var(--bg);
-			color: #062431; /* dark text for readability */
-			border: 1px solid rgba(6,36,49,0.10);
-			padding: 8px 40px 8px 12px;
-			border-radius: 10px;
-			font-weight: 700;
-			font-size: 0.9rem;
-			box-shadow: 0 6px 18px rgba(6,36,49,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
-			/* dark arrow */
-			background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 24 24"><path fill="%23062231" d="M7 10l5 5 5-5z"/></svg>');
-			background-repeat: no-repeat;
-			background-position: right 12px center;
-			cursor: pointer;
-		}
-		.neo-select:hover {
-			box-shadow: 0 8px 22px rgba(6,36,49,0.06), inset 0 1px 0 rgba(255,255,255,0.85);
-			transform: translateY(-1px);
-		}
-		.neo-select:focus {
-			outline: none;
-			box-shadow: 0 10px 30px rgba(6,36,49,0.10);
-			transform: translateY(-1px);
-		}
-
-		@media (max-width: 576px) {
-			.neo-select { font-size: 0.82rem; padding: 7px 34px 7px 8px; }
-		}
-
-		/* keep default "ALL" option readable */
-		#pelabuhanFilter option[value="ALL"],
-		#yearFilter option[value="ALL"],
-		.neo-select option[value="ALL"] {
-			color: #333333 !important;
-		}
-
-		/* wrapper to allow animated ring around select (select pseudo-elems unreliable) */
-		.neo-select-wrap {
-			position: relative;
-			display: inline-block;
-			border-radius: 12px;
-			padding: 2px; /* space for animated ring */
-			/* ensure wrapper doesn't affect layout too much */
-			vertical-align: middle;
-		}
-
-		/* animated light ring (subtle) */
-		.neo-select-wrap::before {
-			content: "";
-			position: absolute;
-			inset: 0;               /* cover wrapper area */
-			border-radius: 14px;    /* slightly larger than select */
-			pointer-events: none;
-			opacity: 0;             /* shown only on hover/focus-within */
-			background: linear-gradient(90deg,
-				rgba(255,255,255,0) 0%,
-				rgba(255,255,255,0.75) 45%,
-				rgba(255,255,255,0) 100%);
-			filter: blur(8px);
-			transform: translateX(-120%);
-		}
-
-		/* run sweep continuously but visible only on hover/focus */
-		.neo-select-wrap:focus-within::before,
-		.neo-select-wrap:hover::before {
-			opacity: 1;
-			animation: lightSweep 2.6s linear infinite;
-		}
-
-		@keyframes lightSweep {
-			0%   { transform: translateX(-120%); }
-			50%  { transform: translateX(20%); }
-			100% { transform: translateX(120%); }
-		}
-
-		/* subtle static ring as border accent (low opacity) */
-		.neo-select-wrap::after {
-			content: "";
-			position: absolute;
-			inset: 0;
-			border-radius: 14px;
-			pointer-events: none;
-			box-shadow: 0 0 0 1px rgba(6,36,49,0.06) inset;
-		}
-
-		/* ensure the select stays above the ring */
-		.neo-select {
-			position: relative;
-			z-index: 2;
-			border-radius: 10px;
-		}
-
-		/* Chart card: container around chart with soft shadow and rounded corners */
-		.chart-card {
-			background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,255,0.98));
-			border-radius: 16px;
-			padding: 12px;
-			box-shadow: 0 18px 40px rgba(12,40,70,0.08), 0 6px 20px rgba(6,36,49,0.04) inset;
-			margin: 0 auto;
-			max-width: 100%;
-			/* keep layout consistent with container */
-			box-sizing: border-box;
-		}
-
-		/* make canvas pop a bit */
-		.chart-card #barChart {
-			border-radius: 10px;
-			box-shadow: 0 8px 28px rgba(6,36,49,0.06);
-			background: transparent;
-			display: block;
-		}
-
-		/* New header banner (curved gradients like sample) */
-		.page-header {
-			position: relative;
-			width: 100%;
-			height: 92px;         /* smaller, more proportional */
-			max-height: 14vh;
-			min-height: 72px;
-			margin: 8px 0 14px;
-			overflow: visible;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			background: transparent;
-		}
-		.page-header .header-ribbon {
-			position: absolute;
-			left: 6%;
-			right: 6%;
-			top: 8px;
-			bottom: 8px;
-			border-radius: 28px;
-			overflow: visible;
-			display: block;
-			/* subtle shadow like sample */
-			box-shadow: 0 12px 22px rgba(6,36,49,0.06), 0 5px 10px rgba(6,36,49,0.03) inset;
-		}
-		/* center blue ribbon */
-		.page-header .ribbon-center {
-			position: absolute;
-			left: 13%;
-			right: 22%;
-			top: 8px;
-			bottom: 10px;
-			border-radius: 22px;
-			background: linear-gradient(90deg,#60bffb 0%, #49c6f6 40%, #2db6ff 70%, #8fd9ff 100%);
-			box-shadow: inset 0 -12px 36px rgba(0,0,0,0.03);
-			transform: skewX(-6deg);
-		}
-		/* left purple cap */
-		.page-header .ribbon-left {
-			position: absolute;
-			left: 4%;
-			width: 20%;
-			top: 2%;
-			bottom: 2%;
-			border-radius: 22px;
-			background: linear-gradient(135deg,#8e3dbf 0%, #d05aa9 60%);
-			transform: translateX(-6%) skewX(-6deg);
-			box-shadow: inset 0 -14px 30px rgba(0,0,0,0.03);
-		}
-		/* right magenta cap */
-		.page-header .ribbon-right {
-			position: absolute;
-			right: 4%;
-			width: 24%;
-			top: 2%;
-			bottom: 2%;
-			border-radius: 22px;
-			background: linear-gradient(135deg,#a13399 0%, #ff7bbf 60%);
-			transform: translateX(6%) skewX(-6deg);
-			box-shadow: inset 0 -14px 30px rgba(0,0,0,0.03);
-		}
-		.page-header .header-accent {
-			position: absolute;
-			left: 8%;
-			right: 8%;
-			top: 6px;
-			bottom: 12px;
-			pointer-events: none;
-			border-radius: 28px;
-			/* thin white outline highlight */
-			box-shadow: 0 0 0 4px rgba(255,255,255,0.02) inset;
-		}
-		.page-header .header-title {
-			position: relative;
-			z-index: 40;
-			font-weight: 900;
-			letter-spacing: .06em;
-			text-transform: uppercase;
-			font-size: clamp(1.2rem, 3.2vw, 2.2rem); /* reduced */
-			color: white;
-			-webkit-text-stroke: 0.5px rgba(0,0,0,0.06);
-			text-shadow: 0 5px 12px rgba(0,0,0,0.14);
-			font-family: 'Arial Black', Arial, sans-serif;
-			padding: 8px 18px;
-			white-space: nowrap;           /* keep header on one line */
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
-		/* small decorative curve overlay */
-		.page-header::before {
-			content: "";
-			position: absolute;
-			left: 2%;
-			right: 2%;
-			bottom: -6px;
-			height: 12px;
-			border-radius: 50%;
-			background: linear-gradient(180deg, rgba(0,0,0,0.06), rgba(0,0,0,0.00));
-			filter: blur(5px);
-			opacity: 0.6;
-			z-index: 1;
-		}
-
-		@media (max-width: 576px) {
-			.page-header { height: 78px; margin: 6px 0 10px; }
-			.page-header .ribbon-left { width: 28%; left: 2%; }
-			.page-header .ribbon-right { width: 34%; right: 2%; }
-			.page-header .ribbon-center { left: 18%; right: 28%; }
-			.cards-section-title { display:none; } /* kept for legacy if present */
-			.page-header .header-title { font-size: clamp(1.0rem, 5.0vw, 1.6rem); padding: 6px 12px; }
-		}
-
-		/* Chart hero: decorative background left/right with diagonal pattern */
-		.chart-hero {
-			position: relative;
-			background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,255,255,0.98));
-			padding: 28px 0;
-			overflow: visible;
-		}
-		/* Center inner area that keeps chart content readable */
-		.chart-hero .chart-inner {
-			position: relative;
-			max-width: 1200px;
-			margin: 0 auto;
-			padding: 8px 20px;
-			box-sizing: border-box;
-		}
-
-		/* Decorative left / right panels using diagonal repeating gradients */
-		.chart-hero::before,
-		.chart-hero::after {
-			content: "";
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			width: 36%;
-			pointer-events: none;
-			opacity: 0.92;
-			z-index: 0;
-		}
-		.chart-hero::before {
-			left: 0;
-			background:
-				repeating-linear-gradient(135deg,
-					rgba(29, 186, 183, 0.12) 0 36px,
-					rgba(255,255,255,0) 36px 72px),
-				linear-gradient(135deg, rgba(29,186,183,0.06), rgba(29,186,183,0.02));
-			transform-origin: left center;
-		}
-		.chart-hero::after {
-			right: 0;
-			background:
-				repeating-linear-gradient(225deg,
-					rgba(122, 61, 160, 0.10) 0 36px,
-					rgba(255,255,255,0) 36px 72px),
-				linear-gradient(225deg, rgba(122,61,160,0.04), rgba(122,61,160,0.01));
-			transform-origin: right center;
-		}
-		/* Make the chart-card stand above decorative panels */
-		.chart-hero .chart-card {
-			position: relative;
-			z-index: 10;
-			/* slightly lifted look */
-			margin: 0 auto;
-			box-shadow: 0 20px 40px rgba(6,36,49,0.06);
-		}
-
-		/* Responsive tweaks so patterns don't crowd small screens */
-		@media (max-width: 900px) {
-			.chart-hero::before,
-			.chart-hero::after { width: 28%; }
-		}
-		@media (max-width: 576px) {
-			.chart-hero::before,
-			.chart-hero::after { width: 20%; opacity: 0.9; }
-			.chart-hero { padding: 18px 0; }
-		}
-
-		/* PKK Manual small label for cards */
-		.pkk-manual {
-			font-size: 0.78rem;
-			font-weight: 800;
-			margin-top: 6px;
-			color: rgba(255,255,255,0.95); /* white-on-gradient for visibility */
-			text-shadow: 0 3px 10px rgba(0,0,0,0.12);
-			letter-spacing: 0.02em;
-		}
-
-		/* If card background is light/dark make a fallback darker label */
-		.stat-card.light .pkk-manual {
-			color: rgba(6,36,49,0.9);
-			text-shadow: none;
-		}
-		.pelayaran-stats {
-    font-size: 0.62rem;
-    font-weight: 600;
-    line-height: 1.05;
-    margin-top: 2px;
-    color: rgba(255,255,255,0.90);
-    letter-spacing: .3px;
-}
-.stat-card.light .pelayaran-stats { color: #06313f; }
+        .pelayaran-stats {
+            font-size: 0.6rem;
+            font-weight: 600;
+            line-height: 1.1;
+            margin-top: 4px;
+            color: rgba(255,255,255,0.9);
+        }
     </style>
 </head>
-<body>
-    <!-- New decorative header (approximation of provided sample) -->
-    <header class="page-header" role="banner" aria-label="Header banner">
-        <span class="header-ribbon" aria-hidden="true">
-            <span class="ribbon-left"></span>
-            <span class="ribbon-center"></span>
-            <span class="ribbon-right"></span>
-            <span class="header-accent"></span>
-        </span>
-        <div class="header-title">OUTSTANDING WILAYAH 3</div>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <!-- Modern Header with Tailwind -->
+    <header class="relative w-full bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 py-8 px-4 mb-8 overflow-hidden">
+        <!-- Background decoration -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        <div class="absolute top-0 left-0 w-64 h-64 bg-purple-400/20 rounded-full -translate-x-32 -translate-y-32 blur-3xl"></div>
+        <div class="absolute bottom-0 right-0 w-64 h-64 bg-pink-400/20 rounded-full translate-x-32 translate-y-32 blur-3xl"></div>
+        
+        <!-- Header content -->
+        <div class="relative z-10 text-center">
+            <h1 class="text-xl md:text-3xl lg:text-4xl font-black text-white mb-2 tracking-tight">
+                OUTSTANDING WILAYAH 3
+            </h1>
+            <p class="text-blue-100 text-xs md:text-sm font-medium">Dashboard Monitoring dan Analisis Data</p>
+        </div>
+        
+        <!-- Decorative elements -->
+        <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400"></div>
     </header>
 
-    <div class="container mb-4">
-	<div class="cards-panel">
-		<div id="pelabuhanCardsRow" class="cards-grid"></div>
-	</div>
-</div>
+    <!-- Tab Navigation -->
+    <div class="max-w-7xl mx-auto px-4 mb-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="flex border-b border-gray-200">
+                <button id="dashboardTab" class="tab-button active px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 bg-blue-50 text-blue-600 border-b-2 border-blue-600">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    Dashboard
+                </button>
+                <button id="tabelTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M8 18h8M8 6h8"></path>
+                    </svg>
+                    Tabel
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Chart section with decorative diagonal panels -->
-    <section class="chart-hero" aria-label="Chart banner">
-        <div class="chart-inner">
-            <h5 id="chartTitle" class="text-center" style="position:relative; z-index:12; margin-bottom:8px;">Departures per Month</h5>
-            <div class="chart-card">
-                <div class="chart-wrapper">
+    <!-- Dashboard Tab Content -->
+    <div id="dashboardContent" class="tab-content">
+        <!-- Stats Cards Section -->
+    <div class="max-w-7xl mx-auto px-4 mb-8">
+        <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-6">
+            <div id="pelabuhanCardsContainer">
+                <!-- Regional groups will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <section class="max-w-7xl mx-auto px-4 mb-8">
+        <!-- Chart Container -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <!-- Chart Header -->
+            <div class="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Data Visualization</h3>
+                            <p class="text-sm text-gray-600">Analisis Keberangkatan Bulanan</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1 text-xs text-gray-500">
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span>Live Data</span>
+                        </div>
+                        <button class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chart Content -->
+            <div class="p-6">
+                <h5 id="chartTitle" class="hidden">Departures per Month</h5>
+                
+                <!-- Chart Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-600 text-xs font-medium uppercase tracking-wide">Total Data</p>
+                                <p id="totalDataCount" class="text-2xl font-bold text-blue-900">-</p>
+                            </div>
+                            <div class="p-2 bg-blue-200 rounded-lg">
+                                <svg class="w-4 h-4 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-green-600 text-xs font-medium uppercase tracking-wide">Dalam Negeri</p>
+                                <p id="dnCount" class="text-2xl font-bold text-green-900">-</p>
+                            </div>
+                            <div class="p-2 bg-green-200 rounded-lg">
+                                <svg class="w-4 h-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-600 text-xs font-medium uppercase tracking-wide">Luar Negeri</p>
+                                <p id="lnCount" class="text-2xl font-bold text-purple-900">-</p>
+                            </div>
+                            <div class="p-2 bg-purple-200 rounded-lg">
+                                <svg class="w-4 h-4 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg p-4 border border-orange-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-orange-600 text-xs font-medium uppercase tracking-wide">PKK Manual</p>
+                                <p id="manualCount" class="text-2xl font-bold text-orange-900">-</p>
+                            </div>
+                            <div class="p-2 bg-orange-200 rounded-lg">
+                                <svg class="w-4 h-4 text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart Container -->
+                <div class="chart-wrapper bg-gray-50 rounded-xl border border-gray-200 p-4">
                     <canvas id="barChart"></canvas>
                 </div>
             </div>
         </div>
     </section>
+    </div>
 
-    <div class="container mb-3 d-flex align-items-end" style="gap:8px;">
-	<div>
-		<label for="pelabuhanFilter" class="form-label">Filter by Pelabuhan:</label>
-		<div class="neo-select-wrap" style="width:auto; display:inline-block;">
-			<select id="pelabuhanFilter" class="form-select form-select-sm neo-select" style="width: auto;">
-				<option value="ALL">Semua Pelabuhan</option>
-			</select>
-		</div>
-	</div>
-	<div>
-		<label for="yearFilter" class="form-label">Filter by Tahun:</label>
-		<div class="neo-select-wrap" style="width:auto; display:inline-block;">
-			<select id="yearFilter" class="form-select form-select-sm neo-select" style="width: auto;">
-				<option value="ALL">Semua Tahun</option>
-			</select>
-		</div>
-	</div>
-	<div class="ms-auto" style="display:flex; gap:8px; align-items:center;">
-		<button id="downloadGabungBtn" class="neo-button" type="button">Download Data</button>
-		<button id="clearFilterBtn" class="neo-button" type="button">Clear Filter</button>
-	</div>
-</div>
+    <!-- Tabel Tab Content -->
+    <div id="tabelContent" class="tab-content hidden">
+        <!-- Filters and Controls -->
+    <div class="max-w-7xl mx-auto px-4 mb-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <!-- Filters -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <div>
+                        <label for="pelabuhanFilter" class="hidden">Filter by Pelabuhan:</label>
+                        <select id="pelabuhanFilter" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-100 min-w-[160px]">
+                            <option value="ALL">Semua Pelabuhan</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="yearFilter" class="hidden">Filter by Tahun:</label>
+                        <select id="yearFilter" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-100 min-w-[120px]">
+                            <option value="ALL">Semua Tahun</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex gap-3">
+                    <button id="downloadGabungBtn" type="button" class="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Download Data
+                    </button>
+                    <button id="clearFilterBtn" type="button" class="px-6 py-2 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        Clear Filter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <div class="container mb-5" id="tableContainer">
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr id="table-header">
-                    <!-- Table headers will be dynamically inserted here -->
-                </tr>
-                <tr id="table-filter-row">
-                    <!-- Filter inputs will be dynamically inserted here -->
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- Table rows will be dynamically inserted here -->
-            </tbody>
-        </table>
+    <!-- Data Table -->
+    <div class="max-w-7xl mx-auto px-4 mb-8" id="tableContainer">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                        <tr id="table-header" class="text-center">
+                            <!-- Table headers will be dynamically inserted here -->
+                        </tr>
+                        <tr id="table-filter-row" class="bg-gray-100">
+                            <!-- Filter inputs will be dynamically inserted here -->
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-200">
+                        <!-- Table rows will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script>
+        // Tab functionality
+        function initTabs() {
+            const dashboardTab = document.getElementById('dashboardTab');
+            const tabelTab = document.getElementById('tabelTab');
+            const dashboardContent = document.getElementById('dashboardContent');
+            const tabelContent = document.getElementById('tabelContent');
+
+            function switchTab(activeTab, inactiveTab, activeContent, inactiveContent) {
+                // Update tab appearance
+                activeTab.classList.add('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                activeTab.classList.remove('text-gray-600');
+                
+                inactiveTab.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                inactiveTab.classList.add('text-gray-600');
+                
+                // Update content visibility
+                activeContent.classList.remove('hidden');
+                inactiveContent.classList.add('hidden');
+            }
+
+            dashboardTab.addEventListener('click', () => {
+                switchTab(dashboardTab, tabelTab, dashboardContent, tabelContent);
+            });
+
+            tabelTab.addEventListener('click', () => {
+                switchTab(tabelTab, dashboardTab, tabelContent, dashboardContent);
+            });
+        }
+
+        // Initialize tabs when page loads
+        document.addEventListener('DOMContentLoaded', initTabs);
         async function fetchCSV(filePath) {
             try {
                 const response = await fetch(filePath);
@@ -706,6 +460,7 @@
         // Populate table headers (pakai label tampilan)
         updatedHeaders.forEach(header => {
             const th = document.createElement("th");
+            th.className = "px-4 py-3 text-xs font-semibold uppercase tracking-wider";
             th.textContent = HEADER_MAP[header] || header;
             tableHeader.appendChild(th);
         });
@@ -713,12 +468,13 @@
         // --- Filter row ---
         updatedHeaders.forEach(header => {
             const th = document.createElement("th");
+            th.className = "px-4 py-2";
             if (header === "NO") {
                 th.innerHTML = "";
             } else {
                 const input = document.createElement("input");
                 input.type = "text";
-                input.className = "form-control form-control-sm";
+                input.className = "w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
                 input.style.minWidth = "60px";
                 input.placeholder = "Filter";
                 input.addEventListener("input", function() {
@@ -732,16 +488,25 @@
         // Populate table rows (tetap pakai key asli untuk ambil data)
         data.forEach((row, index) => {
             const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors duration-150";
             updatedHeaders.forEach(header => {
                 const td = document.createElement("td");
+                td.className = "px-4 py-3 text-xs whitespace-nowrap";
                 if (header === "NO") {
                     td.textContent = index + 1;
+                    td.className += " font-medium text-gray-900";
                 } else if (header === "PELABUHAN") {
                     td.textContent = row["name_branch"] || "";
                 } else if (header === "PELAYARAN") {
-                    if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) td.textContent = "Dalam Negeri";
-                    else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) td.textContent = "Luar Negeri";
-                    else td.textContent = "";
+                    if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) {
+                        td.textContent = "Dalam Negeri";
+                        td.className += " text-green-600 font-medium";
+                    } else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) {
+                        td.textContent = "Luar Negeri";
+                        td.className += " text-blue-600 font-medium";
+                    } else {
+                        td.textContent = "";
+                    }
                 } else {
                     td.textContent = row[header] || "";
                 }
@@ -780,7 +545,12 @@
                 if (!departureDate) return;
 
                 const monthKey = departureDate.slice(0, 7); // Extract YYYY-MM format
-                monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+                const year = departureDate.slice(0, 4); // Extract year
+                
+                // Only include data from 2024 and 2025
+                if (year === "2024" || year === "2025") {
+                    monthCounts[monthKey] = (monthCounts[monthKey] || 0) + 1;
+                }
             });
 
             const labels = Object.keys(monthCounts).sort();
@@ -791,128 +561,185 @@
         let selectedMonth = null;
 
         function buildBarChart(ctx, labels, values) {
-	const baseColors = [
-		"#e57373", "#ba68c8", "#7986cb", "#64b5f6", "#4dd0e1", "#81c784", "#ffd54f", "#ffb74d", "#2f4b7c"
+	// Modern gradient colors inspired by popular dashboard templates
+	const modernColors = [
+		{ primary: "#3B82F6", secondary: "#60A5FA", bg: "rgba(59, 130, 246, 0.1)" },
+		{ primary: "#10B981", secondary: "#34D399", bg: "rgba(16, 185, 129, 0.1)" },
+		{ primary: "#8B5CF6", secondary: "#A78BFA", bg: "rgba(139, 92, 246, 0.1)" },
+		{ primary: "#F59E0B", secondary: "#FBBF24", bg: "rgba(245, 158, 11, 0.1)" },
+		{ primary: "#EF4444", secondary: "#F87171", bg: "rgba(239, 68, 68, 0.1)" },
+		{ primary: "#06B6D4", secondary: "#22D3EE", bg: "rgba(6, 182, 212, 0.1)" },
+		{ primary: "#84CC16", secondary: "#A3E635", bg: "rgba(132, 204, 22, 0.1)" },
+		{ primary: "#F97316", secondary: "#FB923C", bg: "rgba(249, 115, 22, 0.1)" },
+		{ primary: "#EC4899", secondary: "#F472B6", bg: "rgba(236, 72, 153, 0.1)" }
 	];
-
-	const maxVal = Math.max(...values, 1);
-	const ghostValues = labels.map(() => Math.ceil(maxVal * 1.6)); // tall translucent background bars
 
 	const chart = new Chart(ctx, {
 		type: "bar",
 		data: {
 			labels: labels,
-			datasets: [
-				// Ghost background columns
-				{
-					label: "ghost",
-					data: ghostValues,
-					// will be drawn full-width but translucent
-					backgroundColor: function(c) {
-						const chart = c.chart;
-						const {ctx, chartArea} = chart;
-						if (!chartArea) return "rgba(150,150,200,0.08)";
-						const grad = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-						grad.addColorStop(0, "rgba(200,220,240,0.22)");
-						grad.addColorStop(1, "rgba(200,220,240,0.06)");
-						return grad;
-					},
-					borderWidth: 0,
-					barPercentage: 1.0,
-					categoryPercentage: 0.92,
-					borderSkipped: false,
-					// rounded top effect (large radius)
-					borderRadius: 100
+			datasets: [{
+				label: "Jumlah Keberangkatan",
+				data: values,
+				backgroundColor: function(context) {
+					const chart = context.chart;
+					const {ctx, chartArea} = chart;
+					if (!chartArea) return modernColors[0].primary;
+					
+					const colorSet = modernColors[context.dataIndex % modernColors.length];
+					const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+					gradient.addColorStop(0, colorSet.primary);
+					gradient.addColorStop(1, colorSet.secondary);
+					return gradient;
 				},
-				// Foreground pill columns (actual values)
-				{
-					label: "Jumlah Keberangkatan",
-					data: values,
-					backgroundColor: function(c) {
-						const chart = c.chart;
-						const {ctx, chartArea} = chart;
-						const idx = c.dataIndex;
-						const color = baseColors[idx % baseColors.length];
-						if (!chartArea) return color;
-						const grad = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-						grad.addColorStop(0, color);
-						grad.addColorStop(1, "rgba(255,255,255,0.18)");
-						return grad;
-					},
-					borderColor: function(c) {
-						const idx = c.dataIndex;
-						return baseColors[idx % baseColors.length];
-					},
-					borderWidth: 0,
-					// make pill narrow and rounded
-					barPercentage: 0.34,
-					categoryPercentage: 0.5,
-					borderRadius: 40,
-					borderSkipped: false
-				}
-			]
+				borderColor: function(context) {
+					return modernColors[context.dataIndex % modernColors.length].primary;
+				},
+				borderWidth: 2,
+				borderRadius: 8,
+				borderSkipped: false,
+				hoverBackgroundColor: function(context) {
+					return modernColors[context.dataIndex % modernColors.length].primary;
+				},
+				hoverBorderColor: "#FFFFFF",
+				hoverBorderWidth: 3,
+				barPercentage: 0.7,
+				categoryPercentage: 0.8,
+			}]
 		},
 		options: {
 			responsive: true,
 			maintainAspectRatio: false,
-			layout: { padding: { top: 28, bottom: 10, left: 10, right: 10 } },
+			interaction: {
+				intersect: false,
+				mode: 'index'
+			},
+			animation: {
+				duration: 1500,
+				easing: 'easeInOutQuart'
+			},
+			layout: { 
+				padding: { 
+					top: 20, 
+					bottom: 20, 
+					left: 20, 
+					right: 20 
+				} 
+			},
 			plugins: {
-				legend: { display: false },
+				legend: { 
+					display: true,
+					position: 'top',
+					labels: {
+						color: '#374151',
+						font: {
+							size: 12,
+							weight: '600'
+						},
+						padding: 15,
+						usePointStyle: true,
+						pointStyle: 'rectRounded'
+					}
+				},
 				title: {
 					display: true,
-					text: "Chart Semua Unit",
-					align: "center",
-					font: { size: 18, weight: "700" }
+					text: 'Grafik Keberangkatan Bulanan',
+					color: '#1F2937',
+					font: {
+						size: 14,
+						weight: 'bold'
+					},
+					padding: {
+						bottom: 20
+					}
+				},
+				tooltip: {
+					backgroundColor: 'rgba(0, 0, 0, 0.8)',
+					titleColor: '#FFFFFF',
+					bodyColor: '#FFFFFF',
+					cornerRadius: 8,
+					padding: 12,
+					displayColors: true,
+					callbacks: {
+						title: function(context) {
+							return `Bulan: ${context[0].label}`;
+						},
+						label: function(context) {
+							return `Keberangkatan: ${context.parsed.y.toLocaleString()}`;
+						}
+					}
 				},
 				datalabels: {
-					// Show circular white label only for foreground dataset (datasetIndex === 1)
-					display: function(ctx) { return ctx.datasetIndex === 1; },
+					display: true,
 					anchor: 'end',
-					align: 'center',
-					offset: -28, // place above pill
-					backgroundColor: function(ctx) {
-						return '#ffffff';
+					align: 'top',
+					offset: 6,
+					backgroundColor: function(context) {
+						return modernColors[context.dataIndex % modernColors.length].primary;
 					},
-					borderColor: function(ctx) {
-						// colored ring matching pill
-						const idx = ctx.dataIndex;
-						return baseColors[idx % baseColors.length];
+					borderColor: '#FFFFFF',
+					borderWidth: 2,
+					borderRadius: 8,
+					color: '#FFFFFF',
+					font: { 
+						weight: 'bold', 
+						size: 12 
 					},
-					borderWidth: 4,
-					borderRadius: 999,
-					color: function(ctx) {
-						const idx = ctx.dataIndex;
-						return baseColors[idx % baseColors.length];
+					padding: { 
+						top: 6, 
+						bottom: 6, 
+						left: 8, 
+						right: 8 
 					},
-					font: { weight: '700', size: 12 },
-					padding: { top: 6, bottom: 6, left: 8, right: 8 },
-					formatter: function(value) { return value; }
+					formatter: function(value) { 
+						if (value === 0 || value === null || value === undefined) return '';
+						return value.toLocaleString(); 
+					}
 				}
 			},
 			scales: {
 				x: {
 					grid: {
-						color: "rgba(15,30,40,0.06)"
+						display: false
 					},
 					ticks: {
-						color: "#062431",
-						maxRotation: 90,
-						minRotation: 90
+						color: "#6B7280",
+						font: {
+							size: 12,
+							weight: '500'
+						},
+						maxRotation: 45,
+						minRotation: 45,
+						padding: 10
 					},
-					title: {
-						display: true,
-						text: "Month",
-						color: "#062431"
+					border: {
+						display: false
 					}
 				},
 				y: {
 					beginAtZero: true,
-					grid: { color: "rgba(15,30,40,0.06)" },
-					ticks: { color: "#062431" },
-					title: { display: true, text: "Value", color: "#062431" }
+					grid: {
+						color: "rgba(229, 231, 235, 0.8)",
+						borderDash: [2, 4]
+					},
+					ticks: {
+						color: "#6B7280",
+						font: {
+							size: 12
+						},
+						padding: 10,
+						callback: function(value) {
+							return value.toLocaleString();
+						}
+					},
+					border: {
+						display: false
+					}
 				}
 			},
-			// clicking behavior preserved from previous implementation
+			onHover: (event, elements) => {
+				event.native.target.style.cursor = elements.length > 0 ? 'pointer' : 'default';
+			},
 			onClick: function(evt, elements) {
 				const chart = this;
 				if (elements.length) {
@@ -920,6 +747,9 @@
 					const month = chart.data.labels[idx];
 					selectedMonth = month;
 					filterTableByPelabuhan(globalData, document.getElementById("pelabuhanFilter").value, month);
+					
+					// Visual feedback for selection
+					chart.update('none');
 				} else {
 					selectedMonth = null;
 					filterTableByPelabuhan(globalData, document.getElementById("pelabuhanFilter").value);
@@ -1035,28 +865,68 @@
             const { labels, values } = aggregateByMonth(filteredData);
             if (!barChart) return;
 
-            // Update labels
+            // Update statistics in chart section
+            updateChartStats(filteredData);
+
+            // Update labels and data
             barChart.data.labels = labels;
+            barChart.data.datasets[0].data = values;
 
-            // ghost dataset should be larger than max to create background columns
-            const maxVal = Math.max(...values, 1);
-            const ghostValues = labels.map(() => Math.ceil(maxVal * 1.25));
-
-            if (barChart.data.datasets && barChart.data.datasets.length >= 2) {
-                // dataset[0] = ghost/background, dataset[1] = foreground actual values
-                barChart.data.datasets[0].data = ghostValues;
-                barChart.data.datasets[1].data = values;
-            } else if (barChart.data.datasets && barChart.data.datasets.length === 1) {
-                // fallback: single dataset present
-                barChart.data.datasets[0].data = values;
-            }
-
-            barChart.update();
+            // Smooth animation update
+            barChart.update('active');
         }
 
-        /* Updated renderPelabuhanCards: append stat-card directly into grid, show PKK Manual count with percentage, sorted by count desc */
+        function updateChartStats(data) {
+            const totalCount = data.length;
+            const dnCount = data.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
+            const lnCount = data.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
+            const manualCount = data.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
+
+            // Update the stat cards in chart section
+            const totalEl = document.getElementById("totalDataCount");
+            const dnEl = document.getElementById("dnCount");
+            const lnEl = document.getElementById("lnCount");
+            const manualEl = document.getElementById("manualCount");
+
+            if (totalEl) totalEl.textContent = totalCount.toLocaleString();
+            if (dnEl) dnEl.textContent = dnCount.toLocaleString();
+            if (lnEl) lnEl.textContent = lnCount.toLocaleString();
+            if (manualEl) manualEl.textContent = manualCount.toLocaleString();
+        }
+
+        /* Updated renderPelabuhanCards: Group by regions (Kalimantan, Jawa, Bali Nusatenggara) */
 function renderPelabuhanCards(data) {
-    // Gunakan kolom zone sebagai referensi utama (case-insensitive: cari 'zone')
+    // Definisi mapping region berdasarkan nama pelabuhan/cabang
+    const regionMapping = {
+        'Kalimantan': {
+            keywords: ['kalimantan', 'pontianak', 'banjarmasin', 'samarinda', 'balikpapan', 'ketapang', 'sampit', 'palangkaraya', 'tanjung selor', 'tarakan', 'kotabaru', 'mekar putih', 'sts kotabaru', 'zona batulicin', 'zona satui', 'bunati', 'zona kumai', 'batulicin', 'satui', 'kumai', 'celukan bawang', 'mekarputih', 'bumiharjo', 'bagendang'],
+            color: {bg: "linear-gradient(135deg, #a7f3d0, #6ee7b7, #34d399)", circle: "rgba(255,255,255,0.15)"}, // Soft emerald gradient
+            icon: '🌳'
+        },
+        'Jawa': {
+            keywords: ['jakarta', 'surabaya', 'semarang', 'cirebon', 'tanjung priok', 'tanjung perak', 'cilacap', 'probolinggo', 'jepara', 'pekalongan', 'banten', 'merak', 'tanjung wangi', 'tanjung intan', 'tanjung emas', 'zona tanjung wangi'],
+            color: {bg: "linear-gradient(135deg, #bfdbfe, #93c5fd, #60a5fa)", circle: "rgba(255,255,255,0.15)"}, // Soft blue gradient
+            icon: '🏙️'
+        },
+        'Bali Nusatenggara': {
+            keywords: ['bali', 'lombok', 'sumbawa', 'flores', 'kupang', 'denpasar', 'mataram', 'ende', 'waingapu', 'labuan bajo', 'benoa', 'zona lembar', 'lembar'],
+            color: {bg: "linear-gradient(135deg, #fce7f3, #fbcfe8, #f9a8d4)", circle: "rgba(255,255,255,0.15)"}, // Soft pink gradient
+            icon: '🏝️'
+        }
+    };
+
+    // Fungsi untuk menentukan region berdasarkan nama
+    function getRegion(name) {
+        const nameLower = name.toLowerCase();
+        for (const [region, config] of Object.entries(regionMapping)) {
+            if (config.keywords.some(keyword => nameLower.includes(keyword))) {
+                return region;
+            }
+        }
+        return 'Lainnya'; // Default untuk yang tidak cocok
+    }
+
+    // Gunakan kolom zone sebagai referensi utama
     let zoneKey = null;
     let branchKey = null;
     for (const h of globalHeaders) {
@@ -1070,7 +940,7 @@ function renderPelabuhanCards(data) {
     if (!zoneKey) zoneKey = globalHeaders[0];
     if (!branchKey) branchKey = "name_branch";
 
-    // Kelompokkan data berdasarkan zone, jika kosong gunakan name_branch
+    // Kelompokkan data berdasarkan zone/branch
     const zoneGroups = {};
     data.forEach(row => {
         let key = (row[zoneKey] || "").trim();
@@ -1082,79 +952,130 @@ function renderPelabuhanCards(data) {
         zoneGroups[key].push(row);
     });
 
-    const colors = [
-        {bg: "linear-gradient(135deg,#ff7e7e,#ffb199)", circle: "rgba(255,255,255,0.18)"},
-        {bg: "linear-gradient(135deg,#6a9bff,#8dc2ff)", circle: "rgba(255,255,255,0.16)"},
-        {bg: "linear-gradient(135deg,#7fe7c9,#4fbfa6)", circle: "rgba(255,255,255,0.14)"},
-        {bg: "linear-gradient(135deg,#7fd3ff,#5aa4ff)", circle: "rgba(255,255,255,0.12)"},
-        {bg: "linear-gradient(135deg,#c8a3ff,#ff80bf)", circle: "rgba(255,255,255,0.14)"},
-        {bg: "linear-gradient(135deg,#ffd56b,#ff8a5b)", circle: "rgba(255,255,255,0.12)"},
-        {bg: "linear-gradient(135deg,#b089ff,#6ae0ff)", circle: "rgba(255,255,255,0.10)"}
-    ];
+    // Kelompokkan zona berdasarkan region
+    const regionGroups = {
+        'Kalimantan': [],
+        'Jawa': [],
+        'Bali Nusatenggara': [],
+        'Lainnya': []
+    };
 
-    const rowDiv = document.getElementById("pelabuhanCardsRow");
-    rowDiv.innerHTML = "";
-    const sortedZone = Object.entries(zoneGroups).sort((a, b) => b[1].length - a[1].length);
+    Object.entries(zoneGroups).forEach(([zone, rows]) => {
+        const region = getRegion(zone);
+        regionGroups[region].push({zone, rows});
+    });
 
-    sortedZone.forEach(([zone, rows], idx) => {
-        const count = rows.length;
-        const manualCount = rows.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
-        let pct = 0;
-        if (count > 0) pct = (manualCount / count) * 100;
-        const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
+    // Sort dalam setiap region berdasarkan jumlah data
+    Object.keys(regionGroups).forEach(region => {
+        regionGroups[region].sort((a, b) => b.rows.length - a.rows.length);
+    });
 
-        // Hitung DN / LN (mapping: DN = PKK.DN, LN = PKK.LN)
-        const dnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
-        const lnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
+    const container = document.getElementById("pelabuhanCardsContainer");
+    container.innerHTML = "";
 
-        const card = document.createElement("div");
-        card.className = "stat-card";
-        const c = colors[idx % colors.length];
-        card.style.background = c.bg;
+    // Render setiap region
+    Object.entries(regionGroups).forEach(([regionName, zones]) => {
+        if (zones.length === 0) return; // Skip empty regions
 
-        const header = document.createElement("div");
-        header.className = "stat-header";
+        // Create region section
+        const regionSection = document.createElement("div");
+        regionSection.className = "mb-8";
 
-        const titleWrap = document.createElement("div");
-        titleWrap.style.display = "flex";
-        titleWrap.style.flexDirection = "column";
+        // Region header
+        const regionHeader = document.createElement("div");
+        regionHeader.className = "flex items-center gap-3 mb-4 pb-2 border-b-2 border-gray-200";
+        
+        const regionIcon = document.createElement("span");
+        regionIcon.className = "text-2xl";
+        regionIcon.textContent = regionMapping[regionName]?.icon || '📍';
+        
+        const regionTitle = document.createElement("h3");
+        regionTitle.className = "text-xl font-bold text-gray-800";
+        regionTitle.textContent = regionName;
+        
+        const regionCount = document.createElement("span");
+        regionCount.className = "text-sm bg-gray-100 px-3 py-1 rounded-full font-medium text-gray-600";
+        const totalCount = zones.reduce((sum, {rows}) => sum + rows.length, 0);
+        regionCount.textContent = `${zones.length} lokasi • ${totalCount} data`;
+        
+        regionHeader.appendChild(regionIcon);
+        regionHeader.appendChild(regionTitle);
+        regionHeader.appendChild(regionCount);
+        
+        // Cards grid for this region
+        const cardsGrid = document.createElement("div");
+        cardsGrid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4";
 
-        const title = document.createElement("div");
-        title.className = "stat-title";
-        title.textContent = zone;
-        titleWrap.appendChild(title);
+        // Render cards for this region
+        zones.forEach(({zone, rows}, idx) => {
+            const count = rows.length;
+            const manualCount = rows.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
+            let pct = 0;
+            if (count > 0) pct = (manualCount / count) * 100;
+            const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
 
-        if (manualCount > 0) {
-            const manualLabel = document.createElement("div");
-            manualLabel.className = "pkk-manual";
-            manualLabel.textContent = `PKK Manual: ${manualCount} (${pctText}%)`;
-            titleWrap.appendChild(manualLabel);
-        }
+            const dnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
+            const lnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
 
-        // Tambahkan statistik pelayaran DN / LN
-        const pelayaranStats = document.createElement("div");
-        pelayaranStats.className = "pelayaran-stats";
-        pelayaranStats.innerHTML = `DN = ${dnCount}<br>LN = ${lnCount}`;
-        titleWrap.appendChild(pelayaranStats);
+            const card = document.createElement("div");
+            card.className = "relative overflow-hidden bg-gradient-to-br p-2 rounded-lg shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 text-gray-700 min-h-[65px] flex flex-col justify-between group border border-white/20 backdrop-blur-sm";
+            
+            // Use region-specific color or default colors
+            const regionColor = regionMapping[regionName]?.color;
+            if (regionColor) {
+                card.style.background = regionColor.bg;
+            } else {
+                const defaultColors = [
+                    {bg: "linear-gradient(135deg, #f3e8ff, #e9d5ff, #d8b4fe)"},
+                    {bg: "linear-gradient(135deg, #fef3c7, #fde68a, #fcd34d)"},
+                    {bg: "linear-gradient(135deg, #dbeafe, #bfdbfe, #93c5fd)"}
+                ];
+                card.style.background = defaultColors[idx % defaultColors.length].bg;
+            }
 
-        const value = document.createElement("div");
-        value.className = "stat-value";
-        value.textContent = count;
+            // Main content area with title and stats
+            const contentArea = document.createElement("div");
+            contentArea.className = "flex-1";
 
-        header.appendChild(titleWrap);
-        const spacer = document.createElement("div");
-        spacer.style.flex = "1 1 auto";
-        header.appendChild(spacer);
+            const title = document.createElement("div");
+            title.className = "stat-title font-bold text-gray-800 text-xs leading-tight truncate group-hover:text-gray-900 transition-colors mb-1";
+            title.textContent = zone;
+            title.title = zone;
+            contentArea.appendChild(title);
 
-        card.appendChild(header);
-        card.appendChild(value);
+            if (manualCount > 0) {
+                const manualLabel = document.createElement("div");
+                manualLabel.className = "pkk-manual text-gray-700 font-semibold text-xs opacity-90";
+                manualLabel.textContent = `Manual: ${manualCount} (${pctText}%)`;
+                contentArea.appendChild(manualLabel);
+            }
 
-        const circle = document.createElement("div");
-        circle.className = "card-circle";
-        circle.style.background = c.circle;
-        card.appendChild(circle);
+            const pelayaranStats = document.createElement("div");
+            pelayaranStats.className = "pelayaran-stats text-gray-600 font-medium text-xs leading-tight opacity-80";
+            pelayaranStats.innerHTML = `DN: ${dnCount} | LN: ${lnCount}`;
+            contentArea.appendChild(pelayaranStats);
 
-        rowDiv.appendChild(card);
+            // Value positioned at bottom-right corner
+            const value = document.createElement("div");
+            value.className = "absolute bottom-2 right-2 font-black text-gray-900 text-lg md:text-xl group-hover:scale-110 transition-transform z-10";
+            value.textContent = count;
+
+            card.appendChild(contentArea);
+            card.appendChild(value);
+
+            const circle = document.createElement("div");
+            circle.className = "card-circle";
+            if (regionColor) {
+                circle.style.background = regionColor.circle;
+            }
+            card.appendChild(circle);
+
+            cardsGrid.appendChild(card);
+        });
+
+        regionSection.appendChild(regionHeader);
+        regionSection.appendChild(cardsGrid);
+        container.appendChild(regionSection);
     });
 }
 
@@ -1202,6 +1123,9 @@ function renderPelabuhanCards(data) {
             populateYearFilter(filtered);
             attachPelabuhanFilterListener();
             attachYearFilterListener();
+            
+            // Update chart statistics on initial load
+            updateChartStats(filtered);
 
             const { labels, values } = aggregateByMonth(filtered);
             const ctx = document.getElementById("barChart").getContext("2d");
