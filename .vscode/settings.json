@@ -6,10 +6,13 @@
     "python.venvPath": "./.venv",
     "pylance.inlayHints.variableTypes": true,
     "pylance.inlayHints.functionReturnTypes": true,
-    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.typeCheckingMode": "off",
     "python.analysis.autoSearchPaths": true,
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.stubPath": "./.venv/lib/python3.13/site-packages",
     "python.analysis.extraPaths": [
-        "./.venv/lib/python3.13/site-packages"
+        "./.venv/lib/python3.13/site-packages",
+        "/Users/hadipurwana/Library/CloudStorage/GoogleDrive-purwana.hadi@gmail.com/My Drive/PYTHON/PHINNISI SCRAP/.venv/lib/python3.13/site-packages"
     ],
     "python.analysis.include": [
         "**/*.py"
@@ -17,10 +20,18 @@
     "python.analysis.exclude": [
         "**/node_modules",
         "**/__pycache__",
-        ".git"
+        ".git",
+        ".venv"
     ],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingModuleSource": "none",
+        "reportArgumentType": "warning",
+        "reportAttributeAccessIssue": "warning",
+        "reportOptionalMemberAccess": "warning"
+    },
     "files.exclude": {
         "**/__pycache__": true,
-        "**/*.pyc": true
+        "**/*.pyc": true,
+        ".DS_Store": true
     }
 }

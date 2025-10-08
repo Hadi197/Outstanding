@@ -1,0 +1,52 @@
+# Mac system files# Mac system files
+
+.DS_Store.DS_Store
+
+.AppleDouble
+
+.LSOverride# File Google Sheets shortcut
+
+*.gsheet
+
+# File Google Sheets shortcut
+
+*.gsheet# Log / hasil uji coba
+
+*.log
+
+# Log / hasil uji coba
+
+*.log# Folder cache python
+
+__pycache__/
+
+# Python cache files*.pyc
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# IDE files
+.vscode/launch.json
+.vscode/tasks.json
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
