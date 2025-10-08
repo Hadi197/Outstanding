@@ -2161,13 +2161,14 @@
         async function checkServerStatus() {
             try {
                 const apiUrl = getApiUrl();
-                const response = await fetch(`${apiUrl}/status`);
+                // Use existing abaikan endpoint instead of non-existent status endpoint
+                const response = await fetch(`${apiUrl}/abaikan?action=list`);
                 if (response.ok) {
                     const data = await response.json();
                     const isLocal = apiUrl.includes('localhost');
                     const statusMsg = isLocal 
-                        ? `Local server - ${data.total_entries} entries`
-                        : `Netlify function - ${data.total_entries} entries`;
+                        ? `Local server - ${data.total_entries || 0} entries`
+                        : `Netlify function - ${data.total_entries || 0} entries`;
                     updateServerStatus(true, statusMsg);
                     return true;
                 } else {
