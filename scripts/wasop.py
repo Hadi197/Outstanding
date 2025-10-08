@@ -36,7 +36,13 @@ def scrape_data(page=1, record=100000):
         print(f"[!] Error during request: {e}")
         return None
 
-def save_to_csv(data, filename="wasop.csv"):
+def save_to_csv(data, filename=None):
+    if filename is None:
+        # Default to data folder
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(os.path.dirname(script_dir), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        filename = os.path.join(data_dir, "wasop.csv")
     try:
         # Extract only the required columns
         df = pd.DataFrame(data["data"]["dataRec"])

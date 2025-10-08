@@ -56,7 +56,13 @@ def scrape_data(page=1, record=100000, periode=""):
         print(f"[!] Error during request: {e}")
         return None
 
-def save_to_csv(data, filename="spb.csv"):
+def save_to_csv(data, filename=None):
+    if filename is None:
+        # Default to data folder
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(os.path.dirname(script_dir), "data")
+        os.makedirs(data_dir, exist_ok=True)
+        filename = os.path.join(data_dir, "spb.csv")
     try:
         df = pd.DataFrame(data)
         # Pastikan kolom yang dibutuhkan ada, jika tidak, tampilkan kolom yang tersedia
