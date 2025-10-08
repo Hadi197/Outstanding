@@ -2267,16 +2267,24 @@
                 
                 // Determine port name from row data
                 let portName = 'Unknown Port';
+                console.log('🔧 DEBUG: Row data for port extraction:', rowData);
+                
                 if (rowData) {
+                    console.log('🔧 DEBUG: Available columns:', Object.keys(rowData));
+                    
                     // Try different possible column names for port
                     if (rowData.PELABUHAN) {
                         portName = rowData.PELABUHAN;
+                        console.log('🔧 DEBUG: Port found in PELABUHAN:', portName);
                     } else if (rowData.name_branch) {
                         portName = rowData.name_branch;
+                        console.log('🔧 DEBUG: Port found in name_branch:', portName);
                     } else if (rowData.pelabuhan) {
                         portName = rowData.pelabuhan;
+                        console.log('🔧 DEBUG: Port found in pelabuhan:', portName);
                     } else if (rowData.Pelabuhan) {
                         portName = rowData.Pelabuhan;
+                        console.log('🔧 DEBUG: Port found in Pelabuhan:', portName);
                     } else {
                         // Try to find any column containing "pelabuhan" in the name
                         const portColumn = Object.keys(rowData).find(key => 
@@ -2286,9 +2294,16 @@
                         );
                         if (portColumn) {
                             portName = rowData[portColumn];
+                            console.log(`🔧 DEBUG: Port found in ${portColumn}:`, portName);
+                        } else {
+                            console.log('🔧 DEBUG: No port column found, using Unknown Port');
                         }
                     }
+                } else {
+                    console.log('🔧 DEBUG: No row data provided');
                 }
+                
+                console.log('🔧 DEBUG: Final port name:', portName);
                 
                 // Add new entry with reason, port name, and additional details
                 const newEntry = {
