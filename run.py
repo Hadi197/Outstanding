@@ -106,8 +106,8 @@ def main():
             print(f"\nScript {scr} exited with code {rc}. Aborting.")
             sys.exit(4)
 
-    # Verify required CSV outputs in data folder
-    data_dir = os.path.join(os.path.dirname(base_dir), "data")
+    # Verify required CSV outputs in root folder
+    data_dir = base_dir  # Use root directory
     spb_path = os.path.join(data_dir, "spb.csv")
     wasop_path = os.path.join(data_dir, "wasop.csv")
     gabung_path = os.path.join(data_dir, "gabung.csv")

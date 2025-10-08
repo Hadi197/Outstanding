@@ -76,7 +76,7 @@
             output.innerHTML = 'Loading CSV...';
             
             try {
-                const csvData = await fetchCSV('data/bill.csv');
+                const csvData = await fetchCSV('bill.csv');
                 if (!csvData) {
                     output.innerHTML = 'Failed to fetch CSV';
                     return;

@@ -24,12 +24,12 @@ jobs:
 
       - name: Run script
         run: |
-          python scripts/run.py
+          python run.py
 
       - name: Commit and push results
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/*.csv
+          git add *.csv
           git commit -m "Update CSV hasil scraping [skip ci]" || echo "No changes to commit"
           git push

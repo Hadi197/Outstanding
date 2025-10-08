@@ -207,15 +207,13 @@ class PelindoBillingScraper:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"pelindo_invoices_{timestamp}.csv"
         
-        # Ensure file is saved to data directory
+        # Ensure file is saved to current directory (root)
         import os
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(os.path.dirname(script_dir), 'data')
-        os.makedirs(data_dir, exist_ok=True)
         
-        # Join with data directory path
+        # Join with current directory path
         if not os.path.dirname(filename):  # If filename doesn't have path
-            filename = os.path.join(data_dir, filename)
+            filename = os.path.join(script_dir, filename)
         
         try:
             df = pd.DataFrame(data)

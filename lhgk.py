@@ -132,9 +132,8 @@ if __name__ == "__main__":
                 seen.add(key)
                 filtered_row = {k: row.get(k, "") for k in selected_cols}
                 unique_rows.append(filtered_row)
-        # Create data directory if it doesn't exist
-        data_dir = Path(__file__).parent.parent / "data"
-        data_dir.mkdir(exist_ok=True)
+        # Save to current directory (root)
+        data_dir = Path(__file__).parent
         
         csv_path = data_dir / "lhgk.csv"
         with open(csv_path, "w", newline="", encoding="utf-8") as f:

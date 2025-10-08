@@ -59,7 +59,7 @@ def normalize_key_series(s: pd.Series) -> pd.Series:
 
 def main(argv: list[str]) -> int:
     here = Path(__file__).resolve().parent
-    data_dir = here.parent / "data"  # Path to data folder
+    data_dir = here  # Path to current directory (root)
 
     parser = argparse.ArgumentParser(
         description="Gabungkan SPB.csv, wasop.csv, dan lhgk.csv."
@@ -69,7 +69,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--lhgk", help="Path ke lhgk.csv (default: cari di folder data)")
     parser.add_argument("--how", choices=["left", "right", "inner", "outer"], default="left",
                         help="Tipe merge (default: left, WASOP sebagai referensi)")
-    parser.add_argument("--output", "-o", help="Path output CSV (default: gabung.csv di folder data)")
+    parser.add_argument("--output", "-o", help="Path output CSV (default: gabung.csv di root folder)")
     args = parser.parse_args(argv)
 
     spb_path = resolve_path(args.spb, ["SPB.csv", "spb.csv"], data_dir)

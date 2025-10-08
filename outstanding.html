@@ -527,7 +527,7 @@
         
         async function loadVerifikatorData() {
             try {
-                const csvData = await fetchCSV('data/bill.csv');
+                const csvData = await fetchCSV('bill.csv');
                 if (!csvData) {
                     console.error('No CSV data received');
                     return;
@@ -1683,14 +1683,14 @@ function renderPelabuhanCards(data) {
 }
 
         async function main() {
-            const csvText = await fetchCSV("data/gabung.csv");
+            const csvText = await fetchCSV("gabung.csv");
             if (!csvText) return;
             const { headers, data: rawData } = parseCSV(csvText);
 
             // Try to fetch abai.csv and build a set of PKK values to ignore
             let abaiSet = new Set();
             try {
-                const abaiText = await fetchCSV("data/abai.csv");
+                const abaiText = await fetchCSV("abai.csv");
                 if (abaiText) {
                     const lines = abaiText.split("\n").map(l => l.trim()).filter(Boolean);
                     if (lines.length) {
@@ -1741,7 +1741,7 @@ function renderPelabuhanCards(data) {
             try {
                 // Try XLSX first
                 try {
-                    const resp = await fetch("data/gabung.xlsx", { cache: "no-store" });
+                    const resp = await fetch("gabung.xlsx", { cache: "no-store" });
                     if (!resp.ok) throw new Error("gabung.xlsx not available");
                     const blob = await resp.blob();
                     const url = URL.createObjectURL(blob);
@@ -1758,7 +1758,7 @@ function renderPelabuhanCards(data) {
                 }
 
                 // Fallback to CSV
-                const respCsv = await fetch("data/gabung.csv", { cache: "no-store" });
+                const respCsv = await fetch("gabung.csv", { cache: "no-store" });
                 if (!respCsv.ok) throw new Error("gabung.csv not available");
                 const blobCsv = await respCsv.blob();
                 const urlCsv = URL.createObjectURL(blobCsv);

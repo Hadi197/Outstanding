@@ -254,10 +254,9 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p.add_argument("--sub-branch", default="MTc=", help="Optional sub-branch header value")
     p.add_argument("--id-unit", default="", help="Optional id-unit parameter")
     p.add_argument("--id-zone", default="", help="Optional id-zone parameter")
-    # Get data directory path
+    # Get current directory path (root)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(os.path.dirname(script_dir), "data")
-    default_csv = os.path.join(data_dir, "tug.csv")
+    default_csv = os.path.join(script_dir, "tug.csv")
     p.add_argument("--csv", default=default_csv, help="Output CSV path")
     p.add_argument("--sort-by", default="revenue", help="Column name to sort by descending in CSV output (default: revenue)")
     p.add_argument("--json", default="tug_raw.json", help="Output raw JSON path")
