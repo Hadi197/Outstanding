@@ -2162,7 +2162,13 @@
             try {
                 const apiUrl = getApiUrl();
                 // Use existing abaikan endpoint instead of non-existent status endpoint
-                const response = await fetch(`${apiUrl}/abaikan?action=list`);
+                // Add timestamp to prevent caching
+                const timestamp = new Date().getTime();
+                const url = `${apiUrl}/abaikan?action=list&_t=${timestamp}`;
+                console.log('🔍 checkServerStatus calling:', url);
+                const response = await fetch(url, {
+                    cache: 'no-cache'
+                });
                 if (response.ok) {
                     const data = await response.json();
                     const isLocal = apiUrl.includes('localhost');
