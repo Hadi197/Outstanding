@@ -193,31 +193,42 @@
     <!-- Tab Navigation -->
     <div class="w-full px-2 sm:px-4 lg:px-6 mb-6">
         <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="flex border-b border-gray-200">
-                <button id="dashboardTab" class="tab-button active px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 bg-blue-50 text-blue-600 border-b-2 border-blue-600">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    Dashboard
-                </button>
-                <button id="tabelTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M8 18h8M8 6h8"></path>
-                    </svg>
-                    Tabel
-                </button>
-                <button id="billingTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Billing
-                </button>
-                <button id="verifikatorTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
-                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Verifikator
-                </button>
+            <div class="flex border-b border-gray-200 justify-between">
+                <div class="flex">
+                    <button id="dashboardTab" class="tab-button active px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 bg-blue-50 text-blue-600 border-b-2 border-blue-600">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Dashboard
+                    </button>
+                    <button id="tabelTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M8 18h8M8 6h8"></path>
+                        </svg>
+                        Tabel
+                    </button>
+                    <button id="billingTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Billing
+                    </button>
+                    <button id="verifikatorTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Verifikator
+                    </button>
+                </div>
+                <!-- PKK Clear Tab - Positioned at the right -->
+                <div class="flex">
+                    <button id="pkkClearTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        PKK Clear
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -590,6 +601,133 @@
         </div>
     </div>
 
+    <!-- PKK Clear Tab Content -->
+    <div id="pkkClearContent" class="tab-content hidden">
+        <div class="w-full px-2 sm:px-4 lg:px-6 py-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">🗑️ PKK Clear Management</h2>
+                <p class="text-gray-600 text-lg">Kelola data PKK yang telah diabaikan</p>
+                <div class="w-24 h-1 bg-gradient-to-r from-red-500 to-orange-500 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <!-- Total Ignored Items -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total PKK Diabaikan</p>
+                            <p id="totalIgnoredCount" class="text-2xl font-bold text-red-600">0</p>
+                        </div>
+                        <div class="bg-red-100 rounded-lg p-3">
+                            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage Type -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Storage Type</p>
+                            <p id="storageTypeText" class="text-lg font-bold text-blue-600">localStorage</p>
+                        </div>
+                        <div class="bg-blue-100 rounded-lg p-3">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7c0-2.21-1.79-4-4-4H8c-2.21 0-4 1.79-4 4z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Quick Actions</p>
+                            <p class="text-lg font-bold text-green-600">Management</p>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 mb-8 justify-center">
+                <button id="refreshIgnoredBtn" class="px-6 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Refresh Data
+                </button>
+                <button id="clearAllIgnoredBtn" class="px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Clear All
+                </button>
+                <button id="exportIgnoredBtn" class="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Export Data
+                </button>
+            </div>
+
+            <!-- Ignored PKK List -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Daftar PKK yang Diabaikan
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-1">Data PKK yang telah ditandai untuk diabaikan</p>
+                </div>
+                
+                <!-- Search and Filter -->
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" id="searchIgnoredInput" placeholder="Cari PKK Number..." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button id="searchIgnoredBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ignored Items List -->
+                <div class="max-h-96 overflow-y-auto">
+                    <div id="ignoredItemsList" class="divide-y divide-gray-200">
+                        <!-- Ignored items will be loaded here -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyIgnoredState" class="text-center py-12 hidden">
+                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Tidak Ada Data</h3>
+                        <p class="text-gray-600">Belum ada PKK yang diabaikan</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Tab functionality
         function initTabs() {
@@ -597,23 +735,25 @@
             const tabelTab = document.getElementById('tabelTab');
             const billingTab = document.getElementById('billingTab');
             const verifikatorTab = document.getElementById('verifikatorTab');
+            const pkkClearTab = document.getElementById('pkkClearTab');
             const dashboardContent = document.getElementById('dashboardContent');
             const tabelContent = document.getElementById('tabelContent');
             const billingContent = document.getElementById('billingContent');
             const verifikatorContent = document.getElementById('verifikatorContent');
+            const pkkClearContent = document.getElementById('pkkClearContent');
 
             // Initialize subtabs
             initVerifikatorSubTabs();
 
             function switchTab(activeTab, activeContent) {
                 // Reset all tabs to inactive state
-                [dashboardTab, tabelTab, billingTab, verifikatorTab].forEach(tab => {
+                [dashboardTab, tabelTab, billingTab, verifikatorTab, pkkClearTab].forEach(tab => {
                     tab.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
                     tab.classList.add('text-gray-600');
                 });
                 
                 // Hide all content
-                [dashboardContent, tabelContent, billingContent, verifikatorContent].forEach(content => {
+                [dashboardContent, tabelContent, billingContent, verifikatorContent, pkkClearContent].forEach(content => {
                     content.classList.add('hidden');
                 });
                 
@@ -623,6 +763,11 @@
                 
                 // Show selected content
                 activeContent.classList.remove('hidden');
+                
+                // Special handling for PKK Clear tab
+                if (activeContent === pkkClearContent) {
+                    loadPkkClearData();
+                }
             }
 
             dashboardTab.addEventListener('click', () => {
@@ -639,6 +784,10 @@
             
             verifikatorTab.addEventListener('click', () => {
                 switchTab(verifikatorTab, verifikatorContent);
+            });
+            
+            pkkClearTab.addEventListener('click', () => {
+                switchTab(pkkClearTab, pkkClearContent);
             });
         }
 
@@ -2584,6 +2733,240 @@ function renderPelabuhanCards(data) {
             } finally {
                 if (btn) btn.disabled = false;
             }
+        }
+
+        // PKK Clear Management Functions
+        function loadPkkClearData() {
+            console.log('🔄 Loading PKK Clear data...');
+            updateIgnoredStats();
+            loadIgnoredList();
+            initPkkClearEventListeners();
+        }
+
+        function updateIgnoredStats() {
+            const abaiSet = getAbaiFromLocalStorage();
+            const totalCount = abaiSet.size;
+            
+            // Update stats
+            document.getElementById('totalIgnoredCount').textContent = totalCount;
+            document.getElementById('storageTypeText').textContent = 'localStorage';
+            
+            console.log(`📊 PKK Clear Stats: ${totalCount} items ignored`);
+        }
+
+        function loadIgnoredList() {
+            const abaiSet = getAbaiFromLocalStorage();
+            const ignoredItemsList = document.getElementById('ignoredItemsList');
+            const emptyState = document.getElementById('emptyIgnoredState');
+            
+            if (abaiSet.size === 0) {
+                ignoredItemsList.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            
+            const items = Array.from(abaiSet);
+            ignoredItemsList.innerHTML = items.map((pkkNumber, index) => `
+                <div class="flex items-center justify-between p-4 hover:bg-gray-50">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <span class="text-red-600 font-semibold text-sm">${index + 1}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${pkkNumber}</p>
+                            <p class="text-sm text-gray-500">PKK Number</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                            Diabaikan
+                        </span>
+                        <button onclick="restoreIgnoredItem('${pkkNumber}')" 
+                                class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" 
+                                title="Restore item">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        <button onclick="removeIgnoredItem('${pkkNumber}')" 
+                                class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" 
+                                title="Delete permanently">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function initPkkClearEventListeners() {
+            // Refresh button
+            const refreshBtn = document.getElementById('refreshIgnoredBtn');
+            if (refreshBtn) {
+                refreshBtn.onclick = () => {
+                    loadPkkClearData();
+                    showNotification('✅ Data berhasil diperbarui', 'success');
+                };
+            }
+            
+            // Clear all button
+            const clearAllBtn = document.getElementById('clearAllIgnoredBtn');
+            if (clearAllBtn) {
+                clearAllBtn.onclick = () => {
+                    if (confirm('⚠️ Apakah Anda yakin ingin menghapus SEMUA data PKK yang diabaikan?\n\nTindakan ini tidak dapat dibatalkan!')) {
+                        clearAllIgnoredItems();
+                    }
+                };
+            }
+            
+            // Export button
+            const exportBtn = document.getElementById('exportIgnoredBtn');
+            if (exportBtn) {
+                exportBtn.onclick = exportIgnoredData;
+            }
+            
+            // Search functionality
+            const searchInput = document.getElementById('searchIgnoredInput');
+            const searchBtn = document.getElementById('searchIgnoredBtn');
+            
+            if (searchInput && searchBtn) {
+                const performSearch = () => {
+                    const searchTerm = searchInput.value.toLowerCase().trim();
+                    filterIgnoredList(searchTerm);
+                };
+                
+                searchBtn.onclick = performSearch;
+                searchInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') performSearch();
+                };
+            }
+        }
+
+        function restoreIgnoredItem(pkkNumber) {
+            if (confirm(`Apakah Anda yakin ingin mengembalikan PKK: ${pkkNumber}?\n\nItem ini akan muncul kembali di tabel utama.`)) {
+                const abaiSet = getAbaiFromLocalStorage();
+                abaiSet.delete(pkkNumber);
+                saveAbaiToLocalStorage(abaiSet);
+                
+                loadPkkClearData();
+                showNotification(`✅ PKK ${pkkNumber} berhasil dikembalikan`, 'success');
+                
+                // Refresh main data if on dashboard/tabel tab
+                if (typeof refreshDataAfterAbaikan === 'function') {
+                    refreshDataAfterAbaikan();
+                }
+            }
+        }
+
+        function removeIgnoredItem(pkkNumber) {
+            if (confirm(`⚠️ Apakah Anda yakin ingin menghapus PKK: ${pkkNumber} secara PERMANEN?\n\nTindakan ini tidak dapat dibatalkan!`)) {
+                const abaiSet = getAbaiFromLocalStorage();
+                abaiSet.delete(pkkNumber);
+                saveAbaiToLocalStorage(abaiSet);
+                
+                loadPkkClearData();
+                showNotification(`🗑️ PKK ${pkkNumber} berhasil dihapus secara permanen`, 'warning');
+            }
+        }
+
+        function clearAllIgnoredItems() {
+            try {
+                localStorage.removeItem(ABAI_STORAGE_KEY);
+                loadPkkClearData();
+                showNotification('🗑️ Semua data PKK yang diabaikan berhasil dihapus', 'warning');
+                
+                // Refresh main data if on dashboard/tabel tab
+                if (typeof refreshDataAfterAbaikan === 'function') {
+                    refreshDataAfterAbaikan();
+                }
+            } catch (error) {
+                console.error('Error clearing ignored items:', error);
+                showNotification('❌ Gagal menghapus data', 'error');
+            }
+        }
+
+        function exportIgnoredData() {
+            const abaiSet = getAbaiFromLocalStorage();
+            
+            if (abaiSet.size === 0) {
+                showNotification('⚠️ Tidak ada data untuk diekspor', 'warning');
+                return;
+            }
+            
+            const data = Array.from(abaiSet);
+            const csvContent = 'PKK_NUMBER,DATE_EXPORTED,STATUS\n' + 
+                data.map(pkk => `${pkk},${new Date().toISOString()},IGNORED`).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `pkk_ignored_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification(`✅ Data berhasil diekspor (${data.length} items)`, 'success');
+        }
+
+        function filterIgnoredList(searchTerm) {
+            const abaiSet = getAbaiFromLocalStorage();
+            const filteredItems = Array.from(abaiSet).filter(pkk => 
+                pkk.toLowerCase().includes(searchTerm)
+            );
+            
+            const ignoredItemsList = document.getElementById('ignoredItemsList');
+            const emptyState = document.getElementById('emptyIgnoredState');
+            
+            if (filteredItems.length === 0) {
+                ignoredItemsList.innerHTML = `
+                    <div class="text-center py-8">
+                        <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <p class="text-gray-600">Tidak ditemukan hasil untuk: "${searchTerm}"</p>
+                        <button onclick="loadIgnoredList()" class="mt-2 text-blue-600 hover:text-blue-800">Tampilkan semua</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            ignoredItemsList.innerHTML = filteredItems.map((pkkNumber, index) => `
+                <div class="flex items-center justify-between p-4 hover:bg-gray-50">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <span class="text-red-600 font-semibold text-sm">${index + 1}</span>
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">${pkkNumber}</p>
+                            <p class="text-sm text-gray-500">PKK Number</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                            Diabaikan
+                        </span>
+                        <button onclick="restoreIgnoredItem('${pkkNumber}')" 
+                                class="p-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors" 
+                                title="Restore item">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        <button onclick="removeIgnoredItem('${pkkNumber}')" 
+                                class="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors" 
+                                title="Delete permanently">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         main();
