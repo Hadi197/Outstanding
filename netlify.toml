@@ -1,22 +1,15 @@
-[bui[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/abaikan/:splat"
-  status = 200  functions = "netlify/functions"
+[build]
+  functions = "netlify/functions"
   publish = "."
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/abaikan-fallback/:splat"
-  status = 200
-  
-[[redirects]]
-  from = "/api/status"
-  to = "/.netlify/functions/abaikan"
+  to = "/.netlify/functions/abaikan/:splat"
   status = 200
 
 [[headers]]
   for = "/api/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
