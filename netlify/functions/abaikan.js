@@ -23,7 +23,7 @@ exports.handler = async (event, context) => {
   });
 
   // GitHub configuration with your token
-  const GITHUB_TOKEN = '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';
+  const GITHUB_TOKEN = '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';
   const GITHUB_OWNER = 'Hadi197';
   const GITHUB_REPO = 'Outstanding';
   const FILE_PATH = 'abai.csv';
