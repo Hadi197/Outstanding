@@ -140,11 +140,19 @@ exports.handler = async (event, context) => {
       if (action === 'list') {
         // Get abai list for frontend filtering
         try {
+          console.log('📂 Attempting to get GitHub file for list action...');
           const fileData = await getGitHubFile();
+          console.log('📄 GitHub file data received:', { 
+            exists: fileData.exists, 
+            contentLength: fileData.content ? fileData.content.length : 0 
+          });
+          
           const abaiList = [];
 
           if (fileData.exists && fileData.content) {
             const lines = fileData.content.split('\n').filter(line => line.trim());
+            console.log(`📋 Processing ${lines.length} lines from GitHub file...`);
+            
             for (let i = 0; i < lines.length; i++) {
               const line = lines[i].trim();
               if (line && !line.toLowerCase().includes('no_pkk_inaportnet')) {
@@ -155,6 +163,9 @@ exports.handler = async (event, context) => {
                 }
               }
             }
+            console.log(`✅ Extracted ${abaiList.length} PKK entries from GitHub`);
+          } else {
+            console.log('⚠️ GitHub file does not exist or has no content');
           }
 
           return {
@@ -168,16 +179,24 @@ exports.handler = async (event, context) => {
             })
           };
         } catch (error) {
-          console.error('Error getting abai list:', error);
+          console.error('❌ Error getting abai list from GitHub:', error.message);
+          console.error('❌ Full error:', error);
           return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
               abai_list: [],
               total_entries: 0,
-              source: 'error',
+              source: 'github_error',
               success: false,
-              error: error.message
+              error: error.message,
+              github_token_configured: !!GITHUB_TOKEN,
+              debug: {
+                owner: GITHUB_OWNER,
+                repo: GITHUB_REPO,
+                file: FILE_PATH,
+                timestamp: new Date().toISOString()
+              }
             })
           };
         }
