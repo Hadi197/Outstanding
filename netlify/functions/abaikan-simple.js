@@ -124,6 +124,7 @@ exports.handler = async (event, context) => {
           timestamp: timestamp,
           storage_type: 'localStorage (fallback)',
           persistent: false,  // Indicates localStorage should be used
+          use_localstorage: true,  // CRITICAL: This triggers localStorage saving
           duplicate: false,
           fallback_mode: true
         })

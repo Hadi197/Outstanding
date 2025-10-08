@@ -1815,14 +1815,22 @@
                 
                 // Fetch updated abai data
                 const abaiSet = await fetchAbaiData();
+                console.log('🔍 DEBUG: abaiSet contents:', Array.from(abaiSet));
                 
                 // Filter data with updated abai set
+                let debugCount = 0;
                 const filtered = rawData.filter(r => {
                     const key = (r["no_pkk_inaportnet"] || "").trim();
-                    return !key || !abaiSet.has(key);
+                    const shouldExclude = key && abaiSet.has(key);
+                    if (shouldExclude) {
+                        debugCount++;
+                        console.log(`🚫 DEBUG: Excluding row with PKK: "${key}"`);
+                    }
+                    return !shouldExclude;
                 });
                 
                 const removedCount = rawData.length - filtered.length;
+                console.log(`🔍 DEBUG: Found ${debugCount} matches, removed ${removedCount} rows`);
                 console.log(`🗂️ After refresh: ${removedCount} rows excluded from persistent abai data`);
                 
                 // Update global data
