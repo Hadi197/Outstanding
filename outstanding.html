@@ -2118,6 +2118,10 @@
 
         // New function to handle abaikan with reason
         async function handleAbaikanWithReason(noPkkInaportnet, buttonElement, rowElement, reasonData) {
+            console.log('🔧 DEBUG: handleAbaikanWithReason called with:', {
+                noPkkInaportnet,
+                reasonData
+            });
 
             // Disable button and show loading state
             const originalText = buttonElement.textContent;
@@ -2127,9 +2131,46 @@
 
             try {
                 // Check if abaikan server is running
+                console.log('🔧 DEBUG: Checking server status...');
                 const serverActive = await checkServerStatus();
+                console.log('🔧 DEBUG: Server active:', serverActive);
+                
                 if (!serverActive) {
-                    throw new Error('Abaikan server tidak aktif. Silakan jalankan server terlebih dahulu.');
+                    // Don't throw error, use localStorage fallback directly
+                    console.log('⚠️ Server not active, using localStorage fallback');
+                    
+                    // Save to localStorage with reason
+                    addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData);
+                    console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
+                    
+                    // Show success notification
+                    const reasonText = getReasonDisplayText(reasonData.reason);
+                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (localStorage) - ${reasonText}`, 'success');
+                    
+                    // Mark row as ignored
+                    rowElement.style.transition = 'all 0.5s ease-out';
+                    rowElement.style.opacity = '0.5';
+                    rowElement.style.background = '#fee2e2';
+                    
+                    // Replace button with status and reason
+                    const reasonDisplay = reasonText.length > 15 ? reasonText.substring(0, 15) + '...' : reasonText;
+                    buttonElement.innerHTML = `<span title="${reasonText}">✓ ${reasonDisplay}</span>`;
+                    buttonElement.className = 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-md cursor-not-allowed';
+                    buttonElement.disabled = true;
+                    
+                    // Auto-hide row and refresh data
+                    setTimeout(() => {
+                        showNotification('🔄 Memperbarui data...', 'info', 2000);
+                        rowElement.style.height = '0';
+                        rowElement.style.padding = '0';
+                        rowElement.style.margin = '0';
+                        setTimeout(() => {
+                            rowElement.remove();
+                            refreshDataAfterAbaikan();
+                        }, 300);
+                    }, 1500);
+                    
+                    return; // Exit function successfully
                 }
                 
                 // Send request to backend (auto-detect local vs production) with reason data
@@ -3030,6 +3071,12 @@ function renderPelabuhanCards(data) {
 
         // Modal Management Functions
         function showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement) {
+            console.log('🔧 DEBUG: showAbaiReasonModal called with:', {
+                noPkkInaportnet,
+                buttonElement,
+                rowElement
+            });
+            
             // Store current data for later use
             currentAbaiData = {
                 noPkkInaportnet: noPkkInaportnet,
@@ -3037,14 +3084,28 @@ function renderPelabuhanCards(data) {
                 rowElement: rowElement
             };
 
+            console.log('✅ DEBUG: currentAbaiData stored:', currentAbaiData);
+
             // Set PKK number in modal
-            document.getElementById('modalPkkNumber').textContent = noPkkInaportnet;
+            const modalPkk = document.getElementById('modalPkkNumber');
+            if (modalPkk) {
+                modalPkk.textContent = noPkkInaportnet;
+                console.log('✅ DEBUG: Modal PKK number set');
+            } else {
+                console.error('❌ DEBUG: modalPkkNumber element not found');
+            }
             
             // Reset form
             resetAbaiReasonForm();
             
             // Show modal
-            document.getElementById('abaiReasonModal').classList.remove('hidden');
+            const modal = document.getElementById('abaiReasonModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                console.log('✅ DEBUG: Modal shown');
+            } else {
+                console.error('❌ DEBUG: abaiReasonModal element not found');
+            }
         }
 
         function closeAbaiReasonModal() {
@@ -3066,18 +3127,28 @@ function renderPelabuhanCards(data) {
         }
 
         function confirmAbaikanAction() {
+            console.log('🔧 DEBUG: confirmAbaikanAction called');
+            
             const reasonSelect = document.getElementById('abaiReasonSelect');
             const customReasonText = document.getElementById('customReasonText');
             const additionalNotes = document.getElementById('additionalNotes');
 
+            console.log('🔧 DEBUG: Form elements:', {
+                reasonValue: reasonSelect?.value,
+                customText: customReasonText?.value,
+                notes: additionalNotes?.value
+            });
+
             // Validate reason selection
             if (!reasonSelect.value) {
+                console.log('❌ DEBUG: No reason selected');
                 showNotification('⚠️ Silakan pilih alasan terlebih dahulu', 'warning');
                 return;
             }
 
             // Validate custom reason if selected
             if (reasonSelect.value === 'custom' && !customReasonText.value.trim()) {
+                console.log('❌ DEBUG: Custom reason empty');
                 showNotification('⚠️ Silakan masukkan alasan khusus', 'warning');
                 return;
             }
@@ -3094,17 +3165,24 @@ function renderPelabuhanCards(data) {
                 timestamp: new Date().toISOString()
             };
 
+            console.log('✅ DEBUG: Reason data prepared:', reasonData);
+            console.log('🔧 DEBUG: Current abai data:', currentAbaiData);
+
             // Close modal
             closeAbaiReasonModal();
 
             // Proceed with abaikan action
             if (currentAbaiData) {
+                console.log('🚀 DEBUG: Calling handleAbaikanWithReason...');
                 handleAbaikanWithReason(
                     currentAbaiData.noPkkInaportnet,
                     currentAbaiData.buttonElement,
                     currentAbaiData.rowElement,
                     reasonData
                 );
+            } else {
+                console.error('❌ DEBUG: No currentAbaiData available!');
+                showNotification('❌ Error: Data tidak tersedia, coba lagi', 'error');
             }
         }
 
