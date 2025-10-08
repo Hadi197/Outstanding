@@ -959,9 +959,45 @@
         }
 
         function parseCSV(csvText) {
-            const rows = csvText.split("\n").filter(row => row.trim() !== "");
-            const headers = rows[0].split(",");
-            const data = rows.slice(1).map(row => {
+            // Debug: Check raw input
+            console.log('parseCSV input length:', csvText.length);
+            console.log('First 100 characters:', csvText.substring(0, 100));
+            
+            // Split rows and filter empty ones
+            const rows = csvText.split(/\r?\n/).filter(row => row.trim() !== "");
+            console.log('Total rows after split:', rows.length);
+            
+            if (rows.length === 0) {
+                console.error('No rows found in CSV');
+                return { headers: [], data: [] };
+            }
+            
+            // Get headers - check for BOM or other issues
+            const firstRow = rows[0];
+            console.log('First row raw:', firstRow);
+            console.log('First row char codes:', Array.from(firstRow.substring(0, 20)).map(c => c.charCodeAt(0)));
+            
+            // Remove potential BOM and split by comma
+            const cleanFirstRow = firstRow.replace(/^\uFEFF/, ''); // Remove BOM if present
+            const headers = cleanFirstRow.split(",");
+            console.log('Headers after split:', headers);
+            console.log('Headers count:', headers.length);
+            
+            if (headers.length < 2) {
+                console.error('Header parsing failed - only got', headers.length, 'columns');
+                console.log('Trying alternative splits...');
+                
+                // Try semicolon if comma fails
+                const altHeaders = cleanFirstRow.split(";");
+                console.log('Alt headers (semicolon):', altHeaders);
+                
+                if (altHeaders.length > headers.length) {
+                    headers = altHeaders;
+                    console.log('Using semicolon separator');
+                }
+            }
+            
+            const data = rows.slice(1).map((row, rowIndex) => {
                 const values = [];
                 let current = "";
                 let insideQuotes = false;
@@ -980,11 +1016,18 @@
                 }
                 values.push(current.trim());
 
+                // Debug first few rows
+                if (rowIndex < 3) {
+                    console.log(`Row ${rowIndex + 1} values (${values.length}):`, values);
+                }
+
                 return headers.reduce((acc, header, index) => {
                     acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : "";
                     return acc;
                 }, {});
             });
+            
+            console.log('Final parsed result - Headers:', headers.length, 'Data rows:', data.length);
             return { headers, data };
         }
 

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CSV Debug</title>
+</head>
+<body>
+    <h1>CSV Debug Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        async function fetchCSV(filePath) {
+            try {
+                const response = await fetch(filePath);
+                const data = await response.text();
+                return data;
+            } catch (error) {
+                console.error("Failed to fetch CSV file:", error);
+                return null;
+            }
+        }
+
+        function parseCSV(csvText) {
+            console.log('Raw CSV length:', csvText.length);
+            console.log('First 200 chars:', csvText.substring(0, 200));
+            
+            const rows = csvText.split("\n").filter(row => row.trim() !== "");
+            console.log('Total rows after split:', rows.length);
+            console.log('First row (header):', rows[0]);
+            
+            const headers = rows[0].split(",");
+            console.log('Headers count:', headers.length);
+            console.log('Headers:', headers);
+            
+            const data = rows.slice(1).map((row, index) => {
+                if (index < 3) { // Only log first 3 rows for debugging
+                    console.log(`Row ${index + 1}:`, row.substring(0, 100) + '...');
+                }
+                
+                const values = [];
+                let current = "";
+                let insideQuotes = false;
+
+                for (let char of row) {
+                    if (char === '"' && insideQuotes) {
+                        insideQuotes = false;
+                    } else if (char === '"' && !insideQuotes) {
+                        insideQuotes = true;
+                    } else if (char === "," && !insideQuotes) {
+                        values.push(current.trim());
+                        current = "";
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current.trim());
+
+                if (index < 3) {
+                    console.log(`Row ${index + 1} parsed values count:`, values.length);
+                    console.log(`Row ${index + 1} values:`, values);
+                }
+
+                return headers.reduce((acc, header, index) => {
+                    acc[header] = values[index] ? values[index].replace(/^"|"$/g, "") : "";
+                    return acc;
+                }, {});
+            });
+            
+            console.log('Final parsed data count:', data.length);
+            console.log('Sample parsed object:', data[0]);
+            
+            return { headers, data };
+        }
+
+        async function testCSV() {
+            const output = document.getElementById('output');
+            output.innerHTML = 'Loading CSV...';
+            
+            try {
+                const csvData = await fetchCSV('data/bill.csv');
+                if (!csvData) {
+                    output.innerHTML = 'Failed to fetch CSV';
+                    return;
+                }
+                
+                const parsed = parseCSV(csvData);
+                output.innerHTML = `
+                    <h2>Results:</h2>
+                    <p><strong>Headers (${parsed.headers.length}):</strong> ${parsed.headers.join(', ')}</p>
+                    <p><strong>Data rows:</strong> ${parsed.data.length}</p>
+                    <p><strong>Sample row keys:</strong> ${Object.keys(parsed.data[0] || {}).join(', ')}</p>
+                    <p><strong>Sample verified_by values:</strong> ${parsed.data.slice(0, 5).map(r => r.verified_by || 'NULL').join(', ')}</p>
+                `;
+            } catch (error) {
+                output.innerHTML = `Error: ${error.message}`;
+                console.error('Error:', error);
+            }
+        }
+        
+        // Run test when page loads
+        testCSV();
+    </script>
+</body>
+</html>
