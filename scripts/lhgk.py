@@ -1,6 +1,7 @@
 import requests
 import csv
 from datetime import datetime, timedelta
+from pathlib import Path
 
 API_URL = "https://phinnisi.pelindo.co.id:9014/api/reporting/daily-pilotage/list"
 ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiJ9.VTJGc2RHVmtYMStXLzc5dGhtSndHaFp5MkZWaTRnS1c4WHNLQThTS1p1RW9mYVYxR2hRSjVvZ2FCek1BalV3M2QzbUl6RjVTWXJER2ZBZU5LN3lvMGdtUXRYTFpjd1YrWEhzZFlXVnRqTWVJeUVQbHhSbm9IUjlkNkxVVnVZWUcxeFJiT3FLVGY2VXlhS24vcnJLNnJzYlVaVlNxblcwRHZUbnBTL2tCOE5TZ0E0QmlETm8yWHVxeVBuQlZDak1FdHZwUlZCYnR4Q3VDc1RQUmZTaU5KUXo3TFNoYzJnUjlCbjF5LzJpenJlTlVPcm1SRnUvajNLZzZjUzJaWTd6T0R0Vlg0VURJNU5IdFgzdGQ3aWxlVzRENnU0QjBuaTRrS3VmZmhZL3JzZ25jZk5vMjYyREtPWkhPUFZ0T0IzQTlKcm1VYWY2amVlVms5UGs3bzZFVEg0aWQ1eU1RWFpWaksrWWMvbW5NQ1IxOTQyWW1sNTEvZWFqeXpnN0RPUjJyUE9xZ3NSbVUyTFJxRytublF0VWZ1ak1uSlZDVFpBd3UvNURzV3ltdDc0MXFHb2JHUHdncGREVlptMnN1aWt1MFFPUEJsbXFKZ2dlYkJLNlVjVERRNFhJNTF3Q2l1SGRmNUpYRTU1ZU02cWJrUWcrM3JuRTYrU0l3blhITHhOeGlGbCsrQW95b1B2aFNFczRLNGpLU3dpNGdvSFZTWTBrUnlXYSt4MTBNMWdHbmdSWXFNTE5yelMzZk5TcUprd1d0SlpMb0xQRnRrcUNWMk5xaVM1NHRSZDExb2lDd0IzeWhqdkUxbHUxM2hXbDRFTDU3VEhXM0RwZHZxdmloSlJXVm4wV1J5S21WeHp2RDBxaFpEZnd4T0FxQkZpemZtQWNGb1lmcGdiTkVoSnlkYzJYdFVzeVYyQWhJZEw1VWk4WEQveFpGUHJ4RkY2SGRodGJSK2pUa0EzVmxEK1QzeTJ3bFFwVW5CVHhTL0JudlAySnkydWhLRWV3bnZGZVdZWmN0SjB6UnZHU1IxdHBKZXVXU3ErVWU1eGUwOXdvMk5VeDVMVUs0T2Vvc3pvQXpzcnBEY2NldUpLdi8zWXFVOWhHcEthaFAybFBJWHBuKzMzZVYxR0xybGdGeEFHd1F2YjFYM1NQQjJENkdRWXBTbFU3VzJlanpRWXlIOTZDay9MSzR2QjV0cFpWSnVnU0M4SXU5QWUzUGV5YWFRYTZMdjh2M2lEQzFGSjBnR1Vtb3dWbWVMVDczS3RqMTcvVktjR1AvVU16S3VLbXdUNHEvV2VmMExFZEhWNEwvbThwbllOTHIzZUpKcFdueVBTQjZPRkJXdmxOVXE1V2FmOThwUk0rK2dCWGo3QmhxemVwaFB0WE5pTUxxUjlwcVpiUWM5MFdRWEpaVzF1NEhrUnhFUHNDRmJnRGtkTFhaQSswekl4RzVRQTZOTkpzNVl0MmV3eCtyRDA2cW1wK0xEaUYxSEd3cHQ0MnUwcUQza3dBMTE2ZUVJclpXbGNRbHp0Y0k5aUtOaUZiNGNuY25SVFRWQjNhd3poL1U3SUYxSWNHY1VNT0NkRDVRY0hyUlExSlV5UEdEckVpaE5mSFlJVmI2M0oxTExyOURUbTFHamIvL3Q5MTdBWjhpM3FId0J3L0cvYXVnQ2ZoMzVYUm9uY2Yzd3gwK1hMeURvcVRmZWdkNEdkVDIvQ2RlTzlFbFNxWk5DK1pXcUlRdlJaaDlEcEhlYis3OW9EMHZ0WUJkZTM4UTZVRnV3dnVRNVFCaGlUblNodThiWGZVNHA3REFDaWVkSFFYYXFtQStNUmtFcGUxemp6dTNUTEZMMU94QWxNQ2hUSnAxYk94LzlYTk9vNVA3VUh6Q21JY1E2L0pSdUVkRHdOeUFCN1pZZFZsWWRrQ3hLbFV6eHZ3V0hXNnJkeG9EeFNkUHpzZk4xNEZsb0VkUGZoTlBPWFErdVlTVmdOMnJqMEEySUJlUzFJMmNUL2pBR1ZNS0xhc2hRQ0doTVNWNGJKSW5lMFhwMzYxT1h2S1lrWFJGL1dReXVaUHVZc3E4TDdJclU2UEVsN2dMWWszeENpaGt2Y0lYOFhRbmVjbndxaDhhZmZMa2NTUm9TaitvM2dqREZwVGp1V1pNaEo3TE11NFI1c2U1Wm5iUFpoMVdCY0Z4N21pY1NrTi9scVpnN2VCenBab2lmbnI3QmZ4ZVRVY2tVK25KeTJNSXlpU1VLUHZBRFdSV1JKcEZVdzd4SHg3aDRZaWJwbmxqLzVYUC9yZjA1OVV4ME9hTytpNjkwZ0NoSHZIUlBOSTFJa00xQjNRR29WRm1NdXBMWmlMTU5hV3dEV2hmTFhTRGtJLzUyTlE3bDA1VFNjNDdBdUZjbkd0NkUzRmJjUmZsL3l1Um9qMHRPMDBSWURGSkhDZFBxM09sWk8zd0hQZDFuendIWXYvR1kxRlU2NmtobGc0UXRSeGFvQVhiMlkwNHRVb3hYVUtZNmd1S0M2L1YzOUN4QWlJb0FYeTZ5bnpBUUFrQUZDUlRPci9CK3VNbzdkay9BY0hLcWpaMWllYkRXWmFZTFB1ZTVWcFlqNVdyazhkNE9zRndNcmdHdFQxemVoT1g0TjlONXFWdm1ta1p3Z0p1ZlNxMVZSU01UTHlPbVJZZDE0aHk1M3U2SUtJMjlxZFRiR0lRV3BWUnVaWjY3U3prYnBSL014UE1LUUZZUGUxTVVCUDBzT0hvMUQ3YzFIeFo2VmEwUjdXbGZWL3hOclNXNFNSZDZZeER1RGw4eXFROXF2MlVVMm9BWlZHRHNyVVBFRU9XWjA3eTJFUU5VRnBkRTUyNVVjSWpCUjdnV3NKSzV6cUt0WXIwZ3FLcTZnRGZPb2dVN2Vncm9ZUnJabjRwa1NRRUZxMDZaejdXcjB2SGxYWDFlazJNMGJPb2gvcUVpc1lmby9kdWZGZFJMaVdwaVNoNnY2V3RIWElmcGtjUXVMTkJ4TFRPbVlRTEw1Y3ZsQ1RkSll2NUo4SVpCOUpFU1E5WjdOUW9NUGRDMVI2TkdzMUpyRlpwUHkySjU2Zzg4dklJUTlNV0ZUdDVNSElTdE54TjZmVU10dDh4M0dxRENmUG5McFdtQnVXYUtGMnpmZmRSdnRsUmMzRy9sUnpnaGNjdjEyL2xkN3hyeC9XVU5FaldDQUhnUWVxbmdITVhMVXNwdjdld3l4UjFTZElYbHBhMUN2RlFVUGhiU092aURTL2c.V85wJNkbUuMUbdijBefbMJREO5VpnEsTsHav2OUjtP8"
@@ -131,10 +132,15 @@ if __name__ == "__main__":
                 seen.add(key)
                 filtered_row = {k: row.get(k, "") for k in selected_cols}
                 unique_rows.append(filtered_row)
-        with open("lhgk.csv", "w", newline="", encoding="utf-8") as f:
+        # Create data directory if it doesn't exist
+        data_dir = Path(__file__).parent.parent / "data"
+        data_dir.mkdir(exist_ok=True)
+        
+        csv_path = data_dir / "lhgk.csv"
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=selected_cols)
             writer.writeheader()
             writer.writerows(unique_rows)
-        print("Data berhasil disimpan ke lhgk.csv (hanya kolom yang dipilih & unik no_pkk_inaportnet)")
+        print(f"Data berhasil disimpan ke {csv_path} (hanya kolom yang dipilih & unik no_pkk_inaportnet)")
     else:
         print("Tidak ada data tabular untuk disimpan.")

@@ -254,7 +254,7 @@ def parse_args(argv: List[str]) -> argparse.Namespace:
     p.add_argument("--sub-branch", default="MTc=", help="Optional sub-branch header value")
     p.add_argument("--id-unit", default="", help="Optional id-unit parameter")
     p.add_argument("--id-zone", default="", help="Optional id-zone parameter")
-    p.add_argument("--csv", default="tug.csv", help="Output CSV path")
+    p.add_argument("--csv", default="../data/tug.csv", help="Output CSV path")
     p.add_argument("--sort-by", default="revenue", help="Column name to sort by descending in CSV output (default: revenue)")
     p.add_argument("--json", default="tug_raw.json", help="Output raw JSON path")
     return p.parse_args(argv)

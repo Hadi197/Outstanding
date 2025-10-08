@@ -59,22 +59,23 @@ def normalize_key_series(s: pd.Series) -> pd.Series:
 
 def main(argv: list[str]) -> int:
     here = Path(__file__).resolve().parent
+    data_dir = here.parent / "data"  # Path to data folder
 
     parser = argparse.ArgumentParser(
         description="Gabungkan SPB.csv, wasop.csv, dan lhgk.csv."
     )
-    parser.add_argument("--spb", help="Path ke SPB.csv (default: cari di direktori skrip)")
-    parser.add_argument("--wasop", help="Path ke wasop.csv (default: cari di direktori skrip)")
-    parser.add_argument("--lhgk", help="Path ke lhgk.csv (default: cari di direktori skrip)")
+    parser.add_argument("--spb", help="Path ke SPB.csv (default: cari di folder data)")
+    parser.add_argument("--wasop", help="Path ke wasop.csv (default: cari di folder data)")
+    parser.add_argument("--lhgk", help="Path ke lhgk.csv (default: cari di folder data)")
     parser.add_argument("--how", choices=["left", "right", "inner", "outer"], default="left",
                         help="Tipe merge (default: left, WASOP sebagai referensi)")
-    parser.add_argument("--output", "-o", help="Path output CSV (default: gabung.csv di direktori skrip)")
+    parser.add_argument("--output", "-o", help="Path output CSV (default: gabung.csv di folder data)")
     args = parser.parse_args(argv)
 
-    spb_path = resolve_path(args.spb, ["SPB.csv", "spb.csv"], here)
-    wasop_path = resolve_path(args.wasop, ["wasop.csv", "WASOP.csv"], here)
-    lhgk_path = resolve_path(args.lhgk, ["lhgk.csv", "LHGK.csv"], here)
-    out_path = Path(args.output) if args.output else (here / "gabung.csv")
+    spb_path = resolve_path(args.spb, ["SPB.csv", "spb.csv"], data_dir)
+    wasop_path = resolve_path(args.wasop, ["wasop.csv", "WASOP.csv"], data_dir)
+    lhgk_path = resolve_path(args.lhgk, ["lhgk.csv", "LHGK.csv"], data_dir)
+    out_path = Path(args.output) if args.output else (data_dir / "gabung.csv")
 
     print(f"Memuat SPB: {spb_path}")
     print(f"Memuat WASOP: {wasop_path}")
