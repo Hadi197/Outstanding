@@ -1433,7 +1433,8 @@
                         const button = document.createElement("button");
                         button.className = "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1";
                         button.textContent = "Abaikan";
-                        button.onclick = () => handleAbaikan(row["no_pkk_inaportnet"], button, tr);
+                        // Pass full row data to capture port name and other details
+                        button.onclick = () => handleAbaikan(row["no_pkk_inaportnet"], button, tr, row);
                         td.appendChild(button);
                     } else {
                         td.textContent = "-";
@@ -2106,21 +2107,22 @@
         });
 
         // Function to handle "Abaikan" button click
-        async function handleAbaikan(noPkkInaportnet, buttonElement, rowElement) {
+        async function handleAbaikan(noPkkInaportnet, buttonElement, rowElement, rowData = null) {
             if (!noPkkInaportnet) {
                 showNotification('No PKK Inaportnet tidak ditemukan', 'error');
                 return;
             }
 
-            // Show modal popup for reason selection
-            showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement);
+            // Show modal popup for reason selection with full row data
+            showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement, rowData);
         }
 
         // New function to handle abaikan with reason
-        async function handleAbaikanWithReason(noPkkInaportnet, buttonElement, rowElement, reasonData) {
+        async function handleAbaikanWithReason(noPkkInaportnet, buttonElement, rowElement, reasonData, rowData = null) {
             console.log('🔧 DEBUG: handleAbaikanWithReason called with:', {
                 noPkkInaportnet,
-                reasonData
+                reasonData,
+                rowData
             });
 
             // Disable button and show loading state
@@ -2139,8 +2141,8 @@
                     // Don't throw error, use localStorage fallback directly
                     console.log('⚠️ Server not active, using localStorage fallback');
                     
-                    // Save to localStorage with reason
-                    addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData);
+                    // Save to localStorage with reason and row data
+                    addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
                     console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
                     
                     // Show success notification
@@ -2194,7 +2196,7 @@
                     
                     // If server indicates localStorage usage, save locally with reason
                     if (result.use_localstorage) {
-                        addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData);
+                        addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
                         console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
                     }
                     
@@ -2257,19 +2259,46 @@
             return reasonMap[reasonCode] || reasonCode;
         }
 
-        // Enhanced localStorage function to include reason
-        function addToAbaiLocalStorageWithReason(noPkk, reasonData) {
+        // Enhanced localStorage function to include reason and port name
+        function addToAbaiLocalStorageWithReason(noPkk, reasonData, rowData = null) {
             try {
                 // Get existing abai data
                 const existingData = JSON.parse(localStorage.getItem(ABAI_STORAGE_KEY) || '[]');
                 
-                // Add new entry with reason
+                // Determine port name from row data
+                let portName = 'Unknown Port';
+                if (rowData) {
+                    // Try different possible column names for port
+                    if (rowData.PELABUHAN) {
+                        portName = rowData.PELABUHAN;
+                    } else if (rowData.name_branch) {
+                        portName = rowData.name_branch;
+                    } else if (rowData.pelabuhan) {
+                        portName = rowData.pelabuhan;
+                    } else if (rowData.Pelabuhan) {
+                        portName = rowData.Pelabuhan;
+                    } else {
+                        // Try to find any column containing "pelabuhan" in the name
+                        const portColumn = Object.keys(rowData).find(key => 
+                            key.toLowerCase().includes('pelabuhan') || 
+                            key.toLowerCase().includes('branch') ||
+                            key.toLowerCase().includes('port')
+                        );
+                        if (portColumn) {
+                            portName = rowData[portColumn];
+                        }
+                    }
+                }
+                
+                // Add new entry with reason, port name, and additional details
                 const newEntry = {
                     pkk: noPkk,
+                    port_name: portName,
                     reason: reasonData.reason,
                     notes: reasonData.notes,
                     timestamp: reasonData.timestamp,
-                    added_at: new Date().toISOString()
+                    added_at: new Date().toISOString(),
+                    full_row_data: rowData // Store complete row data for reference
                 };
                 
                 // For backward compatibility, also maintain simple array
@@ -2856,6 +2885,10 @@ function renderPelabuhanCards(data) {
             const ignoredItemsList = document.getElementById('ignoredItemsList');
             const emptyState = document.getElementById('emptyIgnoredState');
             
+            // Get detailed data
+            const detailedKey = ABAI_STORAGE_KEY + '_detailed';
+            const detailedData = JSON.parse(localStorage.getItem(detailedKey) || '[]');
+            
             if (abaiSet.size === 0) {
                 ignoredItemsList.innerHTML = '';
                 emptyState.classList.remove('hidden');
@@ -2865,19 +2898,32 @@ function renderPelabuhanCards(data) {
             emptyState.classList.add('hidden');
             
             const items = Array.from(abaiSet);
-            ignoredItemsList.innerHTML = items.map((pkkNumber, index) => `
-                <div class="flex items-center justify-between p-4 hover:bg-gray-50">
-                    <div class="flex items-center space-x-4">
+            ignoredItemsList.innerHTML = items.map((pkkNumber, index) => {
+                // Find detailed data for this PKK number
+                const detailed = detailedData.find(item => item.pkk === pkkNumber);
+                const portName = detailed?.port_name || 'Unknown Port';
+                const reason = detailed?.reason ? getReasonDisplayText(detailed.reason) : 'No reason provided';
+                const notes = detailed?.notes || '';
+                const timestamp = detailed?.timestamp ? new Date(detailed.timestamp).toLocaleString('id-ID') : '';
+                
+                return `
+                <div class="flex items-center justify-between p-4 hover:bg-gray-50 border-b border-gray-100">
+                    <div class="flex items-center space-x-4 flex-1">
                         <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
                             <span class="text-red-600 font-semibold text-sm">${index + 1}</span>
                         </div>
-                        <div>
-                            <p class="font-medium text-gray-900">${pkkNumber}</p>
-                            <p class="text-sm text-gray-500">PKK Number</p>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex flex-col space-y-1">
+                                <p class="font-medium text-gray-900 truncate">${pkkNumber}</p>
+                                <p class="text-sm text-blue-600 font-medium truncate">📍 ${portName}</p>
+                                <p class="text-sm text-orange-600 truncate">📋 ${reason}</p>
+                                ${notes ? `<p class="text-xs text-gray-500 truncate" title="${notes}">💬 ${notes}</p>` : ''}
+                                ${timestamp ? `<p class="text-xs text-gray-400">${timestamp}</p>` : ''}
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                    <div class="flex items-center space-x-2 ml-4">
+                        <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full whitespace-nowrap">
                             Diabaikan
                         </span>
                         <button onclick="restoreIgnoredItem('${pkkNumber}')" 
@@ -2896,7 +2942,7 @@ function renderPelabuhanCards(data) {
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function initPkkClearEventListeners() {
@@ -2993,9 +3039,22 @@ function renderPelabuhanCards(data) {
                 return;
             }
             
+            // Get detailed data
+            const detailedKey = ABAI_STORAGE_KEY + '_detailed';
+            const detailedData = JSON.parse(localStorage.getItem(detailedKey) || '[]');
+            
             const data = Array.from(abaiSet);
-            const csvContent = 'PKK_NUMBER,DATE_EXPORTED,STATUS\n' + 
-                data.map(pkk => `${pkk},${new Date().toISOString()},IGNORED`).join('\n');
+            const csvContent = 'PKK_NUMBER,PORT_NAME,REASON,NOTES,TIMESTAMP,DATE_EXPORTED,STATUS\n' + 
+                data.map(pkk => {
+                    const detailed = detailedData.find(item => item.pkk === pkk);
+                    const portName = (detailed?.port_name || 'Unknown Port').replace(/"/g, '""');
+                    const reason = (detailed?.reason ? getReasonDisplayText(detailed.reason) : 'No reason').replace(/"/g, '""');
+                    const notes = (detailed?.notes || '').replace(/"/g, '""');
+                    const timestamp = detailed?.timestamp || '';
+                    const dateExported = new Date().toISOString();
+                    
+                    return `"${pkk}","${portName}","${reason}","${notes}","${timestamp}","${dateExported}","IGNORED"`;
+                }).join('\n');
             
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
@@ -3070,18 +3129,20 @@ function renderPelabuhanCards(data) {
         let currentAbaiData = null;
 
         // Modal Management Functions
-        function showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement) {
+        function showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement, rowData = null) {
             console.log('🔧 DEBUG: showAbaiReasonModal called with:', {
                 noPkkInaportnet,
                 buttonElement,
-                rowElement
+                rowElement,
+                rowData
             });
             
-            // Store current data for later use
+            // Store current data for later use with full row data
             currentAbaiData = {
                 noPkkInaportnet: noPkkInaportnet,
                 buttonElement: buttonElement,
-                rowElement: rowElement
+                rowElement: rowElement,
+                rowData: rowData
             };
 
             console.log('✅ DEBUG: currentAbaiData stored:', currentAbaiData);
@@ -3178,18 +3239,20 @@ function renderPelabuhanCards(data) {
                 const storedData = {
                     noPkkInaportnet: currentAbaiData.noPkkInaportnet,
                     buttonElement: currentAbaiData.buttonElement,
-                    rowElement: currentAbaiData.rowElement
+                    rowElement: currentAbaiData.rowElement,
+                    rowData: currentAbaiData.rowData
                 };
                 
                 // Close modal now
                 closeAbaiReasonModal();
                 
-                // Call handler with stored data
+                // Call handler with stored data including row data
                 handleAbaikanWithReason(
                     storedData.noPkkInaportnet,
                     storedData.buttonElement,
                     storedData.rowElement,
-                    reasonData
+                    reasonData,
+                    storedData.rowData
                 );
             } else {
                 console.error('❌ DEBUG: No currentAbaiData available!');
