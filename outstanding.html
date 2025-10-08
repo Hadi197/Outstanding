@@ -2287,7 +2287,14 @@
                 const serverActive = await checkServerStatus();
                 console.log('🔧 DEBUG: Server active:', serverActive);
                 
-                if (!serverActive) {
+                // Force server active to true for production Netlify functions
+                const currentApiUrl = getApiUrl();
+                const isProduction = !currentApiUrl.includes('localhost');
+                const actualServerActive = isProduction ? true : serverActive; // Always treat production as active
+                
+                console.log('🚀 DEBUG: Production mode:', isProduction, 'Actual server active:', actualServerActive);
+                
+                if (!actualServerActive) {
                     // Don't throw error, use localStorage fallback directly
                     console.log('⚠️ Server not active, using localStorage fallback');
                     
@@ -2327,22 +2334,30 @@
                 
                 // Send request to backend (auto-detect local vs production) with reason data
                 const apiUrl = getApiUrl();
+                console.log('🚀 DEBUG: Sending POST request to:', `${apiUrl}/abaikan`);
+                
+                const requestBody = {
+                    no_pkk_inaportnet: noPkkInaportnet,
+                    timestamp: new Date().toISOString(),
+                    reason: reasonData.reason,
+                    notes: reasonData.notes,
+                    reason_timestamp: reasonData.timestamp
+                };
+                console.log('📤 DEBUG: Request body:', requestBody);
+                
                 const response = await fetch(`${apiUrl}/abaikan`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        no_pkk_inaportnet: noPkkInaportnet,
-                        timestamp: new Date().toISOString(),
-                        reason: reasonData.reason,
-                        notes: reasonData.notes,
-                        reason_timestamp: reasonData.timestamp
-                    })
+                    body: JSON.stringify(requestBody)
                 });
+                
+                console.log('📥 DEBUG: Response status:', response.status, response.statusText);
 
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('✅ DEBUG: API Response:', result);
                     
                     // If server indicates localStorage usage, save locally with reason
                     if (result.use_localstorage) {
