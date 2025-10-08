@@ -15,38 +15,67 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Enhanced logging for debugging
+  console.log('Function called:', {
+    method: event.httpMethod,
+    path: event.path,
+    query: event.queryStringParameters
+  });
+
   // GitHub configuration with your token
   const GITHUB_TOKEN = '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';
   const GITHUB_OWNER = 'Hadi197';
   const GITHUB_REPO = 'Outstanding';
   const FILE_PATH = 'abai.csv';
 
+  // Validate GitHub token exists
+  if (!GITHUB_TOKEN || GITHUB_TOKEN.length < 10) {
+    console.error('Invalid GitHub token');
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
+        error: 'GitHub token configuration invalid',
+        debug: 'Token missing or malformed'
+      })
+    };
+  }
+
   // Helper function to get file content from GitHub
   async function getGitHubFile() {
     try {
-      const response = await fetch(
-        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`,
-        {
-          headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'Outstanding-Dashboard'
-          }
+      console.log('Attempting to fetch GitHub file:', `${GITHUB_OWNER}/${GITHUB_REPO}/${FILE_PATH}`);
+      
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`;
+      const fetchOptions = {
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'Outstanding-Dashboard'
         }
-      );
+      };
+
+      console.log('Making request to GitHub API:', url);
+      
+      const response = await fetch(url, fetchOptions);
+      
+      console.log('GitHub API response status:', response.status);
 
       if (response.ok) {
         const data = await response.json();
         const content = Buffer.from(data.content, 'base64').toString('utf-8');
+        console.log('Successfully retrieved file, content length:', content.length);
         return { content, sha: data.sha, exists: true };
       } else if (response.status === 404) {
+        console.log('File does not exist yet (404), will create new file');
         return { content: '', sha: null, exists: false };
       } else {
-        console.error('GitHub API error:', response.status, await response.text());
-        throw new Error(`GitHub API error: ${response.status}`);
+        const errorText = await response.text();
+        console.error('GitHub API error:', response.status, errorText);
+        throw new Error(`GitHub API error: ${response.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Error fetching from GitHub:', error);
+      console.error('Error in getGitHubFile:', error.message, error.stack);
       throw error;
     }
   }
@@ -54,6 +83,8 @@ exports.handler = async (event, context) => {
   // Helper function to update file in GitHub
   async function updateGitHubFile(content, sha = null) {
     try {
+      console.log('Attempting to update GitHub file, content length:', content.length);
+      
       const body = {
         message: `Update abai.csv - ${new Date().toISOString()}`,
         content: Buffer.from(content).toString('base64'),
@@ -62,30 +93,40 @@ exports.handler = async (event, context) => {
 
       if (sha) {
         body.sha = sha;
+        console.log('Using existing file SHA:', sha);
+      } else {
+        console.log('Creating new file (no SHA provided)');
       }
 
-      const response = await fetch(
-        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Outstanding-Dashboard'
-          },
-          body: JSON.stringify(body)
-        }
-      );
+      const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`;
+      const fetchOptions = {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+          'User-Agent': 'Outstanding-Dashboard'
+        },
+        body: JSON.stringify(body)
+      };
+
+      console.log('Making PUT request to GitHub API:', url);
+
+      const response = await fetch(url, fetchOptions);
+      
+      console.log('GitHub update response status:', response.status);
 
       if (response.ok) {
-        return await response.json();
+        const result = await response.json();
+        console.log('Successfully updated GitHub file, new SHA:', result.content.sha);
+        return result;
       } else {
-        console.error('GitHub update error:', response.status, await response.text());
-        throw new Error(`Failed to update GitHub file: ${response.status}`);
+        const errorText = await response.text();
+        console.error('GitHub update error:', response.status, errorText);
+        throw new Error(`Failed to update GitHub file: ${response.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Error updating GitHub:', error);
+      console.error('Error in updateGitHubFile:', error.message, error.stack);
       throw error;
     }
   }
@@ -190,22 +231,58 @@ exports.handler = async (event, context) => {
   // Handle POST request - add abaikan data
   if (event.httpMethod === 'POST') {
     try {
-      const data = JSON.parse(event.body);
+      console.log('Processing POST request for abaikan');
       
-      if (!data.no_pkk_inaportnet) {
+      // Validate request body
+      if (!event.body) {
+        console.error('No request body provided');
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'Missing no_pkk_inaportnet' })
+          body: JSON.stringify({ 
+            error: 'Request body is required',
+            debug: 'No POST data received'
+          })
+        };
+      }
+
+      let data;
+      try {
+        data = JSON.parse(event.body);
+        console.log('Parsed request data:', { no_pkk_inaportnet: data.no_pkk_inaportnet });
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Invalid JSON in request body',
+            debug: parseError.message
+          })
+        };
+      }
+      
+      if (!data.no_pkk_inaportnet) {
+        console.error('Missing no_pkk_inaportnet in request');
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({ 
+            error: 'Missing no_pkk_inaportnet',
+            debug: 'Required field not provided'
+          })
         };
       }
 
       const timestamp = data.timestamp || new Date().toISOString();
+      console.log('Processing abaikan for PKK:', data.no_pkk_inaportnet);
       
       try {
         // Get current file content from GitHub
+        console.log('Fetching current GitHub file...');
         const fileData = await getGitHubFile();
         let csvContent = fileData.content || '';
+        console.log('Retrieved file data, exists:', fileData.exists, 'content length:', csvContent.length);
         
         // Check for duplicates
         if (csvContent && csvContent.includes(data.no_pkk_inaportnet)) {
