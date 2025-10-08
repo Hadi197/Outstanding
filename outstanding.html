@@ -130,10 +130,10 @@
         
         <!-- Header content -->
         <div class="relative z-10 text-center">
-            <h1 class="text-base md:text-xl lg:text-2xl font-black text-white mb-2 tracking-tight">
+            <h1 class="text-2xl md:text-4xl lg:text-5xl font-black text-white mb-4 tracking-tight">
                 OUTSTANDING WILAYAH 3
             </h1>
-            <p class="text-blue-100 text-xs md:text-sm font-medium">Dashboard Monitoring dan Analisis Data</p>
+            <p class="text-blue-100 text-sm md:text-lg lg:text-xl font-medium">Dashboard Monitoring dan Analisis Data</p>
         </div>
         
         <!-- Decorative elements -->
@@ -155,6 +155,18 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M8 18h8M8 6h8"></path>
                     </svg>
                     Tabel
+                </button>
+                <button id="billingTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Billing
+                </button>
+                <button id="verifikatorTab" class="tab-button px-6 py-3 font-semibold text-sm focus:outline-none transition-all duration-200 text-gray-600 hover:text-gray-800 hover:bg-gray-50">
+                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Verifikator
                 </button>
             </div>
         </div>
@@ -339,38 +351,602 @@
     </div>
     </div>
 
+    <!-- Billing Tab Content -->
+    <div id="billingContent" class="tab-content hidden">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+                <div class="p-0">
+                    <iframe 
+                        src="bill.html" 
+                        class="w-full h-screen border-0" 
+                        style="min-height: 800px;"
+                        title="Billing Dashboard">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verifikator Tab Content -->
+    <div id="verifikatorContent" class="tab-content hidden">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Header -->
+            <div class="text-center mb-8 hidden">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">Verifikator per Region - 2025</h2>
+                <p class="text-gray-600 text-sm">(Daftar verifikator yang bertugas di setiap region)</p>
+                <div class="w-24 h-1 bg-gradient-to-r from-green-500 to-emerald-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+
+            <!-- Region Subtabs -->
+            <div class="mb-4 -mt-8">
+                <div class="flex justify-center">
+                    <div class="bg-gray-100 p-1 rounded-lg">
+                        <button id="kalimantanSubTab" class="px-6 py-2 font-semibold text-sm rounded-md transition-all duration-200 bg-white text-gray-800 shadow-sm">
+                            🌳 Kalimantan
+                        </button>
+                        <button id="jawaSubTab" class="px-6 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">
+                            🏛️ Jawa
+                        </button>
+                        <button id="baliSubTab" class="px-6 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">
+                            🏝️ Bali Nusatenggara
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subtab Contents -->
+            <!-- Kalimantan Subtab -->
+            <div id="kalimantanSubContent" class="subtab-content">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">🌳</span>
+                        Region Kalimantan
+                        <span id="kalimantanCount" class="ml-2 text-sm font-normal text-gray-500"></span>
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="kalimantanCards">
+                    <!-- Kalimantan verifikator cards -->
+                </div>
+            </div>
+
+            <!-- Jawa Subtab -->
+            <div id="jawaSubContent" class="subtab-content hidden">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">🏛️</span>
+                        Region Jawa
+                        <span id="jawaCount" class="ml-2 text-sm font-normal text-gray-500"></span>
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="jawaCards">
+                    <!-- Jawa verifikator cards -->
+                </div>
+            </div>
+
+            <!-- Bali Nusatenggara Subtab -->
+            <div id="baliSubContent" class="subtab-content hidden">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2 flex items-center">
+                        <span class="mr-2">🏝️</span>
+                        Region Bali Nusatenggara
+                        <span id="baliCount" class="ml-2 text-sm font-normal text-gray-500"></span>
+                    </h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="baliCards">
+                    <!-- Bali Nusatenggara verifikator cards -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Tab functionality
         function initTabs() {
             const dashboardTab = document.getElementById('dashboardTab');
             const tabelTab = document.getElementById('tabelTab');
+            const billingTab = document.getElementById('billingTab');
+            const verifikatorTab = document.getElementById('verifikatorTab');
             const dashboardContent = document.getElementById('dashboardContent');
             const tabelContent = document.getElementById('tabelContent');
+            const billingContent = document.getElementById('billingContent');
+            const verifikatorContent = document.getElementById('verifikatorContent');
 
-            function switchTab(activeTab, inactiveTab, activeContent, inactiveContent) {
-                // Update tab appearance
+            // Initialize subtabs
+            initVerifikatorSubTabs();
+
+            function switchTab(activeTab, activeContent) {
+                // Reset all tabs to inactive state
+                [dashboardTab, tabelTab, billingTab, verifikatorTab].forEach(tab => {
+                    tab.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
+                    tab.classList.add('text-gray-600');
+                });
+                
+                // Hide all content
+                [dashboardContent, tabelContent, billingContent, verifikatorContent].forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Activate selected tab
                 activeTab.classList.add('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
                 activeTab.classList.remove('text-gray-600');
                 
-                inactiveTab.classList.remove('active', 'bg-blue-50', 'text-blue-600', 'border-b-2', 'border-blue-600');
-                inactiveTab.classList.add('text-gray-600');
-                
-                // Update content visibility
+                // Show selected content
                 activeContent.classList.remove('hidden');
-                inactiveContent.classList.add('hidden');
             }
 
             dashboardTab.addEventListener('click', () => {
-                switchTab(dashboardTab, tabelTab, dashboardContent, tabelContent);
+                switchTab(dashboardTab, dashboardContent);
             });
 
             tabelTab.addEventListener('click', () => {
-                switchTab(tabelTab, dashboardTab, tabelContent, dashboardContent);
+                switchTab(tabelTab, tabelContent);
+            });
+            
+            billingTab.addEventListener('click', () => {
+                switchTab(billingTab, billingContent);
+            });
+            
+            verifikatorTab.addEventListener('click', () => {
+                switchTab(verifikatorTab, verifikatorContent);
             });
         }
 
         // Initialize tabs when page loads
         document.addEventListener('DOMContentLoaded', initTabs);
+        
+        // Verifikator subtab functionality
+        function initVerifikatorSubTabs() {
+            const kalimantanTab = document.getElementById('kalimantanSubTab');
+            const jawaTab = document.getElementById('jawaSubTab');
+            const baliTab = document.getElementById('baliSubTab');
+            const kalimantanContent = document.getElementById('kalimantanSubContent');
+            const jawaContent = document.getElementById('jawaSubContent');
+            const baliContent = document.getElementById('baliSubContent');
+
+            function showSubTab(activeTab, activeContent) {
+                // Reset all subtabs
+                [kalimantanTab, jawaTab, baliTab].forEach(tab => {
+                    tab.className = 'px-6 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800';
+                });
+                [kalimantanContent, jawaContent, baliContent].forEach(content => {
+                    content.classList.add('hidden');
+                });
+
+                // Activate selected subtab
+                activeTab.className = 'px-6 py-2 font-semibold text-sm rounded-md transition-all duration-200 bg-white text-gray-800 shadow-sm';
+                activeContent.classList.remove('hidden');
+            }
+
+            kalimantanTab.addEventListener('click', () => showSubTab(kalimantanTab, kalimantanContent));
+            jawaTab.addEventListener('click', () => showSubTab(jawaTab, jawaContent));
+            baliTab.addEventListener('click', () => showSubTab(baliTab, baliContent));
+        }
+        
+        // Verifikator functionality
+        let verifikatorData = [];
+        
+        async function loadVerifikatorData() {
+            try {
+                const csvData = await fetchCSV('bill.csv');
+                if (!csvData) {
+                    console.error('No CSV data received');
+                    return;
+                }
+                
+                const parsedResult = parseCSV(csvData);
+                console.log('Parsed result:', parsedResult);
+                
+                if (!parsedResult || !parsedResult.data || !Array.isArray(parsedResult.data)) {
+                    console.error('parseCSV did not return valid data structure');
+                    return;
+                }
+                
+                // Debug: Check available columns in first few rows
+                console.log('Available columns:', parsedResult.headers);
+                console.log('Sample data (first 3 rows):', parsedResult.data.slice(0, 3));
+                
+                // Check for different possible column names for verified_by
+                const sampleRow = parsedResult.data[0];
+                console.log('Sample row keys:', Object.keys(sampleRow));
+                console.log('Sample row values:', sampleRow);
+                
+                // Look for branch-related columns
+                const branchColumns = Object.keys(sampleRow).filter(key => 
+                    key.toLowerCase().includes('branch') || 
+                    key.toLowerCase().includes('cabang') || 
+                    key.toLowerCase().includes('pelabuhan')
+                );
+                console.log('Possible branch columns:', branchColumns);
+                
+                // Look for period-related columns  
+                const periodColumns = Object.keys(sampleRow).filter(key =>
+                    key.toLowerCase().includes('period') || 
+                    key.toLowerCase().includes('tanggal') ||
+                    key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('bulan') ||
+                    key.toLowerCase().includes('tahun')
+                );
+                console.log('Possible period columns:', periodColumns);
+                
+                // Look for verifikator-related columns (exclude date columns)
+                const verifikatorColumns = Object.keys(sampleRow).filter(key =>
+                    key === 'verified_by' ||
+                    key === 'status_nota' ||
+                    ((key.toLowerCase().includes('verif') || 
+                      key.toLowerCase().includes('valid') ||
+                      key.toLowerCase().includes('check') ||
+                      key.toLowerCase().includes('approve') ||
+                      key.toLowerCase().includes('status') ||
+                      key.toLowerCase().includes('nota') ||
+                      key.toLowerCase().includes('by')) && 
+                     !key.toLowerCase().includes('date'))
+                );
+                console.log('Possible verifikator columns:', verifikatorColumns);
+                
+                // Try to find the actual column names by checking sample data
+                const sampleRowForColumns = parsedResult.data[0];
+                const allKeys = Object.keys(sampleRowForColumns);
+                
+                // Find branch column
+                let branchColumn = allKeys.find(key => 
+                    key === 'name_branch' || 
+                    key.toLowerCase().includes('branch') || 
+                    key.toLowerCase().includes('cabang') || 
+                    key.toLowerCase().includes('pelabuhan')
+                ) || 'name_branch';
+                
+                // Find period column
+                let periodColumn = allKeys.find(key =>
+                    key === 'Periode' ||
+                    key.toLowerCase().includes('period') || 
+                    key.toLowerCase().includes('tanggal') ||
+                    key.toLowerCase().includes('date') ||
+                    key.toLowerCase().includes('bulan')
+                ) || 'Periode';
+                
+                // Find verifikator column - prioritize verified_by and avoid verified_date
+                let verifikatorColumn = allKeys.find(key =>
+                    key === 'verified_by'
+                ) || allKeys.find(key =>
+                    key === 'status_nota' ||
+                    (key.toLowerCase().includes('verif') && !key.toLowerCase().includes('date')) ||
+                    (key.toLowerCase().includes('valid') && !key.toLowerCase().includes('date')) ||
+                    key.toLowerCase().includes('check') ||
+                    key.toLowerCase().includes('approve') ||
+                    key.toLowerCase().includes('status') ||
+                    key.toLowerCase().includes('nota') ||
+                    (key.toLowerCase().includes('by') && !key.toLowerCase().includes('date'))
+                ) || 'verified_by';
+                
+                console.log('Using columns - Branch:', branchColumn, 'Period:', periodColumn, 'Verifikator:', verifikatorColumn);
+                
+                verifikatorData = parsedResult.data.filter(row => {
+                    const branchValue = row[branchColumn];
+                    const periodValue = row[periodColumn]; 
+                    const verifikatorValue = row[verifikatorColumn];
+                    
+                    const hasBasicData = row && branchValue && periodValue;
+                    const hasVerified = verifikatorValue && verifikatorValue.toString().trim() !== '';
+                    
+                    return hasBasicData && hasVerified;
+                });
+                
+                console.log('Total rows in CSV:', parsedResult.data.length);
+                console.log(`Rows with ${branchColumn} and ${periodColumn}:`, parsedResult.data.filter(row => row && row[branchColumn] && row[periodColumn]).length);
+                console.log(`Rows with ${verifikatorColumn}:`, parsedResult.data.filter(row => row && row[verifikatorColumn] && row[verifikatorColumn].toString().trim() !== '').length);
+                console.log('Loaded verifikator data:', verifikatorData.length, 'records');
+                
+                // Create column mapping object to pass to other functions
+                const columnMapping = {
+                    branch: branchColumn,
+                    period: periodColumn,
+                    verifikator: verifikatorColumn
+                };
+                window.verifikatorColumnMapping = columnMapping; // Store globally for filter events
+                
+                if (verifikatorData.length === 0) {
+                    console.warn('No verifikator data found. Checking column names...');
+                    // Show all unique column names for debugging
+                    const allColumns = new Set();
+                    parsedResult.data.slice(0, 10).forEach(row => {
+                        Object.keys(row).forEach(key => allColumns.add(key));
+                    });
+                    console.log('All available columns:', Array.from(allColumns));
+                }
+                
+                updateVerifikatorCards(columnMapping);
+                
+            } catch (error) {
+                console.error('Error loading verifikator data:', error);
+            }
+        }
+        
+        function updateVerifikatorCards(columnMapping = {}) {
+            console.log('updateVerifikatorCards called with:', columnMapping);
+            console.log('verifikatorData length:', verifikatorData.length);
+            
+            // Use dynamic column names or defaults
+            const verifikatorCol = columnMapping.verifikator || 'verified_by';
+            const branchCol = columnMapping.branch || 'name_branch';
+            
+            console.log('Using columns - Verifikator:', verifikatorCol, 'Branch:', branchCol);
+            
+            // Group verifikators by their branches and count data
+            const verifikatorBranches = {};
+            const verifikatorDataCount = {};
+            
+            verifikatorData.forEach(row => {
+                const verifikator = row[verifikatorCol];
+                const branch = row[branchCol];
+                
+                if (verifikator && verifikator.trim() !== '' && branch && branch.trim() !== '') {
+                    const cleanVerifikator = verifikator.trim();
+                    const cleanBranch = branch.trim();
+                    
+                    if (!verifikatorBranches[cleanVerifikator]) {
+                        verifikatorBranches[cleanVerifikator] = new Set();
+                        verifikatorDataCount[cleanVerifikator] = 0;
+                    }
+                    verifikatorBranches[cleanVerifikator].add(cleanBranch);
+                    verifikatorDataCount[cleanVerifikator]++;
+                }
+            });
+
+            // Regional grouping mapping - same as dashboard
+            const regionalMapping = {
+                'Kalimantan': ['BANJARMASIN', 'PONTIANAK', 'SAMARINDA', 'BALIKPAPAN', 'KOTABARU', 'SAMPIT', 'KUMAI'],
+                'Jawa': ['JAKARTA', 'SURABAYA', 'SEMARANG', 'CIREBON', 'CILACAP', 'TANJUNG PRIOK'],
+                'Bali Nusatenggara': ['BENOA', 'LEMBAR', 'BIMA', 'KUPANG', 'TENAU', 'CELUKAN BAWANG']
+            };
+
+            // Group verifikators by region
+            const regionalVerifikators = {
+                'Kalimantan': {},
+                'Jawa': {},
+                'Bali Nusatenggara': {}
+            };
+            
+            Object.keys(verifikatorBranches).forEach(verifikator => {
+                const branches = Array.from(verifikatorBranches[verifikator]);
+                
+                branches.forEach(branch => {
+                    let assignedRegion = null;
+                    
+                    // Find which region this branch belongs to
+                    for (const [region, regionBranches] of Object.entries(regionalMapping)) {
+                        if (regionBranches.some(rb => branch.toUpperCase().includes(rb))) {
+                            assignedRegion = region;
+                            break;
+                        }
+                    }
+                    
+                    // If no specific region found, assign to Jawa as default
+                    if (!assignedRegion) {
+                        assignedRegion = 'Jawa';
+                    }
+                    
+                    if (!regionalVerifikators[assignedRegion][verifikator]) {
+                        regionalVerifikators[assignedRegion][verifikator] = new Set();
+                    }
+                    regionalVerifikators[assignedRegion][verifikator].add(branch);
+                });
+            });
+            
+            console.log('Regional verifikators:', regionalVerifikators);
+            
+            // Clear all subtab containers
+            const kalimantanContainer = document.getElementById('kalimantanCards');
+            const jawaContainer = document.getElementById('jawaCards');
+            const baliContainer = document.getElementById('baliCards');
+            
+            if (!kalimantanContainer || !jawaContainer || !baliContainer) {
+                console.error('Subtab containers not found');
+                return;
+            }
+            
+            kalimantanContainer.innerHTML = '';
+            jawaContainer.innerHTML = '';
+            baliContainer.innerHTML = '';
+            
+            const modernColors = [
+                'bg-gradient-to-br from-blue-50 to-blue-100 text-blue-800 border-blue-200',
+                'bg-gradient-to-br from-green-50 to-green-100 text-green-800 border-green-200',
+                'bg-gradient-to-br from-purple-50 to-purple-100 text-purple-800 border-purple-200',
+                'bg-gradient-to-br from-pink-50 to-pink-100 text-pink-800 border-pink-200',
+                'bg-gradient-to-br from-indigo-50 to-indigo-100 text-indigo-800 border-indigo-200',
+                'bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-800 border-yellow-200',
+                'bg-gradient-to-br from-red-50 to-red-100 text-red-800 border-red-200',
+                'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-800 border-gray-200',
+                'bg-gradient-to-br from-cyan-50 to-cyan-100 text-cyan-800 border-cyan-200',
+                'bg-gradient-to-br from-teal-50 to-teal-100 text-teal-800 border-teal-200'
+            ];
+            
+            // Regional icons
+            const regionIcons = {
+                'Kalimantan': '🌴',
+                'Jawa': '🏛️', 
+                'Bali Nusatenggara': '🏝️'
+            };
+            
+            // Update subtab contents
+            Object.keys(regionalVerifikators).forEach(region => {
+                const regionData = regionalVerifikators[region];
+                const verifikatorList = Object.keys(regionData);
+                
+                // Get container for this region
+                let container;
+                let countElementId;
+                if (region === 'Kalimantan') {
+                    container = kalimantanContainer;
+                    countElementId = 'kalimantanCount';
+                } else if (region === 'Jawa') {
+                    container = jawaContainer;
+                    countElementId = 'jawaCount';
+                } else if (region === 'Bali Nusatenggara') {
+                    container = baliContainer;
+                    countElementId = 'baliCount';
+                }
+                
+                if (!container) return;
+                
+                // Update count in header
+                const countElement = document.getElementById(countElementId);
+                if (countElement) {
+                    const filteredCount = verifikatorList.filter(verifikator => {
+                        const upperName = verifikator.toUpperCase().trim();
+                        return upperName !== 'SYSTEM' && upperName !== 'ADMIN SYSTEM';
+                    }).length;
+                    countElement.textContent = `(${filteredCount} verifikator)`;
+                }
+                
+                // Filter out SYSTEM and ADMIN SYSTEM, then sort by data count (highest first)
+                const filteredAndSortedVerifikators = verifikatorList
+                    .filter(verifikator => {
+                        const upperName = verifikator.toUpperCase().trim();
+                        return upperName !== 'SYSTEM' && upperName !== 'ADMIN SYSTEM';
+                    })
+                    .sort((a, b) => {
+                        const dataCountA = verifikatorDataCount[a] || 0;
+                        const dataCountB = verifikatorDataCount[b] || 0;
+                        return dataCountB - dataCountA; // Sort by data count descending
+                    });
+                
+                filteredAndSortedVerifikators.forEach((verifikator, index) => {
+                const colorClass = modernColors[index % modernColors.length];
+                const branches = Array.from(regionData[verifikator]);
+                const branchText = branches.join(', ');
+                const dataCount = verifikatorDataCount[verifikator] || 0;
+                
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl p-6 border shadow-md hover:shadow-lg transition-all duration-200 min-h-[300px]`;
+                
+                // Calculate duration categories for this verifikator
+                const verifikatorRows = verifikatorData.filter(row => 
+                    row[verifikatorCol] && row[verifikatorCol].trim() === verifikator
+                );
+                
+                const durationCounts = {
+                    lessThan1: 0,
+                    oneToTwo: 0,
+                    threeToTen: 0,
+                    moreThan10: 0
+                };
+                
+                verifikatorRows.forEach(row => {
+                    const lamaNota = parseInt(row['Lama_Nota']) || 0;
+                    if (lamaNota < 1) durationCounts.lessThan1++;
+                    else if (lamaNota <= 2) durationCounts.oneToTwo++;
+                    else if (lamaNota <= 10) durationCounts.threeToTen++;
+                    else durationCounts.moreThan10++;
+                });
+                
+                const total = dataCount;
+                
+                card.innerHTML = `
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-gray-800 text-lg">${verifikator}</h3>
+                                <p class="text-2xl font-bold text-gray-900">${total.toLocaleString()}</p>
+                                <p class="text-xs text-gray-500">Total</p>
+                            </div>
+                            <div class="p-3 rounded-full bg-blue-100">
+                                <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 p-2 bg-gray-50 rounded-lg">
+                            <div class="text-xs text-gray-600">📍 ${branchText}</div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-green-800">< 1 hari</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-green-800">${durationCounts.lessThan1.toLocaleString()}</div>
+                                    <div class="text-xs text-green-600">${total > 0 ? ((durationCounts.lessThan1/total)*100).toFixed(2) : 0}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-blue-800">1-2 hari</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-blue-800">${durationCounts.oneToTwo.toLocaleString()}</div>
+                                    <div class="text-xs text-blue-600">${total > 0 ? ((durationCounts.oneToTwo/total)*100).toFixed(2) : 0}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-yellow-800">3-10 hari</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-yellow-800">${durationCounts.threeToTen.toLocaleString()}</div>
+                                    <div class="text-xs text-yellow-600">${total > 0 ? ((durationCounts.threeToTen/total)*100).toFixed(2) : 0}%</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                                    <span class="text-sm font-medium text-red-800">> 10 hari</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-bold text-red-800">${durationCounts.moreThan10.toLocaleString()}</div>
+                                    <div class="text-xs text-red-600">${total > 0 ? ((durationCounts.moreThan10/total)*100).toFixed(2) : 0}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                
+                /* Old HTML:
+                card.innerHTML = `
+                    <div class="font-medium text-sm mb-2">� ${verifikator}</div>
+                    <div class="text-xs opacity-75">
+                        <div class="mb-1">� ${branchText}</div>
+                        <div class="mb-1">📊 ${total.toLocaleString()} data</div>
+                        <div>${branches.length} cabang</div>
+                    </div>
+                */
+                container.appendChild(card);
+                });
+            });
+        }
+        
+
+        
+
+        
+
+        
+        // Load verifikator data when tab is clicked
+        document.addEventListener('DOMContentLoaded', () => {
+            const verifikatorTab = document.getElementById('verifikatorTab');
+            if (verifikatorTab) {
+                verifikatorTab.addEventListener('click', () => {
+                    if (verifikatorData.length === 0) {
+                        // Add a small delay to ensure tab content is visible
+                        setTimeout(() => {
+                            loadVerifikatorData();
+                        }, 100);
+                    } else {
+                        // If data is already loaded, just update the cards
+                        setTimeout(() => {
+                            updateVerifikatorCards(window.verifikatorColumnMapping || {});
+                        }, 100);
+                    }
+                });
+            }
+        });
+        
         async function fetchCSV(filePath) {
             try {
                 const response = await fetch(filePath);
@@ -669,33 +1245,7 @@
 						}
 					}
 				},
-				datalabels: {
-					display: true,
-					anchor: 'end',
-					align: 'top',
-					offset: 6,
-					backgroundColor: function(context) {
-						return modernColors[context.dataIndex % modernColors.length].primary;
-					},
-					borderColor: '#FFFFFF',
-					borderWidth: 2,
-					borderRadius: 8,
-					color: '#FFFFFF',
-					font: { 
-						weight: 'bold', 
-						size: 12 
-					},
-					padding: { 
-						top: 6, 
-						bottom: 6, 
-						left: 8, 
-						right: 8 
-					},
-					formatter: function(value) { 
-						if (value === 0 || value === null || value === undefined) return '';
-						return value.toLocaleString(); 
-					}
-				}
+
 			},
 			scales: {
 				x: {
@@ -756,7 +1306,7 @@
 				}
 			}
 		},
-		plugins: [ChartDataLabels]
+
 	});
 
 	return chart;
@@ -876,6 +1426,25 @@
             barChart.update('active');
         }
 
+        function initializeChart(data) {
+            const ctx = document.getElementById('barChart');
+            if (!ctx) {
+                console.error('Canvas element "barChart" not found');
+                return;
+            }
+
+            const { labels, values } = aggregateByMonth(data);
+            
+            // Destroy existing chart if any
+            if (barChart) {
+                barChart.destroy();
+            }
+            
+            // Create new chart
+            barChart = buildBarChart(ctx, labels, values);
+            console.log('Chart initialized successfully');
+        }
+
         function updateChartStats(data) {
             const totalCount = data.length;
             const dnCount = data.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
@@ -899,7 +1468,7 @@ function renderPelabuhanCards(data) {
     // Definisi mapping region berdasarkan nama pelabuhan/cabang
     const regionMapping = {
         'Kalimantan': {
-            keywords: ['kalimantan', 'pontianak', 'banjarmasin', 'samarinda', 'balikpapan', 'ketapang', 'sampit', 'palangkaraya', 'tanjung selor', 'tarakan', 'kotabaru', 'mekar putih', 'sts kotabaru', 'zona batulicin', 'zona satui', 'bunati', 'zona kumai', 'batulicin', 'satui', 'kumai', 'celukan bawang', 'mekarputih', 'bumiharjo', 'bagendang'],
+            keywords: ['kalimantan', 'pontianak', 'banjarmasin', 'samarinda', 'balikpapan', 'ketapang', 'sampit', 'palangkaraya', 'tanjung selor', 'tarakan', 'kotabaru', 'mekar putih', 'sts kotabaru', 'zona batulicin', 'zona satui', 'bunati', 'zona kumai', 'batulicin', 'satui', 'kumai', 'mekarputih', 'bumiharjo', 'bagendang'],
             color: {bg: "linear-gradient(135deg, #a7f3d0, #6ee7b7, #34d399)", circle: "rgba(255,255,255,0.15)"}, // Soft emerald gradient
             icon: '🌳'
         },
@@ -909,7 +1478,7 @@ function renderPelabuhanCards(data) {
             icon: '🏙️'
         },
         'Bali Nusatenggara': {
-            keywords: ['bali', 'lombok', 'sumbawa', 'flores', 'kupang', 'denpasar', 'mataram', 'ende', 'waingapu', 'labuan bajo', 'benoa', 'zona lembar', 'lembar'],
+            keywords: ['bali', 'lombok', 'sumbawa', 'flores', 'kupang', 'denpasar', 'mataram', 'ende', 'waingapu', 'labuan bajo', 'benoa', 'zona lembar', 'lembar', 'celukan bawang'],
             color: {bg: "linear-gradient(135deg, #fce7f3, #fbcfe8, #f9a8d4)", circle: "rgba(255,255,255,0.15)"}, // Soft pink gradient
             icon: '🏝️'
         }
@@ -1002,9 +1571,9 @@ function renderPelabuhanCards(data) {
         regionHeader.appendChild(regionTitle);
         regionHeader.appendChild(regionCount);
         
-        // Cards grid for this region
+        // Cards grid for this region - reduce columns for better layout
         const cardsGrid = document.createElement("div");
-        cardsGrid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4";
+        cardsGrid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full";
 
         // Render cards for this region
         zones.forEach(({zone, rows}, idx) => {
@@ -1018,57 +1587,48 @@ function renderPelabuhanCards(data) {
             const lnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
 
             const card = document.createElement("div");
-            card.className = "relative overflow-hidden bg-gradient-to-br p-2 rounded-lg shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-[1.02] transition-all duration-300 text-gray-700 min-h-[65px] flex flex-col justify-between group border border-white/20 backdrop-blur-sm";
+            card.className = "bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group min-h-[160px]";
             
-            // Use region-specific color or default colors
-            const regionColor = regionMapping[regionName]?.color;
-            if (regionColor) {
-                card.style.background = regionColor.bg;
-            } else {
-                const defaultColors = [
-                    {bg: "linear-gradient(135deg, #f3e8ff, #e9d5ff, #d8b4fe)"},
-                    {bg: "linear-gradient(135deg, #fef3c7, #fde68a, #fcd34d)"},
-                    {bg: "linear-gradient(135deg, #dbeafe, #bfdbfe, #93c5fd)"}
-                ];
-                card.style.background = defaultColors[idx % defaultColors.length].bg;
-            }
-
-            // Main content area with title and stats
-            const contentArea = document.createElement("div");
-            contentArea.className = "flex-1";
-
-            const title = document.createElement("div");
-            title.className = "stat-title font-bold text-gray-800 text-xs leading-tight truncate group-hover:text-gray-900 transition-colors mb-1";
-            title.textContent = zone;
-            title.title = zone;
-            contentArea.appendChild(title);
-
-            if (manualCount > 0) {
-                const manualLabel = document.createElement("div");
-                manualLabel.className = "pkk-manual text-gray-700 font-semibold text-xs opacity-90";
-                manualLabel.textContent = `Manual: ${manualCount} (${pctText}%)`;
-                contentArea.appendChild(manualLabel);
-            }
-
-            const pelayaranStats = document.createElement("div");
-            pelayaranStats.className = "pelayaran-stats text-gray-600 font-medium text-xs leading-tight opacity-80";
-            pelayaranStats.innerHTML = `DN: ${dnCount} | LN: ${lnCount}`;
-            contentArea.appendChild(pelayaranStats);
-
-            // Value positioned at bottom-right corner
-            const value = document.createElement("div");
-            value.className = "absolute bottom-2 right-2 font-black text-gray-900 text-lg md:text-xl group-hover:scale-110 transition-transform z-10";
-            value.textContent = count;
-
-            card.appendChild(contentArea);
-            card.appendChild(value);
-
-            const circle = document.createElement("div");
-            circle.className = "card-circle";
-            if (regionColor) {
-                circle.style.background = regionColor.circle;
-            }
-            card.appendChild(circle);
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                        <div class="w-10 h-10 bg-${regionName === 'Kalimantan' ? 'green' : regionName === 'Jawa' ? 'blue' : 'orange'}-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-${regionName === 'Kalimantan' ? 'green' : regionName === 'Jawa' ? 'blue' : 'orange'}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h3 class="font-bold text-gray-900 text-sm leading-tight break-words" title="${zone}">${zone}</h3>
+                            <p class="text-xs text-gray-500">Pelabuhan</p>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0">
+                        <div class="text-2xl font-bold text-gray-900">${count}</div>
+                        <div class="text-xs text-gray-500 uppercase">TOTAL</div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-blue-50 rounded-lg p-3 text-center">
+                        <div class="text-xs font-medium text-blue-700 mb-1">DN</div>
+                        <div class="text-lg font-bold text-blue-900">${dnCount}</div>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 text-center">
+                        <div class="text-xs font-medium text-green-700 mb-1">LN</div>
+                        <div class="text-lg font-bold text-green-900">${lnCount}</div>
+                    </div>
+                </div>
+                
+                ${manualCount > 0 ? `
+                <div class="mt-3 p-3 bg-red-50 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-red-700">Manual</span>
+                        <span class="text-sm font-bold text-red-900">${manualCount} (${pctText}%)</span>
+                    </div>
+                </div>
+                ` : ''}
+            `;
 
             cardsGrid.appendChild(card);
         });
@@ -1124,12 +1684,11 @@ function renderPelabuhanCards(data) {
             attachPelabuhanFilterListener();
             attachYearFilterListener();
             
-            // Update chart statistics on initial load
+            // Initialize and update chart
+            initializeChart(filtered);
             updateChartStats(filtered);
 
-            const { labels, values } = aggregateByMonth(filtered);
-            const ctx = document.getElementById("barChart").getContext("2d");
-            barChart = buildBarChart(ctx, labels, values);
+            console.log('Dashboard initialized with chart');
          }
 
         // New: download gabung.csv by fetching as blob then triggering a download
@@ -1177,8 +1736,10 @@ function renderPelabuhanCards(data) {
 
         main();
     </script>
+
+    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+    
     <script>
   // Enforce session + 30-minute inactivity logout
   if (typeof enforceAuth === 'function') {

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rata-rata Terbit Nota Sejak Kapal Keluar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-lg shadow-lg mb-8 hidden">
+            <h1 class="text-3xl font-bold mb-2">Lama Waktu Penerbitan Nota</h1>
+        </div>
+
+        <!-- Branch Cards -->
+        <div class="mb-12">
+            <div class="text-center mb-8">
+                <h2 class="text-lg font-bold text-gray-900 mb-2">Kategori Durasi Penerbitan Nota - 2025</h2>
+                <p class="text-gray-600 text-sm">(Berdasarkan Lama_Nota)</p>
+                <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto mt-4 rounded-full"></div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8" id="branchCards">
+                <!-- Branch cards will be populated dynamically -->
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        let rawData = [];
+
+        // Load and parse CSV data
+        async function loadCSVData() {
+            try {
+                const response = await fetch('bill.csv');
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const lines = csvText.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                rawData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (lines[i].trim()) {
+                        const values = parseCSVLine(lines[i]);
+                        if (values.length === headers.length) {
+                            const row = {};
+                            headers.forEach((header, index) => {
+                                row[header] = values[index].replace(/"/g, '').trim();
+                            });
+                            
+                            // Convert Lama_Nota to number
+                            row.Lama_Nota = parseFloat(row.Lama_Nota) || 0;
+                            
+                            // Only include rows with valid data and from year 2025
+                            if (row.name_branch && row.Periode && !isNaN(row.Lama_Nota)) {
+                                // Filter only 2025 data (Periode format is MM-YYYY)
+                                const year = row.Periode ? row.Periode.split('-')[1] : '';
+                                if (year === '2025') {
+                                    rawData.push(row);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                console.log('Loaded data for 2025:', rawData.length, 'records');
+                updateBranchCards();
+                
+            } catch (error) {
+                console.error('Error loading CSV:', error);
+            }
+        }
+
+        // Parse CSV line handling commas within quotes
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        // Update branch cards with average Lama_Nota
+        function updateBranchCards() {
+            const branchData = {};
+            
+            // Calculate duration categories for each branch
+            rawData.forEach(row => {
+                if (!branchData[row.name_branch]) {
+                    branchData[row.name_branch] = {
+                        negative: 0,       // < 0 hari (nilai minus)
+                        sameDay: 0,        // 0 sampai < 1 hari
+                        oneToTwo: 0,       // 1-2 hari
+                        threeToTen: 0,     // 3-10 hari
+                        moreThanTen: 0,    // >10 hari
+                        total: 0
+                    };
+                }
+                
+                const lamaNota = row.Lama_Nota;
+                branchData[row.name_branch].total++;
+                
+                if (lamaNota < 0) {
+                    branchData[row.name_branch].negative++;
+                } else if (lamaNota >= 0 && lamaNota < 1) {
+                    branchData[row.name_branch].sameDay++;
+                } else if (lamaNota >= 1 && lamaNota <= 2) {
+                    branchData[row.name_branch].oneToTwo++;
+                } else if (lamaNota >= 3 && lamaNota <= 10) {
+                    branchData[row.name_branch].threeToTen++;
+                } else if (lamaNota > 10) {
+                    branchData[row.name_branch].moreThanTen++;
+                }
+            });
+
+            // Calculate averages and sort branches
+            const branches = Object.keys(branchData).sort();
+            const branchCardsContainer = document.getElementById('branchCards');
+            
+            branchCardsContainer.innerHTML = '';
+            
+            const modernColors = [
+                {
+                    gradient: 'from-blue-500 to-blue-600',
+                    bg: 'bg-blue-50',
+                    icon: 'bg-blue-500',
+                    text: 'text-blue-600',
+                    shadow: 'shadow-blue-200'
+                },
+                {
+                    gradient: 'from-emerald-500 to-emerald-600',
+                    bg: 'bg-emerald-50',
+                    icon: 'bg-emerald-500',
+                    text: 'text-emerald-600',
+                    shadow: 'shadow-emerald-200'
+                },
+                {
+                    gradient: 'from-purple-500 to-purple-600',
+                    bg: 'bg-purple-50',
+                    icon: 'bg-purple-500',
+                    text: 'text-purple-600',
+                    shadow: 'shadow-purple-200'
+                },
+                {
+                    gradient: 'from-rose-500 to-rose-600',
+                    bg: 'bg-rose-50',
+                    icon: 'bg-rose-500',
+                    text: 'text-rose-600',
+                    shadow: 'shadow-rose-200'
+                },
+                {
+                    gradient: 'from-amber-500 to-amber-600',
+                    bg: 'bg-amber-50',
+                    icon: 'bg-amber-500',
+                    text: 'text-amber-600',
+                    shadow: 'shadow-amber-200'
+                },
+                {
+                    gradient: 'from-indigo-500 to-indigo-600',
+                    bg: 'bg-indigo-50',
+                    icon: 'bg-indigo-500',
+                    text: 'text-indigo-600',
+                    shadow: 'shadow-indigo-200'
+                },
+                {
+                    gradient: 'from-pink-500 to-pink-600',
+                    bg: 'bg-pink-50',
+                    icon: 'bg-pink-500',
+                    text: 'text-pink-600',
+                    shadow: 'shadow-pink-200'
+                },
+                {
+                    gradient: 'from-teal-500 to-teal-600',
+                    bg: 'bg-teal-50',
+                    icon: 'bg-teal-500',
+                    text: 'text-teal-600',
+                    shadow: 'shadow-teal-200'
+                },
+                {
+                    gradient: 'from-orange-500 to-orange-600',
+                    bg: 'bg-orange-50',
+                    icon: 'bg-orange-500',
+                    text: 'text-orange-600',
+                    shadow: 'shadow-orange-200'
+                },
+                {
+                    gradient: 'from-cyan-500 to-cyan-600',
+                    bg: 'bg-cyan-50',
+                    icon: 'bg-cyan-500',
+                    text: 'text-cyan-600',
+                    shadow: 'shadow-cyan-200'
+                },
+                {
+                    gradient: 'from-lime-500 to-lime-600',
+                    bg: 'bg-lime-50',
+                    icon: 'bg-lime-500',
+                    text: 'text-lime-600',
+                    shadow: 'shadow-lime-200'
+                },
+                {
+                    gradient: 'from-violet-500 to-violet-600',
+                    bg: 'bg-violet-50',
+                    icon: 'bg-violet-500',
+                    text: 'text-violet-600',
+                    shadow: 'shadow-violet-200'
+                }
+            ];
+            
+            branches.forEach((branch, index) => {
+                const data = branchData[branch];
+                const colorScheme = modernColors[index % modernColors.length];
+                
+                // Calculate percentages for each category
+                const negativePct = ((data.negative / data.total) * 100).toFixed(1);
+                const sameDayPct = ((data.sameDay / data.total) * 100).toFixed(1);
+                const oneToTwoPct = ((data.oneToTwo / data.total) * 100).toFixed(1);
+                const threeToTenPct = ((data.threeToTen / data.total) * 100).toFixed(1);
+                const moreThanTenPct = ((data.moreThanTen / data.total) * 100).toFixed(1);
+                
+                const card = document.createElement('div');
+                card.className = `group relative overflow-hidden bg-white rounded-2xl ${colorScheme.shadow} shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out cursor-pointer border border-gray-100`;
+                
+                // Add subtle animation on hover
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) scale(1)';
+                });
+                
+                card.innerHTML = `
+                    <!-- Gradient Background Decoration -->
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${colorScheme.gradient} opacity-10 rounded-bl-full"></div>
+                    
+                    <!-- Card Content -->
+                    <div class="relative p-6">
+                        <!-- Icon and Branch Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 ${colorScheme.icon} rounded-xl flex items-center justify-center shadow-lg">
+                                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider">${branch}</h3>
+                                    <p class="text-xs text-gray-500 mt-1">Duration Categories</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Duration Categories -->
+                        <div class="mb-4 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-red-600">< 0 Hari</span>
+                                <span class="text-sm font-bold text-red-600">${data.negative.toLocaleString()} (${negativePct}%)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-600">0 - < 1 Hari</span>
+                                <span class="text-sm font-bold ${colorScheme.text}">${data.sameDay.toLocaleString()} (${sameDayPct}%)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-600">1-2 Hari</span>
+                                <span class="text-sm font-bold ${colorScheme.text}">${data.oneToTwo.toLocaleString()} (${oneToTwoPct}%)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-600">3-10 Hari</span>
+                                <span class="text-sm font-bold ${colorScheme.text}">${data.threeToTen.toLocaleString()} (${threeToTenPct}%)</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-600">&gt;10 Hari</span>
+                                <span class="text-sm font-bold ${colorScheme.text}">${data.moreThanTen.toLocaleString()} (${moreThanTenPct}%)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Footer -->
+                        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 ${colorScheme.icon} rounded-full"></div>
+                                <span class="text-xs font-medium text-gray-600">${data.total.toLocaleString()} total</span>
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                ${data.moreThanTen > data.total * 0.3 ? '🔴' : data.moreThanTen > data.total * 0.1 ? '🟡' : '🟢'} 
+                                ${data.moreThanTen > data.total * 0.3 ? 'Slow' : data.moreThanTen > data.total * 0.1 ? 'Medium' : 'Fast'}
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar (% >10 hari) -->
+                        <div class="mt-3">
+                            <div class="w-full bg-gray-200 rounded-full h-1">
+                                <div class="bg-gradient-to-r ${data.moreThanTen > data.total * 0.3 ? 'from-red-500 to-red-600' : data.moreThanTen > data.total * 0.1 ? 'from-yellow-500 to-yellow-600' : colorScheme.gradient} h-1 rounded-full transition-all duration-500" 
+                                     style="width: ${moreThanTenPct}%"></div>
+                            </div>
+                            <p class="text-xs text-gray-400 mt-1">${moreThanTenPct}% lebih dari 10 hari</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Hover Glow Effect -->
+                    <div class="absolute inset-0 bg-gradient-to-r ${colorScheme.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl"></div>
+                `;
+                
+                branchCardsContainer.appendChild(card);
+            });
+        }
+
+    // Initialize
+    loadCSVData();
+    </script>
+</body>
+</html>
