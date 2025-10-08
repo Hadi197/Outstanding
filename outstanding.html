@@ -3109,6 +3109,8 @@ function renderPelabuhanCards(data) {
         }
 
         function closeAbaiReasonModal() {
+            console.log('🔧 DEBUG: closeAbaiReasonModal called, clearing currentAbaiData');
+            
             // Hide modal
             document.getElementById('abaiReasonModal').classList.add('hidden');
             
@@ -3168,21 +3170,31 @@ function renderPelabuhanCards(data) {
             console.log('✅ DEBUG: Reason data prepared:', reasonData);
             console.log('🔧 DEBUG: Current abai data:', currentAbaiData);
 
-            // Close modal
-            closeAbaiReasonModal();
-
-            // Proceed with abaikan action
+            // Proceed with abaikan action BEFORE closing modal
             if (currentAbaiData) {
                 console.log('🚀 DEBUG: Calling handleAbaikanWithReason...');
+                
+                // Store data before closing modal
+                const storedData = {
+                    noPkkInaportnet: currentAbaiData.noPkkInaportnet,
+                    buttonElement: currentAbaiData.buttonElement,
+                    rowElement: currentAbaiData.rowElement
+                };
+                
+                // Close modal now
+                closeAbaiReasonModal();
+                
+                // Call handler with stored data
                 handleAbaikanWithReason(
-                    currentAbaiData.noPkkInaportnet,
-                    currentAbaiData.buttonElement,
-                    currentAbaiData.rowElement,
+                    storedData.noPkkInaportnet,
+                    storedData.buttonElement,
+                    storedData.rowElement,
                     reasonData
                 );
             } else {
                 console.error('❌ DEBUG: No currentAbaiData available!');
                 showNotification('❌ Error: Data tidak tersedia, coba lagi', 'error');
+                closeAbaiReasonModal(); // Close modal even on error
             }
         }
 
