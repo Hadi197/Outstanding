@@ -1407,7 +1407,8 @@
 					const {ctx, chartArea} = chart;
 					if (!chartArea) return modernColors[0].primary;
 					
-					const colorSet = modernColors[context.dataIndex % modernColors.length];
+					const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+					const colorSet = modernColors[dataIndex % modernColors.length];
 					
 					// Create enhanced multi-stop gradient
 					const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
@@ -1419,7 +1420,8 @@
 					return gradient;
 				},
 				borderColor: function(context) {
-					const colorSet = modernColors[context.dataIndex % modernColors.length];
+					const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+					const colorSet = modernColors[dataIndex % modernColors.length];
 					return colorSet.tertiary;
 				},
 				borderWidth: 2,
@@ -1433,7 +1435,8 @@
 				hoverBackgroundColor: function(context) {
 					const chart = context.chart;
 					const {ctx, chartArea} = chart;
-					const colorSet = modernColors[context.dataIndex % modernColors.length];
+					const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+					const colorSet = modernColors[dataIndex % modernColors.length];
 					
 					// Enhanced hover gradient
 					const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
@@ -1508,7 +1511,8 @@
 					},
 					color: function(context) {
 						// Dynamic label color based on bar background
-						const colorSet = modernColors[context.dataIndex % modernColors.length];
+						const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+						const colorSet = modernColors[dataIndex % modernColors.length];
 						const value = context.parsed ? context.parsed.y : 0;
 						return value > 500 ? '#FFFFFF' : colorSet.tertiary;
 					},
@@ -1527,12 +1531,14 @@
 						return value.toLocaleString('id-ID');
 					},
 					backgroundColor: function(context) {
-						const colorSet = modernColors[context.dataIndex % modernColors.length];
+						const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+						const colorSet = modernColors[dataIndex % modernColors.length];
 						const value = context.parsed ? context.parsed.y : 0;
 						return value > 500 ? 'transparent' : colorSet.bg;
 					},
 					borderColor: function(context) {
-						const colorSet = modernColors[context.dataIndex % modernColors.length];
+						const dataIndex = context.dataIndex !== undefined ? context.dataIndex : 0;
+						const colorSet = modernColors[dataIndex % modernColors.length];
 						const value = context.parsed ? context.parsed.y : 0;
 						return value > 500 ? 'transparent' : colorSet.primary;
 					},
