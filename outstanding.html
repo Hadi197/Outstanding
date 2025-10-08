@@ -2315,6 +2315,9 @@
                 localStorage.setItem(ABAI_STORAGE_KEY, JSON.stringify(Array.from(abaiSet)));
                 
                 console.log(`💾 Saved detailed abai data for ${noPkk}:`, newEntry);
+                console.log(`📍 Port Name: ${portName}`);
+                console.log(`📋 Reason: ${reasonData.reason}`);
+                console.log(`💬 Notes: ${reasonData.notes}`);
             } catch (error) {
                 console.error('Error saving detailed abai data:', error);
                 // Fallback to simple method
