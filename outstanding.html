@@ -2112,10 +2112,12 @@
                 return;
             }
 
-            // Confirm action
-            if (!confirm(`Apakah Anda yakin ingin mengabaikan data dengan No PKK: ${noPkkInaportnet}?`)) {
-                return;
-            }
+            // Show modal popup for reason selection
+            showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement);
+        }
+
+        // New function to handle abaikan with reason
+        async function handleAbaikanWithReason(noPkkInaportnet, buttonElement, rowElement, reasonData) {
 
             // Disable button and show loading state
             const originalText = buttonElement.textContent;
@@ -2130,7 +2132,7 @@
                     throw new Error('Abaikan server tidak aktif. Silakan jalankan server terlebih dahulu.');
                 }
                 
-                // Send request to backend (auto-detect local vs production)
+                // Send request to backend (auto-detect local vs production) with reason data
                 const apiUrl = getApiUrl();
                 const response = await fetch(`${apiUrl}/abaikan`, {
                     method: 'POST',
@@ -2139,30 +2141,35 @@
                     },
                     body: JSON.stringify({
                         no_pkk_inaportnet: noPkkInaportnet,
-                        timestamp: new Date().toISOString()
+                        timestamp: new Date().toISOString(),
+                        reason: reasonData.reason,
+                        notes: reasonData.notes,
+                        reason_timestamp: reasonData.timestamp
                     })
                 });
 
                 if (response.ok) {
                     const result = await response.json();
                     
-                    // If server indicates localStorage usage, save locally
+                    // If server indicates localStorage usage, save locally with reason
                     if (result.use_localstorage) {
-                        addToAbaiLocalStorage(noPkkInaportnet);
-                        console.log('💾 Saved to localStorage for persistence');
+                        addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData);
+                        console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
                     }
                     
                     // Show success notification with storage type info
                     const storageType = result.persistent ? 'GitHub' : 'localStorage';
-                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (${storageType})`, 'success');
+                    const reasonText = getReasonDisplayText(reasonData.reason);
+                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (${storageType}) - ${reasonText}`, 'success');
                     
                     // Mark row as ignored (fade out animation)
                     rowElement.style.transition = 'all 0.5s ease-out';
                     rowElement.style.opacity = '0.5';
                     rowElement.style.background = '#fee2e2';
                     
-                    // Replace button with status
-                    buttonElement.textContent = result.persistent ? '✓ GitHub' : '✓ Tersimpan';
+                    // Replace button with status and reason
+                    const reasonDisplay = reasonText.length > 15 ? reasonText.substring(0, 15) + '...' : reasonText;
+                    buttonElement.innerHTML = `<span title="${reasonText}">✓ ${reasonDisplay}</span>`;
                     buttonElement.className = 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-md cursor-not-allowed';
                     buttonElement.disabled = true;
                     
@@ -2193,6 +2200,55 @@
                 buttonElement.disabled = false;
                 buttonElement.textContent = originalText;
                 buttonElement.className = buttonElement.className.replace('bg-gray-400 cursor-not-allowed', 'bg-red-500 hover:bg-red-600');
+            }
+        }
+
+        // Helper function to convert reason codes to display text
+        function getReasonDisplayText(reasonCode) {
+            const reasonMap = {
+                'data_duplikat': 'Data Duplikat',
+                'data_tidak_valid': 'Data Tidak Valid', 
+                'sudah_diproses': 'Sudah Diproses',
+                'di_luar_jurisdiksi': 'Di Luar Jurisdiksi',
+                'tidak_relevan': 'Tidak Relevan',
+                'error_sistem': 'Error Sistem'
+            };
+            return reasonMap[reasonCode] || reasonCode;
+        }
+
+        // Enhanced localStorage function to include reason
+        function addToAbaiLocalStorageWithReason(noPkk, reasonData) {
+            try {
+                // Get existing abai data
+                const existingData = JSON.parse(localStorage.getItem(ABAI_STORAGE_KEY) || '[]');
+                
+                // Add new entry with reason
+                const newEntry = {
+                    pkk: noPkk,
+                    reason: reasonData.reason,
+                    notes: reasonData.notes,
+                    timestamp: reasonData.timestamp,
+                    added_at: new Date().toISOString()
+                };
+                
+                // For backward compatibility, also maintain simple array
+                const abaiSet = new Set(existingData.map(item => typeof item === 'string' ? item : item.pkk));
+                abaiSet.add(noPkk);
+                
+                // Save detailed data to a separate key
+                const detailedKey = ABAI_STORAGE_KEY + '_detailed';
+                const detailedData = JSON.parse(localStorage.getItem(detailedKey) || '[]');
+                detailedData.push(newEntry);
+                localStorage.setItem(detailedKey, JSON.stringify(detailedData));
+                
+                // Save simple array for main functionality
+                localStorage.setItem(ABAI_STORAGE_KEY, JSON.stringify(Array.from(abaiSet)));
+                
+                console.log(`💾 Saved detailed abai data for ${noPkk}:`, newEntry);
+            } catch (error) {
+                console.error('Error saving detailed abai data:', error);
+                // Fallback to simple method
+                addToAbaiLocalStorage(noPkk);
             }
         }
 
@@ -2969,6 +3025,120 @@ function renderPelabuhanCards(data) {
             `).join('');
         }
 
+        // Global variables for modal
+        let currentAbaiData = null;
+
+        // Modal Management Functions
+        function showAbaiReasonModal(noPkkInaportnet, buttonElement, rowElement) {
+            // Store current data for later use
+            currentAbaiData = {
+                noPkkInaportnet: noPkkInaportnet,
+                buttonElement: buttonElement,
+                rowElement: rowElement
+            };
+
+            // Set PKK number in modal
+            document.getElementById('modalPkkNumber').textContent = noPkkInaportnet;
+            
+            // Reset form
+            resetAbaiReasonForm();
+            
+            // Show modal
+            document.getElementById('abaiReasonModal').classList.remove('hidden');
+        }
+
+        function closeAbaiReasonModal() {
+            // Hide modal
+            document.getElementById('abaiReasonModal').classList.add('hidden');
+            
+            // Clear current data
+            currentAbaiData = null;
+            
+            // Reset form
+            resetAbaiReasonForm();
+        }
+
+        function resetAbaiReasonForm() {
+            document.getElementById('abaiReasonSelect').value = '';
+            document.getElementById('customReasonText').value = '';
+            document.getElementById('additionalNotes').value = '';
+            document.getElementById('customReasonDiv').classList.add('hidden');
+        }
+
+        function confirmAbaikanAction() {
+            const reasonSelect = document.getElementById('abaiReasonSelect');
+            const customReasonText = document.getElementById('customReasonText');
+            const additionalNotes = document.getElementById('additionalNotes');
+
+            // Validate reason selection
+            if (!reasonSelect.value) {
+                showNotification('⚠️ Silakan pilih alasan terlebih dahulu', 'warning');
+                return;
+            }
+
+            // Validate custom reason if selected
+            if (reasonSelect.value === 'custom' && !customReasonText.value.trim()) {
+                showNotification('⚠️ Silakan masukkan alasan khusus', 'warning');
+                return;
+            }
+
+            // Prepare reason data
+            let finalReason = reasonSelect.value;
+            if (reasonSelect.value === 'custom') {
+                finalReason = customReasonText.value.trim();
+            }
+
+            const reasonData = {
+                reason: finalReason,
+                notes: additionalNotes.value.trim(),
+                timestamp: new Date().toISOString()
+            };
+
+            // Close modal
+            closeAbaiReasonModal();
+
+            // Proceed with abaikan action
+            if (currentAbaiData) {
+                handleAbaikanWithReason(
+                    currentAbaiData.noPkkInaportnet,
+                    currentAbaiData.buttonElement,
+                    currentAbaiData.rowElement,
+                    reasonData
+                );
+            }
+        }
+
+        // Event listener for reason selection change
+        document.addEventListener('DOMContentLoaded', function() {
+            const reasonSelect = document.getElementById('abaiReasonSelect');
+            const customReasonDiv = document.getElementById('customReasonDiv');
+
+            if (reasonSelect) {
+                reasonSelect.addEventListener('change', function() {
+                    if (this.value === 'custom') {
+                        customReasonDiv.classList.remove('hidden');
+                        document.getElementById('customReasonText').focus();
+                    } else {
+                        customReasonDiv.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('abaiReasonModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeAbaiReasonModal();
+                }
+            });
+
+            // Handle ESC key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAbaiReasonModal();
+                }
+            });
+        });
+
         main();
     </script>
 
@@ -2989,5 +3159,91 @@ function renderPelabuhanCards(data) {
     enforceAuth();
   }
 </script>
+
+    <!-- Popup Modal untuk Alasan Abaikan -->
+    <div id="abaiReasonModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <svg class="w-6 h-6 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        Konfirmasi Abaikan Data
+                    </h3>
+                    <button onclick="closeAbaiReasonModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- PKK Info -->
+                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                    <p class="text-sm text-gray-600">PKK Number:</p>
+                    <p id="modalPkkNumber" class="font-medium text-gray-900"></p>
+                </div>
+
+                <!-- Reason Selection -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Pilih alasan mengapa data ini diabaikan:
+                    </label>
+                    <select id="abaiReasonSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Pilih Alasan --</option>
+                        <option value="data_duplikat">Data Duplikat</option>
+                        <option value="data_tidak_valid">Data Tidak Valid</option>
+                        <option value="sudah_diproses">Sudah Diproses</option>
+                        <option value="di_luar_jurisdiksi">Di Luar Jurisdiksi</option>
+                        <option value="tidak_relevan">Tidak Relevan</option>
+                        <option value="error_sistem">Error Sistem</option>
+                        <option value="custom">Alasan Lainnya (Tulis Manual)</option>
+                    </select>
+                </div>
+
+                <!-- Custom Reason Input -->
+                <div id="customReasonDiv" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tulis alasan khusus:
+                    </label>
+                    <textarea id="customReasonText" 
+                              placeholder="Masukkan alasan khusus mengapa data ini diabaikan..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              rows="3"></textarea>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Catatan tambahan (opsional):
+                    </label>
+                    <textarea id="additionalNotes" 
+                              placeholder="Tambahkan catatan jika diperlukan..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              rows="2"></textarea>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-3">
+                    <button onclick="closeAbaiReasonModal()" 
+                            class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                        Batal
+                    </button>
+                    <button onclick="confirmAbaikanAction()" 
+                            class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                        <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                        OK - Abaikan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
