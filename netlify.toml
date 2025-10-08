@@ -3,8 +3,8 @@
   publish = "."
 
 [[redirects]]
-  from = "/api/abaikan"
-  to = "/.netlify/functions/abaikan"
+  from = "/api/*"
+  to = "/.netlify/functions/abaikan-persistent/:splat"
   status = 200
   
 [[redirects]]
