@@ -612,7 +612,7 @@
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <!-- Total Ignored Items -->
                 <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
                     <div class="flex items-center justify-between">
@@ -628,24 +628,52 @@
                     </div>
                 </div>
 
-                <!-- Storage Type -->
+                <!-- GitHub Storage -->
                 <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
                     <div class="flex items-center justify-between">
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-600">Storage Type</p>
-                            <p id="storageTypeText" class="text-lg font-bold text-blue-600">localStorage</p>
-                            <div class="mt-2">
-                                <div id="localStorageInfo" class="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-md">
-                                    ⚠️ Data disimpan di browser (tidak permanen)
-                                </div>
-                                <div id="githubStorageInfo" class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-md hidden">
-                                    ✅ Data disimpan di GitHub (permanen)
-                                </div>
-                            </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">GitHub Storage</p>
+                            <p id="githubCount" class="text-2xl font-bold text-green-600">0</p>
+                            <p id="githubStatus" class="text-xs text-gray-500 mt-1">Loading...</p>
+                        </div>
+                        <div class="bg-green-100 rounded-lg p-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Local Browser Storage -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Browser Storage</p>
+                            <p id="localStorageCount" class="text-2xl font-bold text-blue-600">0</p>
+                            <p class="text-xs text-gray-500 mt-1">localStorage</p>
                         </div>
                         <div class="bg-blue-100 rounded-lg p-3">
                             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 1.79 4 4 4h8c2.21 0 4-1.79 4-4V7c0-2.21-1.79-4-4-4H8c-2.21 0-4 1.79-4 4z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync Status -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-600">Sync Status</p>
+                            <p id="syncStatusText" class="text-sm font-bold text-gray-600">Loading...</p>
+                            <div class="flex items-center mt-2">
+                                <div id="syncStatusIndicator" class="w-3 h-3 bg-gray-300 rounded-full"></div>
+                                <span class="ml-2 text-xs text-gray-500">Live Status</span>
+                            </div>
+                        </div>
+                        <div class="bg-purple-100 rounded-lg p-3">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
                         </div>
                     </div>
@@ -668,24 +696,109 @@
                 </div>
             </div>
 
-            <!-- GitHub Status Notice -->
-            <div class="mb-6">
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <svg class="w-5 h-5 text-amber-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+            <!-- Storage Comparison -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- GitHub Storage Info -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 rounded-lg p-2 mr-3">
+                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265L11.095 9l2.696.002a1 1 0 01.994 1.077l-1 13a1 1 0 01-1.992-.154L12.728 14H9a1 1 0 01-.943-1.332L10.684 3.684a1 1 0 011.632-.633zM9 0a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0V4H7a1 1 0 110-2h1V1a1 1 0 011-1z" clip-rule="evenodd"></path>
                             </svg>
                         </div>
-                        <div class="ml-3 flex-1">
-                            <h3 class="text-sm font-medium text-amber-800">Status Penyimpanan Data</h3>
-                            <div class="mt-2 text-sm text-amber-700">
-                                <p>📱 <strong>Saat ini:</strong> Data disimpan di localStorage browser (tidak permanen)</p>
-                                <p class="mt-1">🔧 <strong>GitHub Token:</strong> Memerlukan scope repositori yang tepat untuk penyimpanan permanen</p>
-                                <p class="mt-1">💡 <strong>Solusi:</strong> Data tetap tersimpan selama browser tidak dihapus cache-nya</p>
-                            </div>
+                        <h3 class="text-lg font-semibold text-gray-800">GitHub Repository</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span id="githubConnectionStatus" class="font-medium text-green-600">Connected</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Repository:</span>
+                            <span class="font-medium text-gray-800">Hadi197/Outstanding</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">File:</span>
+                            <span class="font-medium text-gray-800">abai.csv</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Entries:</span>
+                            <span id="githubEntriesDisplay" class="font-bold text-green-600">0</span>
                         </div>
                     </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center text-sm text-green-600">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Persistent across devices & browsers
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Browser Storage Info -->
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 rounded-lg p-2 mr-3">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800">Browser localStorage</h3>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Status:</span>
+                            <span class="font-medium text-blue-600">Active</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Storage:</span>
+                            <span class="font-medium text-gray-800">Browser Cache</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Persistence:</span>
+                            <span class="font-medium text-orange-600">Session Only</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Entries:</span>
+                            <span id="localEntriesDisplay" class="font-bold text-blue-600">0</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="flex items-center text-sm text-amber-600">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.732 15c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            Lost when browser cache cleared
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sync Controls -->
+            <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Data Synchronization</h3>
+                    <button id="refreshStatsBtn" onclick="updateIgnoredStats()" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-md transition-colors">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+                <div id="syncSummary" class="text-sm text-gray-600 mb-4">
+                    Checking synchronization status...
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button id="syncToGithubBtn" onclick="syncLocalToGitHub()" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        📤 Sync to GitHub
+                    </button>
+                    <button id="syncFromGithubBtn" onclick="syncGitHubToLocal()" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        📥 Sync from GitHub
+                    </button>
+                    <button id="exportBothBtn" onclick="exportComparisonData()" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm rounded-md transition-colors">
+                        📊 Export Comparison
+                    </button>
                 </div>
             </div>
 
@@ -2916,15 +3029,246 @@ function renderPelabuhanCards(data) {
             initPkkClearEventListeners();
         }
 
-        function updateIgnoredStats() {
+        async function updateIgnoredStats() {
+            console.log('📊 Loading PKK Clear statistics...');
+            
+            // Get localStorage data
             const abaiSet = getAbaiFromLocalStorage();
-            const totalCount = abaiSet.size;
+            const localCount = abaiSet.size;
             
-            // Update stats
+            // Update localStorage count immediately
+            document.getElementById('localStorageCount').textContent = localCount;
+            
+            // Try to get GitHub data
+            let githubCount = 0;
+            let githubStatus = 'Loading...';
+            
+            try {
+                console.log('🔄 Fetching GitHub data...');
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/abaikan?action=list`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    githubCount = data.total_entries || 0;
+                    githubStatus = data.source === 'github' ? 'Connected' : 'Fallback Mode';
+                    console.log(`✅ GitHub data: ${githubCount} entries, source: ${data.source}`);
+                } else {
+                    console.log('⚠️ GitHub API not available');
+                    githubStatus = 'Not Available';
+                }
+            } catch (error) {
+                console.error('❌ Error fetching GitHub data:', error);
+                githubStatus = 'Connection Error';
+            }
+            
+            // Update GitHub count and status
+            document.getElementById('githubCount').textContent = githubCount;
+            document.getElementById('githubStatus').textContent = githubStatus;
+            
+            // Update detailed display elements
+            document.getElementById('githubEntriesDisplay').textContent = githubCount;
+            document.getElementById('localEntriesDisplay').textContent = localCount;
+            document.getElementById('githubConnectionStatus').textContent = githubStatus;
+            
+            // Calculate total unique entries
+            const totalCount = Math.max(localCount, githubCount);
             document.getElementById('totalIgnoredCount').textContent = totalCount;
-            document.getElementById('storageTypeText').textContent = 'localStorage';
             
-            console.log(`📊 PKK Clear Stats: ${totalCount} items ignored`);
+            // Determine primary storage type
+            let storageType = 'localStorage';
+            if (githubCount > 0 && githubStatus === 'Connected') {
+                storageType = 'GitHub + localStorage';
+            }
+            
+            // Update sync status indicator
+            updateSyncStatusIndicator(localCount, githubCount, githubStatus);
+            updateSyncSummary(localCount, githubCount, githubStatus);
+            
+            console.log(`📊 PKK Clear Stats - Local: ${localCount}, GitHub: ${githubCount}, Total: ${totalCount}`);
+        }
+        
+        function updateSyncStatusIndicator(localCount, githubCount, githubStatus) {
+            const syncIndicator = document.getElementById('syncStatusIndicator');
+            const syncText = document.getElementById('syncStatusText');
+            
+            if (!syncIndicator || !syncText) return;
+            
+            if (githubStatus === 'Connected') {
+                if (localCount === githubCount) {
+                    syncIndicator.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
+                    syncText.textContent = 'Synchronized';
+                    syncText.className = 'text-green-600 text-sm font-medium';
+                } else if (githubCount > localCount) {
+                    syncIndicator.className = 'w-3 h-3 bg-blue-500 rounded-full animate-pulse';
+                    syncText.textContent = 'GitHub has more data';
+                    syncText.className = 'text-blue-600 text-sm font-medium';
+                } else {
+                    syncIndicator.className = 'w-3 h-3 bg-orange-500 rounded-full animate-pulse';
+                    syncText.textContent = 'Local has more data';
+                    syncText.className = 'text-orange-600 text-sm font-medium';
+                }
+            } else {
+                syncIndicator.className = 'w-3 h-3 bg-red-500 rounded-full';
+                syncText.textContent = 'GitHub not available';
+                syncText.className = 'text-red-600 text-sm font-medium';
+            }
+        }
+        
+        function updateSyncSummary(localCount, githubCount, githubStatus) {
+            const summaryEl = document.getElementById('syncSummary');
+            if (!summaryEl) return;
+            
+            let summary = '';
+            if (githubStatus === 'Connected') {
+                if (localCount === githubCount) {
+                    summary = `✅ Data synchronized: ${localCount} entries in both GitHub and browser storage.`;
+                } else if (githubCount > localCount) {
+                    summary = `⬇️ GitHub has ${githubCount - localCount} more entries than local storage (${githubCount} vs ${localCount}).`;
+                } else {
+                    summary = `⬆️ Local storage has ${localCount - githubCount} more entries than GitHub (${localCount} vs ${githubCount}).`;
+                }
+            } else {
+                summary = `❌ GitHub not available. Only local storage active with ${localCount} entries.`;
+            }
+            summaryEl.textContent = summary;
+        }
+        
+        async function syncLocalToGitHub() {
+            const btn = document.getElementById('syncToGithubBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '🔄 Syncing...';
+            
+            try {
+                showNotification('🔄 Starting sync to GitHub...', 'info');
+                
+                const abaiSet = getAbaiFromLocalStorage();
+                const detailedKey = ABAI_STORAGE_KEY + '_detailed';
+                const detailedData = JSON.parse(localStorage.getItem(detailedKey) || '[]');
+                
+                let syncCount = 0;
+                for (const pkk of abaiSet) {
+                    const detailed = detailedData.find(item => item.pkk === pkk);
+                    const reasonData = {
+                        reason: detailed?.reason || 'no_reason',
+                        notes: detailed?.notes || 'Synced from localStorage',
+                        timestamp: detailed?.timestamp || new Date().toISOString()
+                    };
+                    
+                    // Send to GitHub via API
+                    const apiUrl = getApiUrl();
+                    const response = await fetch(`${apiUrl}/abaikan`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            no_pkk_inaportnet: pkk,
+                            reason: reasonData.reason,
+                            notes: reasonData.notes,
+                            timestamp: reasonData.timestamp
+                        })
+                    });
+                    
+                    if (response.ok) syncCount++;
+                }
+                
+                showNotification(`✅ Synced ${syncCount} entries to GitHub`, 'success');
+                updateIgnoredStats();
+                
+            } catch (error) {
+                console.error('Sync to GitHub failed:', error);
+                showNotification('❌ Failed to sync to GitHub', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        async function syncGitHubToLocal() {
+            const btn = document.getElementById('syncFromGithubBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '🔄 Syncing...';
+            
+            try {
+                showNotification('🔄 Starting sync from GitHub...', 'info');
+                
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/abaikan?action=list`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const githubList = data.abai_list || [];
+                    
+                    // Update localStorage
+                    const existingData = JSON.parse(localStorage.getItem(ABAI_STORAGE_KEY) || '[]');
+                    const newEntries = githubList.filter(item => !existingData.includes(item));
+                    
+                    if (newEntries.length > 0) {
+                        const updatedData = [...existingData, ...newEntries];
+                        localStorage.setItem(ABAI_STORAGE_KEY, JSON.stringify(updatedData));
+                        
+                        showNotification(`✅ Synced ${newEntries.length} new entries from GitHub`, 'success');
+                    } else {
+                        showNotification('✅ Local storage is up to date with GitHub', 'success');
+                    }
+                    
+                    updateIgnoredStats();
+                    loadIgnoredList();
+                } else {
+                    throw new Error('Failed to fetch from GitHub');
+                }
+                
+            } catch (error) {
+                console.error('Sync from GitHub failed:', error);
+                showNotification('❌ Failed to sync from GitHub', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+        
+        async function exportComparisonData() {
+            try {
+                showNotification('🔄 Preparing comparison export...', 'info');
+                
+                const abaiSet = getAbaiFromLocalStorage();
+                const localData = Array.from(abaiSet);
+                
+                // Get GitHub data
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/abaikan?action=list`);
+                const githubData = response.ok ? (await response.json()).abai_list || [] : [];
+                
+                // Create comparison CSV
+                const allEntries = new Set([...localData, ...githubData]);
+                const csvContent = 'PKK_NUMBER,IN_LOCAL_STORAGE,IN_GITHUB,SYNC_STATUS,DATE_EXPORTED\n' + 
+                    Array.from(allEntries).map(pkk => {
+                        const inLocal = localData.includes(pkk) ? 'YES' : 'NO';
+                        const inGithub = githubData.includes(pkk) ? 'YES' : 'NO';
+                        let syncStatus = 'SYNCED';
+                        if (inLocal !== inGithub) {
+                            syncStatus = inLocal === 'YES' ? 'LOCAL_ONLY' : 'GITHUB_ONLY';
+                        }
+                        return `"${pkk}","${inLocal}","${inGithub}","${syncStatus}","${new Date().toISOString()}"`;
+                    }).join('\n');
+                
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `pkk_sync_comparison_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification(`✅ Comparison data exported (${allEntries.size} entries)`, 'success');
+                
+            } catch (error) {
+                console.error('Export comparison failed:', error);
+                showNotification('❌ Failed to export comparison data', 'error');
+            }
         }
 
         function loadIgnoredList() {
