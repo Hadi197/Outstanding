@@ -1983,9 +1983,15 @@
                 if (response.ok) {
                     const result = await response.json();
                     
+                    // If server indicates localStorage usage, save locally
+                    if (result.use_localstorage) {
+                        addToAbaiLocalStorage(noPkkInaportnet);
+                        console.log('💾 Saved to localStorage for persistence');
+                    }
+                    
                     // Show success notification with storage type info
-                    const storageInfo = result.persistent ? '(Persistent)' : '(Temporary)';
-                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} ${storageInfo}`, 'success');
+                    const storageType = result.persistent ? 'GitHub' : 'localStorage';
+                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (${storageType})`, 'success');
                     
                     // Mark row as ignored (fade out animation)
                     rowElement.style.transition = 'all 0.5s ease-out';
@@ -1993,32 +1999,21 @@
                     rowElement.style.background = '#fee2e2';
                     
                     // Replace button with status
-                    buttonElement.textContent = result.persistent ? '✓ Disimpan' : '✓ Diabaikan';
+                    buttonElement.textContent = result.persistent ? '✓ GitHub' : '✓ Tersimpan';
                     buttonElement.className = 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-md cursor-not-allowed';
                     buttonElement.disabled = true;
                     
-                    // Auto-hide row and refresh data if persistent
+                    // Auto-hide row and refresh data
                     setTimeout(() => {
-                        if (result.persistent) {
-                            // For persistent storage, remove immediately and refresh
-                            showNotification('🔄 Memperbarui data...', 'info', 2000);
-                            rowElement.style.height = '0';
-                            rowElement.style.padding = '0';
-                            rowElement.style.margin = '0';
-                            setTimeout(() => {
-                                rowElement.remove();
-                                // Refresh the entire data to reflect persistent changes
-                                refreshDataAfterAbaikan();
-                            }, 300);
-                        } else {
-                            // For temporary storage, ask user
-                            if (confirm('Sembunyikan baris yang sudah diabaikan?')) {
-                                rowElement.style.height = '0';
-                                rowElement.style.padding = '0';
-                                rowElement.style.margin = '0';
-                                setTimeout(() => rowElement.remove(), 300);
-                            }
-                        }
+                        showNotification('🔄 Memperbarui data...', 'info', 2000);
+                        rowElement.style.height = '0';
+                        rowElement.style.padding = '0';
+                        rowElement.style.margin = '0';
+                        setTimeout(() => {
+                            rowElement.remove();
+                            // Refresh data to reflect changes (works with both GitHub and localStorage)
+                            refreshDataAfterAbaikan();
+                        }, 300);
                     }, 1500);
                     
                 } else {
@@ -2392,7 +2387,43 @@ function renderPelabuhanCards(data) {
     });
 }
 
-        // Function to fetch persistent abai data
+        // localStorage key for abai data
+        const ABAI_STORAGE_KEY = 'outstanding_abai_data';
+
+        // Function to get abai data from localStorage
+        function getAbaiFromLocalStorage() {
+            try {
+                const stored = localStorage.getItem(ABAI_STORAGE_KEY);
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    console.log(`📱 Loaded ${data.length} entries from localStorage`);
+                    return new Set(data);
+                }
+            } catch (e) {
+                console.warn('Error reading from localStorage:', e);
+            }
+            return new Set();
+        }
+
+        // Function to save abai data to localStorage
+        function saveAbaiToLocalStorage(abaiSet) {
+            try {
+                const data = Array.from(abaiSet);
+                localStorage.setItem(ABAI_STORAGE_KEY, JSON.stringify(data));
+                console.log(`💾 Saved ${data.length} entries to localStorage`);
+            } catch (e) {
+                console.warn('Error saving to localStorage:', e);
+            }
+        }
+
+        // Function to add single item to localStorage
+        function addToAbaiLocalStorage(noPkk) {
+            const abaiSet = getAbaiFromLocalStorage();
+            abaiSet.add(noPkk);
+            saveAbaiToLocalStorage(abaiSet);
+        }
+
+        // Function to fetch persistent abai data with localStorage fallback
         async function fetchAbaiData() {
             let abaiSet = new Set();
             
@@ -2400,26 +2431,40 @@ function renderPelabuhanCards(data) {
                 const apiUrl = getApiUrl();
                 console.log('🔄 Fetching persistent abai data from:', apiUrl);
                 
-                // Try to get abai list from persistent storage first
+                // Try to get abai list from server first (GitHub integration)
                 const response = await fetch(`${apiUrl}/abaikan?action=list`);
                 
                 if (response.ok) {
                     const result = await response.json();
-                    console.log('📊 Persistent abai data received:', result);
+                    console.log('📊 Server abai data received:', result);
                     
-                    if (result.abai_list && Array.isArray(result.abai_list)) {
+                    if (result.abai_list && Array.isArray(result.abai_list) && result.abai_list.length > 0) {
                         result.abai_list.forEach(pkk => {
                             if (pkk && pkk.trim()) {
                                 abaiSet.add(pkk.trim());
                             }
                         });
-                        console.log(`✅ Loaded ${abaiSet.size} entries from persistent storage (${result.source})`);
+                        console.log(`✅ Loaded ${abaiSet.size} entries from server (${result.source})`);
+                        
+                        // Sync with localStorage for offline access
+                        saveAbaiToLocalStorage(abaiSet);
                         return abaiSet;
+                    } else if (!result.github_available) {
+                        console.log('⚠️ GitHub not available, using localStorage for persistence');
                     }
                 }
                 
-                // Fallback to local abai.csv file
-                console.log('⚠️ Persistent storage not available, trying local abai.csv...');
+                // Fallback to localStorage (for production persistence)
+                console.log('🔄 Using localStorage for persistent data...');
+                abaiSet = getAbaiFromLocalStorage();
+                
+                if (abaiSet.size > 0) {
+                    console.log(`📱 Using ${abaiSet.size} entries from localStorage persistence`);
+                    return abaiSet;
+                }
+                
+                // Final fallback to local abai.csv file (development only)
+                console.log('⚠️ No persistent data found, trying local abai.csv...');
                 const abaiText = await fetchCSV("abai.csv");
                 if (abaiText) {
                     const lines = abaiText.split("\n").map(l => l.trim()).filter(Boolean);
@@ -2435,10 +2480,14 @@ function renderPelabuhanCards(data) {
                         });
                     }
                     console.log(`✅ Loaded ${abaiSet.size} entries from local abai.csv`);
+                    
+                    // Save to localStorage for future use
+                    saveAbaiToLocalStorage(abaiSet);
                 }
                 
             } catch (e) {
-                console.warn("Could not load abai data — proceeding without exclusions.", e);
+                console.warn("Could not load abai data from server, using localStorage:", e);
+                abaiSet = getAbaiFromLocalStorage();
             }
             
             return abaiSet;

@@ -1,10 +1,12 @@
-[build]
-  functions = "netlify/functions"
+[bui[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/abaikan/:splat"
+  status = 200  functions = "netlify/functions"
   publish = "."
 
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/abaikan-persistent/:splat"
+  to = "/.netlify/functions/abaikan-fallback/:splat"
   status = 200
   
 [[redirects]]
