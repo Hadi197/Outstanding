@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test GitHub API Connection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-6">🧪 GitHub API Connection Test</h1>
+        
+        <div id="results" class="space-y-4">
+            <div class="text-gray-500">Click test button to check GitHub API...</div>
+        </div>
+        
+        <button id="testBtn" onclick="testGitHubAPI()" 
+                class="mt-6 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md">
+            🔍 Test GitHub API
+        </button>
+    </div>
+
+    <script>
+        async function testGitHubAPI() {
+            const resultsDiv = document.getElementById('results');
+            const testBtn = document.getElementById('testBtn');
+            
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 Testing...';
+            
+            resultsDiv.innerHTML = '<div class="text-blue-600">🔄 Testing GitHub API connection...</div>';
+            
+            try {
+                // Test production API endpoint
+                const response = await fetch('/api/abaikan?action=list');
+                
+                resultsDiv.innerHTML += '<div class="text-gray-600">📡 API Response Status: ' + response.status + '</div>';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    let html = '<div class="bg-green-50 border border-green-200 rounded-md p-4">';
+                    html += '<h3 class="font-bold text-green-800">✅ API Response Success</h3>';
+                    html += '<div class="text-sm text-green-700 mt-2">';
+                    html += '<p><strong>Total Entries:</strong> ' + data.total_entries + '</p>';
+                    html += '<p><strong>Source:</strong> ' + data.source + '</p>';
+                    html += '<p><strong>Success:</strong> ' + data.success + '</p>';
+                    
+                    if (data.abai_list && data.abai_list.length > 0) {
+                        html += '<p><strong>Sample Entries:</strong></p>';
+                        html += '<ul class="list-disc list-inside ml-4">';
+                        data.abai_list.slice(0, 5).forEach(entry => {
+                            html += '<li>' + entry + '</li>';
+                        });
+                        if (data.abai_list.length > 5) {
+                            html += '<li>... and ' + (data.abai_list.length - 5) + ' more entries</li>';
+                        }
+                        html += '</ul>';
+                    }
+                    
+                    if (data.error) {
+                        html += '<p class="text-red-600"><strong>Error:</strong> ' + data.error + '</p>';
+                    }
+                    
+                    html += '</div></div>';
+                    
+                    resultsDiv.innerHTML += html;
+                    
+                } else {
+                    const errorText = await response.text();
+                    resultsDiv.innerHTML += '<div class="bg-red-50 border border-red-200 rounded-md p-4">';
+                    resultsDiv.innerHTML += '<h3 class="font-bold text-red-800">❌ API Error</h3>';
+                    resultsDiv.innerHTML += '<div class="text-sm text-red-700">' + errorText + '</div>';
+                    resultsDiv.innerHTML += '</div>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += '<div class="bg-red-50 border border-red-200 rounded-md p-4">';
+                resultsDiv.innerHTML += '<h3 class="font-bold text-red-800">❌ Connection Error</h3>';
+                resultsDiv.innerHTML += '<div class="text-sm text-red-700">' + error.message + '</div>';
+                resultsDiv.innerHTML += '</div>';
+            }
+            
+            testBtn.disabled = false;
+            testBtn.textContent = '🔍 Test Again';
+        }
+    </script>
+</body>
+</html>

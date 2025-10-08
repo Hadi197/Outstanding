@@ -635,6 +635,7 @@
                             <p class="text-sm font-medium text-gray-600">GitHub Storage</p>
                             <p id="githubCount" class="text-2xl font-bold text-green-600">0</p>
                             <p id="githubStatus" class="text-xs text-gray-500 mt-1">Loading...</p>
+                            <p id="githubDebug" class="text-xs text-gray-400 mt-1" style="display: none;"></p>
                         </div>
                         <div class="bg-green-100 rounded-lg p-3">
                             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3046,15 +3047,36 @@ function renderPelabuhanCards(data) {
             try {
                 console.log('🔄 Fetching GitHub data...');
                 const apiUrl = getApiUrl();
+                console.log('📡 API URL:', apiUrl);
                 const response = await fetch(`${apiUrl}/abaikan?action=list`);
+                
+                console.log('📡 Response status:', response.status);
                 
                 if (response.ok) {
                     const data = await response.json();
                     githubCount = data.total_entries || 0;
-                    githubStatus = data.source === 'github' ? 'Connected' : 'Fallback Mode';
-                    console.log(`✅ GitHub data: ${githubCount} entries, source: ${data.source}`);
+                    githubStatus = data.source === 'github' ? 'Connected' : 
+                                   data.source === 'github_error' ? 'GitHub Error' :
+                                   data.source === 'fallback' ? 'Fallback Mode' : 
+                                   'Unknown Status';
+                    
+                    console.log(`✅ GitHub API Response:`, {
+                        entries: githubCount,
+                        source: data.source,
+                        success: data.success,
+                        error: data.error,
+                        debug: data.debug
+                    });
+                    
+                    // Show detailed error if available
+                    if (data.error) {
+                        console.error('🚨 GitHub API Error Details:', data.error);
+                        if (data.debug) {
+                            console.error('🔍 Debug Info:', data.debug);
+                        }
+                    }
                 } else {
-                    console.log('⚠️ GitHub API not available');
+                    console.log('⚠️ GitHub API not available, status:', response.status);
                     githubStatus = 'Not Available';
                 }
             } catch (error) {
@@ -3065,6 +3087,16 @@ function renderPelabuhanCards(data) {
             // Update GitHub count and status
             document.getElementById('githubCount').textContent = githubCount;
             document.getElementById('githubStatus').textContent = githubStatus;
+            
+            // Show debug info if there are issues
+            const debugElement = document.getElementById('githubDebug');
+            if (githubStatus !== 'Connected' && githubStatus !== 'Loading...') {
+                const apiUrl = getApiUrl();
+                debugElement.textContent = `API: ${apiUrl}/abaikan`;
+                debugElement.style.display = 'block';
+            } else {
+                debugElement.style.display = 'none';
+            }
             
             // Update detailed display elements
             document.getElementById('githubEntriesDisplay').textContent = githubCount;
