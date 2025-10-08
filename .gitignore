@@ -50,3 +50,16 @@ env/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+# Deployment configuration
+node_modules/
+.netlify/
+.env*
+npm-debug.log*
+yarn-*.log
+
+# Development files
+venv/
+.venv/
+*.pyc
+__pycache__/
+

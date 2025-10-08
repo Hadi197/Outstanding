@@ -1,0 +1,26 @@
+{
+  "name": "outstanding-netlify-functions",
+  "version": "1.0.0",
+  "description": "Serverless functions for Outstanding Dashboard",
+  "main": "netlify/functions/abaikan.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build step required'",
+    "deploy": "netlify deploy --prod"
+  },
+  "dependencies": {
+    "@octokit/rest": "^19.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  },
+  "keywords": [
+    "netlify",
+    "functions",
+    "serverless",
+    "dashboard",
+    "outstanding"
+  ],
+  "author": "Hadi197",
+  "license": "MIT"
+}

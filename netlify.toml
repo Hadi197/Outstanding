@@ -1,0 +1,20 @@
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+[[redirects]]
+  from = "/api/abaikan"
+  to = "/.netlify/functions/abaikan"
+  status = 200
+  
+[[redirects]]
+  from = "/api/status"
+  to = "/.netlify/functions/abaikan"
+  status = 200
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
