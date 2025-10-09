@@ -800,6 +800,12 @@
                         </svg>
                         Refresh
                     </button>
+                    <button id="testGitHubBtn" onclick="testGitHubConnection()" class="px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors ml-2">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Test GitHub
+                    </button>
                 </div>
                 <div id="syncSummary" class="text-sm text-gray-600 mb-4">
                     Checking synchronization status...
@@ -3257,7 +3263,7 @@ function renderPelabuhanCards(data) {
                 }
             } catch (error) {
                 console.error('❌ Error fetching data:', error);
-                githubStatus = 'Connection Error';
+                githubStatus = 'Connection Error: ' + error.message;
             }
             
             // Update GitHub count and status
@@ -3301,6 +3307,52 @@ function renderPelabuhanCards(data) {
             console.log(`📊 PKK Clear Stats - Local: ${localCount}, GitHub: ${githubCount}, Total: ${totalCount}`);
         }
         
+        async function testGitHubConnection() {
+            console.log('🔧 Testing GitHub API connection manually...');
+            
+            try {
+                const token = getGitHubToken();
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Outstanding-Dashboard-Manual-Test'
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    headers: headers
+                });
+                
+                console.log('🔧 Manual test response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('🔧 Manual test data:', {
+                        name: data.name,
+                        size: data.size,
+                        hasContent: !!data.content,
+                        contentPreview: data.content ? data.content.substring(0, 100) + '...' : null
+                    });
+                    
+                    if (data.content) {
+                        const csvContent = atob(data.content.replace(/\n/g, ''));
+                        const lines = csvContent.split('\n').filter(line => line.trim());
+                        console.log('🔧 Manual test decoded lines:', lines.length, 'entries:', lines.length - 1);
+                        alert(`✅ GitHub API Test SUCCESS!\nFile: ${data.name}\nSize: ${data.size} bytes\nEntries: ${lines.length - 1}`);
+                    } else {
+                        alert('⚠️ GitHub API responded but no content found');
+                    }
+                } else {
+                    console.error('🔧 Manual test failed:', response.status, response.statusText);
+                    alert(`❌ GitHub API Test FAILED!\nStatus: ${response.status}\nError: ${response.statusText}`);
+                }
+            } catch (error) {
+                console.error('🔧 Manual test error:', error);
+                alert(`❌ GitHub API Test ERROR!\n${error.message}`);
+            }
+        }
+
         function updateSyncStatusIndicator(localCount, githubCount, githubStatus) {
             const syncIndicator = document.getElementById('syncStatusIndicator');
             const syncText = document.getElementById('syncStatusText');
