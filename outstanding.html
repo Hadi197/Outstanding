@@ -2111,9 +2111,7 @@
 
         function getGitHubToken() {
             // GitHub token for private repository access
-            // In production, this should be set via environment variable or secure config
-            // For now, return null to use public API (fallback to localStorage if repo is private)
-            return null;
+            return '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';
         }
 
         function isProductionEnvironment() {
@@ -2188,11 +2186,17 @@
                 // Production mode - check GitHub API
                 console.log('🌐 Production mode: Checking GitHub API');
                 try {
+                    const token = getGitHubToken();
+                    const headers = {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Outstanding-Dashboard'
+                    };
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json',
-                            'User-Agent': 'Outstanding-Dashboard'
-                        }
+                        headers: headers
                     });
                     if (response.ok) {
                         updateServerStatus(true, 'Connected to GitHub API');
@@ -2975,8 +2979,19 @@ function renderPelabuhanCards(data) {
             if (isProductionEnvironment()) {
                 console.log('🌐 Production mode: Fetching from GitHub API');
                 try {
-                    // Fetch from GitHub API
-                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv');
+                    // Fetch from GitHub API with token
+                    const token = getGitHubToken();
+                    const headers = {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Outstanding-Dashboard'
+                    };
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
+                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                        headers: headers
+                    });
                     if (response.ok) {
                         const data = await response.json();
                         const content = atob(data.content); // Decode base64 content
@@ -3166,12 +3181,18 @@ function renderPelabuhanCards(data) {
                 if (isProductionEnvironment()) {
                     // Production: Try GitHub API, fallback to localStorage
                     console.log('🌐 Production mode: Trying GitHub API');
+                    const token = getGitHubToken();
+                    const headers = {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Outstanding-Dashboard'
+                    };
+                    if (token) {
+                        headers['Authorization'] = `Bearer ${token}`;
+                    }
+                    
                     const response = await fetch(apiUrl, {
                         method: 'GET',
-                        headers: {
-                            'Accept': 'application/vnd.github.v3+json',
-                            'User-Agent': 'Outstanding-Dashboard'
-                        }
+                        headers: headers
                     });
                     
                     console.log('📡 GitHub API Response status:', response.status);
