@@ -2350,8 +2350,33 @@
                 const apiUrl = getApiUrl();
                 console.log('🚀 DEBUG: Sending POST request to:', `${apiUrl}/abaikan`);
                 
+                // Extract port name from row data
+                let pelabuhan = 'Unknown Port';
+                if (rowData) {
+                    if (rowData.PELABUHAN) {
+                        pelabuhan = rowData.PELABUHAN;
+                    } else if (rowData.name_branch) {
+                        pelabuhan = rowData.name_branch;
+                    } else if (rowData.pelabuhan) {
+                        pelabuhan = rowData.pelabuhan;
+                    } else if (rowData.Pelabuhan) {
+                        pelabuhan = rowData.Pelabuhan;
+                    } else {
+                        // Try to find any column containing "pelabuhan" in the name
+                        const portColumn = Object.keys(rowData).find(key => 
+                            key.toLowerCase().includes('pelabuhan') || 
+                            key.toLowerCase().includes('branch') ||
+                            key.toLowerCase().includes('port')
+                        );
+                        if (portColumn) {
+                            pelabuhan = rowData[portColumn];
+                        }
+                    }
+                }
+                
                 const requestBody = {
                     no_pkk_inaportnet: noPkkInaportnet,
+                    pelabuhan: pelabuhan,
                     timestamp: new Date().toISOString(),
                     reason: reasonData.reason,
                     notes: reasonData.notes,

@@ -47,8 +47,13 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             no_pkk_inaportnet = data['no_pkk_inaportnet']
             timestamp = data.get('timestamp', datetime.datetime.now().isoformat())
             
-            # Save to abai.csv
-            success = self.save_to_abai_csv(no_pkk_inaportnet, timestamp)
+            # Extract additional fields for CSV columns
+            pelabuhan = data.get('pelabuhan', '')
+            alasan = data.get('reason', '')  # 'reason' from client maps to 'alasan' in CSV
+            keterangan = data.get('notes', '')  # 'notes' from client maps to 'keterangan' in CSV
+            
+            # Save to abai.csv with all columns
+            success = self.save_to_abai_csv(no_pkk_inaportnet, pelabuhan, alasan, keterangan, timestamp)
             
             if success:
                 # Send success response
@@ -76,8 +81,8 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             print(f"❌ Error: {str(e)}")
             self.send_error(500, f"Internal server error: {str(e)}")
     
-    def save_to_abai_csv(self, no_pkk_inaportnet, timestamp):
-        """Save no_pkk_inaportnet to abai.csv"""
+    def save_to_abai_csv(self, no_pkk_inaportnet, pelabuhan, alasan, keterangan, timestamp):
+        """Save no_pkk_inaportnet and additional info to abai.csv"""
         try:
             # Check if file exists, create if not
             file_exists = os.path.isfile(self.csv_file)
@@ -95,13 +100,14 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             with open(self.csv_file, 'a', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 
-                # Write header if new file
+                # Write header if new file (matches the structure we set up earlier)
                 if not file_exists:
-                    writer.writerow(['no_pkk_inaportnet', 'timestamp', 'status'])
+                    writer.writerow(['no_pkk_inaportnet', 'Pelabuhan', 'Alasan', 'Keterangan'])
                 
-                # Write data
-                writer.writerow([no_pkk_inaportnet, timestamp, 'diabaikan'])
+                # Write data with all columns
+                writer.writerow([no_pkk_inaportnet, pelabuhan, alasan, keterangan])
             
+            print(f"✅ Saved to abai.csv: {no_pkk_inaportnet}, Pelabuhan: {pelabuhan}, Alasan: {alasan}, Keterangan: {keterangan}")
             return True
             
         except Exception as e:
