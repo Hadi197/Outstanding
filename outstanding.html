@@ -1782,6 +1782,153 @@
             }
         }
 
+        async function removeFromGitHubCSV(pkkNumber) {
+            console.log('🗑️ Removing PKK from GitHub repository:', pkkNumber);
+            
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('GitHub token not available');
+                }
+                
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Outstanding-Dashboard'
+                };
+                
+                // Get current file
+                console.log('📖 Getting current file content from GitHub...');
+                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    headers: headers
+                });
+                
+                if (!getResponse.ok) {
+                    throw new Error(`Failed to get current file: ${getResponse.status}`);
+                }
+                
+                const fileData = await getResponse.json();
+                const currentContent = atob(fileData.content.replace(/\n/g, ''));
+                const lines = currentContent.trim().split('\n');
+                
+                console.log(`📄 Current file has ${lines.length} lines`);
+                
+                // Filter out the PKK entry
+                const filteredLines = lines.filter(line => {
+                    const cols = line.split(',');
+                    const linePkk = cols[0];
+                    return linePkk !== pkkNumber; // Keep lines that don't match the PKK to remove
+                });
+                
+                console.log(`🔍 After filtering: ${filteredLines.length} lines (removed ${lines.length - filteredLines.length} entries)`);
+                
+                // If no changes needed
+                if (filteredLines.length === lines.length) {
+                    console.log('ℹ️ PKK not found in GitHub CSV, no changes needed');
+                    return true;
+                }
+                
+                const updatedContent = filteredLines.join('\n');
+                const encodedContent = btoa(updatedContent);
+                
+                // Update file in GitHub
+                console.log('⬆️ Updating file in GitHub repository...');
+                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: `Remove restored PKK: ${pkkNumber}`,
+                        content: encodedContent,
+                        sha: fileData.sha
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json();
+                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
+                }
+                
+                const updateResult = await updateResponse.json();
+                console.log('✅ PKK successfully removed from GitHub:', updateResult.commit.sha);
+                
+                showNotification(
+                    `✅ PKK ${pkkNumber} berhasil dihapus dari GitHub repository!`,
+                    'success'
+                );
+                
+                return updateResult;
+                
+            } catch (error) {
+                console.error('❌ Error removing PKK from GitHub:', error);
+                showNotification(`⚠️ Error removing from GitHub: ${error.message}`, 'warning');
+                throw error;
+            }
+        }
+
+        async function clearGitHubCSV() {
+            console.log('🗑️ Clearing all data from GitHub CSV repository...');
+            
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('GitHub token not available');
+                }
+                
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Outstanding-Dashboard'
+                };
+                
+                // Get current file
+                console.log('📖 Getting current file content from GitHub...');
+                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    headers: headers
+                });
+                
+                if (!getResponse.ok) {
+                    throw new Error(`Failed to get current file: ${getResponse.status}`);
+                }
+                
+                const fileData = await getResponse.json();
+                
+                // Create content with only header
+                const headerOnlyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan';
+                const encodedContent = btoa(headerOnlyContent);
+                
+                console.log('⬆️ Updating file in GitHub repository with header only...');
+                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: 'Clear all ignored PKK data - keep header only',
+                        content: encodedContent,
+                        sha: fileData.sha
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json();
+                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
+                }
+                
+                const updateResult = await updateResponse.json();
+                console.log('✅ GitHub CSV successfully cleared:', updateResult.commit.sha);
+                
+                showNotification(
+                    '✅ Semua data berhasil dihapus dari GitHub repository!',
+                    'success'
+                );
+                
+                return updateResult;
+                
+            } catch (error) {
+                console.error('❌ Error clearing GitHub CSV:', error);
+                showNotification(`⚠️ Error clearing GitHub: ${error.message}`, 'warning');
+                throw error;
+            }
+        }
+
         function buildBarChart(ctx, labels, values) {
 	// Ultra-modern gradient color palette with enhanced visual appeal
 	const modernColors = [
@@ -3894,46 +4041,101 @@ function renderPelabuhanCards(data) {
             }
         }
 
-        function restoreIgnoredItem(pkkNumber) {
+        async function restoreIgnoredItem(pkkNumber) {
             if (confirm(`Apakah Anda yakin ingin mengembalikan PKK: ${pkkNumber}?\n\nItem ini akan muncul kembali di tabel utama.`)) {
-                const abaiSet = getAbaiFromLocalStorage();
-                abaiSet.delete(pkkNumber);
-                saveAbaiToLocalStorage(abaiSet);
-                
-                loadPkkClearData();
-                showNotification(`✅ PKK ${pkkNumber} berhasil dikembalikan`, 'success');
-                
-                // Refresh main data if on dashboard/tabel tab
-                if (typeof refreshDataAfterAbaikan === 'function') {
-                    refreshDataAfterAbaikan();
+                try {
+                    // Remove from localStorage first
+                    const abaiSet = getAbaiFromLocalStorage();
+                    abaiSet.delete(pkkNumber);
+                    saveAbaiToLocalStorage(abaiSet);
+                    
+                    // Remove from GitHub if in production
+                    if (isProductionEnvironment()) {
+                        console.log('🌐 Production mode: Removing from GitHub...');
+                        await removeFromGitHubCSV(pkkNumber);
+                    } else {
+                        console.log('🏠 Development mode: Only removing from localStorage');
+                    }
+                    
+                    loadPkkClearData();
+                    showNotification(`✅ PKK ${pkkNumber} berhasil dikembalikan (localStorage + GitHub)`, 'success');
+                    
+                    // Refresh main data if on dashboard/tabel tab
+                    if (typeof refreshDataAfterAbaikan === 'function') {
+                        refreshDataAfterAbaikan();
+                    }
+                } catch (error) {
+                    console.error('❌ Error restoring PKK:', error);
+                    showNotification(`⚠️ PKK ${pkkNumber} dikembalikan dari localStorage, tapi error dari GitHub: ${error.message}`, 'warning');
+                    
+                    // Still refresh the data even if GitHub update failed
+                    loadPkkClearData();
+                    if (typeof refreshDataAfterAbaikan === 'function') {
+                        refreshDataAfterAbaikan();
+                    }
                 }
             }
         }
 
-        function removeIgnoredItem(pkkNumber) {
+        async function removeIgnoredItem(pkkNumber) {
             if (confirm(`⚠️ Apakah Anda yakin ingin menghapus PKK: ${pkkNumber} secara PERMANEN?\n\nTindakan ini tidak dapat dibatalkan!`)) {
-                const abaiSet = getAbaiFromLocalStorage();
-                abaiSet.delete(pkkNumber);
-                saveAbaiToLocalStorage(abaiSet);
-                
-                loadPkkClearData();
-                showNotification(`🗑️ PKK ${pkkNumber} berhasil dihapus secara permanen`, 'warning');
+                try {
+                    // Remove from localStorage first
+                    const abaiSet = getAbaiFromLocalStorage();
+                    abaiSet.delete(pkkNumber);
+                    saveAbaiToLocalStorage(abaiSet);
+                    
+                    // Remove from GitHub if in production
+                    if (isProductionEnvironment()) {
+                        console.log('🌐 Production mode: Removing from GitHub...');
+                        await removeFromGitHubCSV(pkkNumber);
+                    } else {
+                        console.log('🏠 Development mode: Only removing from localStorage');
+                    }
+                    
+                    loadPkkClearData();
+                    showNotification(`🗑️ PKK ${pkkNumber} berhasil dihapus secara permanen (localStorage + GitHub)`, 'warning');
+                } catch (error) {
+                    console.error('❌ Error removing PKK:', error);
+                    showNotification(`⚠️ PKK ${pkkNumber} dihapus dari localStorage, tapi error dari GitHub: ${error.message}`, 'warning');
+                    
+                    // Still refresh the data even if GitHub update failed
+                    loadPkkClearData();
+                }
             }
         }
 
-        function clearAllIgnoredItems() {
-            try {
-                localStorage.removeItem(ABAI_STORAGE_KEY);
-                loadPkkClearData();
-                showNotification('🗑️ Semua data PKK yang diabaikan berhasil dihapus', 'warning');
-                
-                // Refresh main data if on dashboard/tabel tab
-                if (typeof refreshDataAfterAbaikan === 'function') {
-                    refreshDataAfterAbaikan();
+        async function clearAllIgnoredItems() {
+            if (confirm('⚠️ Apakah Anda yakin ingin menghapus SEMUA data PKK yang diabaikan?\n\nTindakan ini akan:\n- Menghapus dari localStorage\n- Menghapus dari GitHub repository\n- Tidak dapat dibatalkan!')) {
+                try {
+                    // Remove from localStorage first
+                    localStorage.removeItem(ABAI_STORAGE_KEY);
+                    
+                    // Clear GitHub repository if in production
+                    if (isProductionEnvironment()) {
+                        console.log('🌐 Production mode: Clearing GitHub repository...');
+                        await clearGitHubCSV();
+                    } else {
+                        console.log('🏠 Development mode: Only clearing localStorage');
+                    }
+                    
+                    loadPkkClearData();
+                    showNotification('🗑️ Semua data PKK yang diabaikan berhasil dihapus (localStorage + GitHub)', 'warning');
+                    
+                    // Refresh main data if on dashboard/tabel tab
+                    if (typeof refreshDataAfterAbaikan === 'function') {
+                        refreshDataAfterAbaikan();
+                    }
+                } catch (error) {
+                    console.error('Error clearing ignored items:', error);
+                    showNotification(`❌ Error: localStorage dihapus, tapi GitHub error: ${error.message}`, 'error');
+                    
+                    // Still refresh even if GitHub failed
+                    loadPkkClearData();
+                    if (typeof refreshDataAfterAbaikan === 'function') {
+                        refreshDataAfterAbaikan();
+                    }
                 }
-            } catch (error) {
-                console.error('Error clearing ignored items:', error);
-                showNotification('❌ Gagal menghapus data', 'error');
             }
         }
 
