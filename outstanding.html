@@ -2358,16 +2358,41 @@
                 console.log('🚀 DEBUG: Production mode:', isProduction, 'Actual server active:', actualServerActive);
                 
                 if (!actualServerActive) {
-                    // Don't throw error, use localStorage fallback directly
-                    console.log('⚠️ Server not active, using localStorage fallback');
+                    console.log('⚠️ Server not active, checking production mode...');
                     
-                    // Save to localStorage with reason and row data
-                    addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
-                    console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
-                    
-                    // Show success notification
-                    const reasonText = getReasonDisplayText(reasonData.reason);
-                    showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan Lokal) - ${reasonText}`, 'success');
+                    // In production, try to save to GitHub API
+                    if (isProductionEnvironment()) {
+                        console.log('🌐 Production mode: Attempting to save to GitHub...');
+                        
+                        try {
+                            // Save to GitHub API
+                            await updateGitHubFile(noPkkInaportnet, reasonData, rowData);
+                            
+                            // Also save to localStorage for immediate UI update
+                            addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
+                            
+                            const reasonText = getReasonDisplayText(reasonData.reason);
+                            showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan ke GitHub) - ${reasonText}`, 'success');
+                            console.log('✅ Successfully saved to GitHub and localStorage');
+                            
+                        } catch (gitHubError) {
+                            console.error('❌ Failed to save to GitHub, using localStorage fallback:', gitHubError);
+                            
+                            // Fallback to localStorage only
+                            addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
+                            const reasonText = getReasonDisplayText(reasonData.reason);
+                            showNotification(`⚠️ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan Lokal - GitHub Error) - ${reasonText}`, 'warning');
+                        }
+                    } else {
+                        // Development mode - localStorage only fallback
+                        console.log('🏠 Development mode: Using localStorage fallback');
+                        
+                        addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
+                        console.log('💾 Saved to localStorage for persistence with reason:', reasonData.reason);
+                        
+                        const reasonText = getReasonDisplayText(reasonData.reason);
+                        showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan Lokal) - ${reasonText}`, 'success');
+                    }
                     
                     // Mark row as ignored
                     rowElement.style.transition = 'all 0.5s ease-out';
@@ -3310,6 +3335,85 @@ function renderPelabuhanCards(data) {
             console.log(`📊 PKK Clear Stats - Local: ${localCount}, GitHub: ${githubCount}, Total: ${totalCount}`);
         }
         
+        async function updateGitHubFile(noPkkInaportnet, reasonData, rowData = null) {
+            console.log('🔄 Updating GitHub repository with new entry:', noPkkInaportnet);
+            
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('GitHub token not available');
+                }
+                
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Outstanding-Dashboard'
+                };
+                
+                // First, get current file content and SHA
+                console.log('📖 Getting current file content from GitHub...');
+                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    headers: headers
+                });
+                
+                if (!getResponse.ok) {
+                    throw new Error(`Failed to get current file: ${getResponse.status}`);
+                }
+                
+                const fileData = await getResponse.json();
+                const currentContent = atob(fileData.content.replace(/\n/g, ''));
+                console.log('📄 Current file content retrieved, SHA:', fileData.sha);
+                
+                // Extract pelabuhan from rowData
+                let pelabuhan = '';
+                if (rowData) {
+                    pelabuhan = rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '';
+                }
+                
+                // Get reason text
+                const reasonText = getReasonDisplayText(reasonData.reason);
+                const notes = reasonData.notes || '';
+                
+                // Prepare new row
+                const newRow = `${noPkkInaportnet},${pelabuhan},${reasonText},${notes}`;
+                
+                // Add new row to existing content
+                const updatedContent = currentContent.trim() + '\n' + newRow;
+                
+                console.log('📝 New row to add:', newRow);
+                console.log('📄 Updated content preview:', updatedContent.substring(0, 200) + '...');
+                
+                // Encode content to base64
+                const encodedContent = btoa(updatedContent);
+                
+                // Update file in GitHub
+                console.log('⬆️ Updating file in GitHub repository...');
+                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: `Add ignored PKK: ${noPkkInaportnet} - ${reasonText}`,
+                        content: encodedContent,
+                        sha: fileData.sha
+                    })
+                });
+                
+                if (!updateResponse.ok) {
+                    const errorData = await updateResponse.json();
+                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
+                }
+                
+                const updateResult = await updateResponse.json();
+                console.log('✅ File updated successfully in GitHub:', updateResult.commit.sha);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error updating GitHub file:', error);
+                throw error;
+            }
+        }
+
         async function testGitHubConnection() {
             console.log('🔧 Testing GitHub API connection manually...');
             
