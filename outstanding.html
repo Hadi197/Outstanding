@@ -2764,12 +2764,10 @@
         // Helper function to convert reason codes to display text
         function getReasonDisplayText(reasonCode) {
             const reasonMap = {
-                'data_duplikat': 'Data Duplikat',
-                'data_tidak_valid': 'Data Tidak Valid', 
-                'sudah_diproses': 'Sudah Diproses',
-                'di_luar_jurisdiksi': 'Di Luar Jurisdiksi',
-                'tidak_relevan': 'Tidak Relevan',
-                'error_sistem': 'Error Sistem'
+                'kendala_phinnisi': 'Kendala PHINNISI',
+                'kendala_inaportnet': 'Kendala INAPORTNET',
+                'kendala_agen': 'Kendala AGEN',
+                'kendala_ksop': 'Kendala KSOP'
             };
             return reasonMap[reasonCode] || reasonCode;
         }
@@ -4546,13 +4544,12 @@ function renderPelabuhanCards(data) {
                     </label>
                     <select id="abaiReasonSelect" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         <option value="">-- Pilih Alasan --</option>
-                        <option value="data_duplikat">Data Duplikat</option>
-                        <option value="data_tidak_valid">Data Tidak Valid</option>
-                        <option value="sudah_diproses">Sudah Diproses</option>
-                        <option value="di_luar_jurisdiksi">Di Luar Jurisdiksi</option>
-                        <option value="tidak_relevan">Tidak Relevan</option>
-                        <option value="error_sistem">Error Sistem</option>
-                        <option value="custom">Alasan Lainnya (Tulis Manual)</option>
+                        <option value="kendala_phinnisi">Kendala PHINNISI</option>
+                        <option value="kendala_inaportnet">Kendala INAPORTNET</option>
+                        <option value="kendala_agen">Kendala AGEN</option>
+                        <option value="kendala_ksop">Kendala KSOP</option>
+                        <option value="kendala_ksop">PKK Double Sudah Jadi Nota</option>
+                        <option value="custom">LAINNYA...</option>
                     </select>
                 </div>
 
