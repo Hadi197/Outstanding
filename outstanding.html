@@ -2175,10 +2175,10 @@
         async function checkServerStatus() {
             try {
                 const apiUrl = getApiUrl();
-                // Use existing abaikan endpoint instead of non-existent status endpoint
+                // Use the correct status endpoint
                 // Add timestamp to prevent caching
                 const timestamp = new Date().getTime();
-                const url = `${apiUrl}/abaikan?action=list&_t=${timestamp}`;
+                const url = `${apiUrl}/status?_t=${timestamp}`;
                 console.log('🔍 checkServerStatus calling:', url);
                 const response = await fetch(url, {
                     cache: 'no-cache'
