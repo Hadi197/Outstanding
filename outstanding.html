@@ -3202,7 +3202,10 @@ function renderPelabuhanCards(data) {
                         headers['Authorization'] = `Bearer ${token}`;
                     }
                     
-                    const response = await fetch(apiUrl, {
+                    const fullApiUrl = `${apiUrl}/abai.csv`;
+                    console.log('📡 Full API URL:', fullApiUrl);
+                    
+                    const response = await fetch(fullApiUrl, {
                         method: 'GET',
                         headers: headers
                     });
