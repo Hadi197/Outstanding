@@ -179,7 +179,7 @@
         <div class="absolute bottom-0 right-0 w-64 h-64 bg-pink-400/20 rounded-full translate-x-32 translate-y-32 blur-3xl"></div>
         
         <!-- GitHub Connection Status Icon -->
-        <div class="absolute top-4 right-4 z-20">
+        <div class="absolute top-4 right-4 z-20 flex flex-col space-y-2">
             <div id="githubConnectionIcon" class="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-2 transition-all duration-300">
                 <!-- GitHub Icon -->
                 <svg id="githubIcon" class="w-6 h-6 text-red-400 transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
@@ -190,6 +190,16 @@
                 <!-- Connection Indicator -->
                 <div id="githubConnectionDot" class="w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
             </div>
+            
+            <!-- CSV Cleanup Button -->
+            <button id="cleanupCsvBtn" onclick="cleanupGitHubCSV()" 
+                    class="bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full px-3 py-2 transition-all duration-300 flex items-center space-x-1"
+                    title="Bersihkan format CSV di GitHub">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"></path>
+                </svg>
+                <span class="text-white text-xs font-medium">Fix CSV</span>
+            </button>
         </div>
 
         <!-- Header content -->
@@ -1692,6 +1702,86 @@
             }, duration);
         }
 
+        function showProcessSteps(pkk, pelabuhan, reason) {
+            console.log('📋 PROSEDUR ABAIKAN PKK - LANGKAH DEMI LANGKAH:');
+            console.log('═══════════════════════════════════════════════');
+            console.log(`1️⃣ PKK yang diabaikan: ${pkk}`);
+            console.log(`2️⃣ Pelabuhan: ${pelabuhan}`);
+            console.log(`3️⃣ Alasan: ${reason}`);
+            console.log(`4️⃣ Timestamp: ${new Date().toLocaleString('id-ID')}`);
+            console.log('5️⃣ Validasi format 4-kolom CSV...');
+            console.log('6️⃣ Menyimpan ke GitHub repository...');
+            console.log('7️⃣ Memperbarui localStorage untuk sinkronisasi...');
+            console.log('8️⃣ Update UI dengan status "Tersimpan"...');
+            console.log('9️⃣ Auto-remove dari tampilan outstanding...');
+            console.log('✅ PROSEDUR SELESAI - Data tersimpan dengan format lengkap!');
+            console.log('═══════════════════════════════════════════════');
+        }
+
+        async function cleanupGitHubCSV() {
+            console.log('🧹 Membersihkan format CSV di GitHub...');
+            
+            try {
+                const token = getGitHubToken();
+                if (!token) {
+                    throw new Error('GitHub token not available');
+                }
+                
+                const headers = {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Authorization': `Bearer ${token}`,
+                    'User-Agent': 'Outstanding-Dashboard'
+                };
+                
+                // Get current file
+                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    headers: headers
+                });
+                
+                if (!getResponse.ok) return false;
+                
+                const fileData = await getResponse.json();
+                const currentContent = atob(fileData.content.replace(/\n/g, ''));
+                const lines = currentContent.trim().split('\n');
+                
+                // Clean up each line to ensure 4 columns
+                const cleanedLines = lines.map(line => {
+                    const cols = line.split(',');
+                    const pkk = cols[0] || '';
+                    const pelabuhan = cols[1] || 'Unknown Port';
+                    const alasan = cols[2] || 'Not Specified';
+                    const keterangan = cols[3] || `Cleaned at ${new Date().toLocaleString('id-ID')}`;
+                    
+                    return `${pkk},${pelabuhan},${alasan},${keterangan}`;
+                });
+                
+                const cleanedContent = cleanedLines.join('\n');
+                const encodedContent = btoa(cleanedContent);
+                
+                // Update file
+                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                    method: 'PUT',
+                    headers: headers,
+                    body: JSON.stringify({
+                        message: 'Clean up CSV format - ensure all 4 columns are filled',
+                        content: encodedContent,
+                        sha: fileData.sha
+                    })
+                });
+                
+                if (updateResponse.ok) {
+                    console.log('✅ CSV cleanup completed!');
+                    showNotification('✅ Format CSV berhasil dibersihkan - semua kolom lengkap!', 'success');
+                    return true;
+                }
+                return false;
+                
+            } catch (error) {
+                console.error('❌ Error cleaning CSV:', error);
+                return false;
+            }
+        }
+
         function buildBarChart(ctx, labels, values) {
 	// Ultra-modern gradient color palette with enhanced visual appeal
 	const modernColors = [
@@ -2366,13 +2456,11 @@
                         
                         try {
                             // Save to GitHub API
-                            await updateGitHubFile(noPkkInaportnet, reasonData, rowData);
+                            const result = await updateGitHubFile(noPkkInaportnet, reasonData, rowData);
                             
                             // Also save to localStorage for immediate UI update
                             addToAbaiLocalStorageWithReason(noPkkInaportnet, reasonData, rowData);
                             
-                            const reasonText = getReasonDisplayText(reasonData.reason);
-                            showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan ke GitHub) - ${reasonText}`, 'success');
                             console.log('✅ Successfully saved to GitHub and localStorage');
                             
                         } catch (gitHubError) {
@@ -2394,14 +2482,16 @@
                         showNotification(`✅ Data berhasil diabaikan: ${noPkkInaportnet} (Disimpan Lokal) - ${reasonText}`, 'success');
                     }
                     
-                    // Mark row as ignored
+                    // Mark row as ignored with better visual feedback
                     rowElement.style.transition = 'all 0.5s ease-out';
-                    rowElement.style.opacity = '0.5';
-                    rowElement.style.background = '#fee2e2';
+                    rowElement.style.opacity = '0.7';
+                    rowElement.style.background = 'linear-gradient(90deg, #dcfce7, #bbf7d0)';
+                    rowElement.style.borderLeft = '4px solid #10b981';
                     
                     // Replace button with status and reason
+                    const reasonText = getReasonDisplayText(reasonData.reason);
                     const reasonDisplay = reasonText.length > 15 ? reasonText.substring(0, 15) + '...' : reasonText;
-                    buttonElement.innerHTML = `<span title="${reasonText}">✓ ${reasonDisplay}</span>`;
+                    buttonElement.innerHTML = `<span title="${reasonText}">✅ Tersimpan: ${reasonDisplay}</span>`;
                     buttonElement.className = 'px-3 py-1 bg-green-600 text-white text-xs font-medium rounded-md cursor-not-allowed';
                     buttonElement.disabled = true;
                     
@@ -3374,8 +3464,13 @@ function renderPelabuhanCards(data) {
                 const reasonText = getReasonDisplayText(reasonData.reason);
                 const notes = reasonData.notes || '';
                 
-                // Prepare new row
-                const newRow = `${noPkkInaportnet},${pelabuhan},${reasonText},${notes}`;
+                // Ensure all fields are properly filled (avoid empty trailing fields)
+                const cleanPelabuhan = pelabuhan.trim() || 'Unknown Port';
+                const cleanReasonText = reasonText.trim() || 'Not Specified';
+                const cleanNotes = notes.trim() || `Ignored at ${new Date().toLocaleString('id-ID')}`;
+                
+                // Prepare new row with all fields properly filled
+                const newRow = `${noPkkInaportnet},${cleanPelabuhan},${cleanReasonText},${cleanNotes}`;
                 
                 // Add new row to existing content
                 const updatedContent = currentContent.trim() + '\n' + newRow;
@@ -3392,7 +3487,7 @@ function renderPelabuhanCards(data) {
                     method: 'PUT',
                     headers: headers,
                     body: JSON.stringify({
-                        message: `Add ignored PKK: ${noPkkInaportnet} - ${reasonText}`,
+                        message: `Add ignored PKK: ${noPkkInaportnet} - ${cleanReasonText}`,
                         content: encodedContent,
                         sha: fileData.sha
                     })
@@ -3406,7 +3501,15 @@ function renderPelabuhanCards(data) {
                 const updateResult = await updateResponse.json();
                 console.log('✅ File updated successfully in GitHub:', updateResult.commit.sha);
                 
-                return true;
+                // Show success notification to user
+                showProcessSteps(noPkkInaportnet, cleanPelabuhan, cleanReasonText);
+                showNotification(
+                    `✅ Prosedur Lengkap!\nPKK: ${noPkkInaportnet}\nPelabuhan: ${cleanPelabuhan}\nAlasan: ${cleanReasonText}\nStatus: Disimpan ke GitHub`,
+                    'success',
+                    5000
+                );
+                
+                return updateResult;
                 
             } catch (error) {
                 console.error('❌ Error updating GitHub file:', error);
@@ -4077,6 +4180,14 @@ function renderPelabuhanCards(data) {
                         customReasonDiv.classList.add('hidden');
                     }
                 });
+            }
+            
+            // Auto-cleanup CSV format on page load for production
+            if (isProductionEnvironment()) {
+                setTimeout(() => {
+                    console.log('🧹 Auto-cleanup CSV format di production...');
+                    cleanupGitHubCSV();
+                }, 3000); // Wait 3 seconds for GitHub connection to establish
             }
 
             // Close modal when clicking outside
