@@ -2101,12 +2101,8 @@
         
         // Detect if running on localhost or production
         function getApiUrl() {
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                return 'http://localhost:8001/api';
-            } else {
-                // Production (Netlify) - use serverless functions
-                return '/.netlify/functions';
-            }
+            // Always try localhost first (works for development and local production)
+            return 'http://localhost:8001/api';
         }
 
         // Function to refresh data after persistent abaikan
@@ -2301,10 +2297,9 @@
                 const serverActive = await checkServerStatus();
                 console.log('🔧 DEBUG: Server active:', serverActive);
                 
-                // Force server active to true for production Netlify functions
-                const currentApiUrl = getApiUrl();
-                const isProduction = !currentApiUrl.includes('localhost');
-                const actualServerActive = isProduction ? true : serverActive; // Always treat production as active
+                // Check if we're in production environment
+                const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+                const actualServerActive = isProduction ? false : serverActive; // Production uses localStorage only
                 
                 console.log('🚀 DEBUG: Production mode:', isProduction, 'Actual server active:', actualServerActive);
                 
@@ -3558,23 +3553,22 @@ function renderPelabuhanCards(data) {
             const detailedData = JSON.parse(localStorage.getItem(detailedKey) || '[]');
             
             const data = Array.from(abaiSet);
-            const csvContent = 'PKK_NUMBER,PORT_NAME,REASON,NOTES,TIMESTAMP,DATE_EXPORTED,STATUS\n' + 
+            // Create CSV in the same format as abai.csv (no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan)
+            const csvContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan\n' + 
                 data.map(pkk => {
                     const detailed = detailedData.find(item => item.pkk === pkk);
-                    const portName = (detailed?.port_name || 'Unknown Port').replace(/"/g, '""');
-                    const reason = (detailed?.reason ? getReasonDisplayText(detailed.reason) : 'No reason').replace(/"/g, '""');
+                    const portName = (detailed?.port_name || '').replace(/"/g, '""');
+                    const reason = (detailed?.reason || '').replace(/"/g, '""');
                     const notes = (detailed?.notes || '').replace(/"/g, '""');
-                    const timestamp = detailed?.timestamp || '';
-                    const dateExported = new Date().toISOString();
                     
-                    return `"${pkk}","${portName}","${reason}","${notes}","${timestamp}","${dateExported}","IGNORED"`;
+                    return `"${pkk}","${portName}","${reason}","${notes}"`;
                 }).join('\n');
             
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             const url = URL.createObjectURL(blob);
             link.setAttribute('href', url);
-            link.setAttribute('download', `pkk_ignored_${new Date().toISOString().split('T')[0]}.csv`);
+            link.setAttribute('download', `abai_export_${new Date().toISOString().split('T')[0]}.csv`);
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
