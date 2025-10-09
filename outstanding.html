@@ -3205,14 +3205,22 @@ function renderPelabuhanCards(data) {
                     
                     if (response.ok) {
                         const data = await response.json();
+                        console.log('🔍 GitHub API data received:', {
+                            hasContent: !!data.content,
+                            contentLength: data.content ? data.content.length : 0,
+                            fileName: data.name,
+                            size: data.size
+                        });
+                        
                         if (data.content) {
                             // Decode base64 content
                             const csvContent = atob(data.content.replace(/\n/g, ''));
+                            console.log('🔍 Decoded CSV content:', csvContent.substring(0, 200) + '...');
                             const lines = csvContent.split('\n').filter(line => line.trim());
                             githubCount = Math.max(0, lines.length - 1); // Subtract header row
                             githubStatus = 'Connected to GitHub';
                             
-                            console.log(`✅ GitHub API Response: ${githubCount} entries`);
+                            console.log(`✅ GitHub API Response: ${githubCount} entries from ${lines.length} lines`);
                         } else {
                             console.log('⚠️ No content in GitHub response');
                             githubStatus = 'GitHub - No Data';
