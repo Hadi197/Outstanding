@@ -2110,8 +2110,9 @@
         }
 
         function getGitHubToken() {
-            // For production, we'll use GitHub API without token for read operations
-            // For write operations, we need to implement GitHub API calls
+            // GitHub token for private repository access
+            // In production, this should be set via environment variable or secure config
+            // For now, return null to use public API (fallback to localStorage if repo is private)
             return null;
         }
 
@@ -2187,16 +2188,25 @@
                 // Production mode - check GitHub API
                 console.log('🌐 Production mode: Checking GitHub API');
                 try {
-                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv');
+                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'User-Agent': 'Outstanding-Dashboard'
+                        }
+                    });
                     if (response.ok) {
                         updateServerStatus(true, 'Connected to GitHub API');
                         return true;
+                    } else if (response.status === 404) {
+                        console.warn('Repository not found or private - falling back to localStorage');
+                        updateServerStatus(false, 'Repository private - localStorage mode');
+                        return false;
                     } else {
-                        throw new Error('GitHub API not accessible');
+                        throw new Error(`GitHub API error: ${response.status}`);
                     }
                 } catch (error) {
                     console.error('GitHub API error:', error);
-                    updateServerStatus(false, 'GitHub API not available');
+                    updateServerStatus(false, 'GitHub API not available - localStorage mode');
                     return false;
                 }
             }
@@ -3154,8 +3164,8 @@ function renderPelabuhanCards(data) {
                 console.log('📡 API URL:', apiUrl);
                 
                 if (isProductionEnvironment()) {
-                    // Production: Use GitHub API
-                    console.log('🌐 Production mode: Using GitHub API');
+                    // Production: Try GitHub API, fallback to localStorage
+                    console.log('🌐 Production mode: Trying GitHub API');
                     const response = await fetch(apiUrl, {
                         method: 'GET',
                         headers: {
@@ -3173,17 +3183,18 @@ function renderPelabuhanCards(data) {
                             const csvContent = atob(data.content.replace(/\n/g, ''));
                             const lines = csvContent.split('\n').filter(line => line.trim());
                             githubCount = Math.max(0, lines.length - 1); // Subtract header row
-                            githubStatus = 'Connected';
+                            githubStatus = 'Connected to GitHub';
                             
-                            console.log(`✅ GitHub Response: ${githubCount} entries`);
+                            console.log(`✅ GitHub API Response: ${githubCount} entries`);
                         } else {
                             console.log('⚠️ No content in GitHub response');
-                            githubStatus = 'No Data';
+                            githubStatus = 'GitHub - No Data';
+                            githubCount = 0;
                         }
                     } else if (response.status === 404) {
-                        console.log('� File not found in GitHub, assuming empty');
+                        console.log('📝 Repository private or not found - using localStorage');
                         githubCount = 0;
-                        githubStatus = 'Connected';
+                        githubStatus = 'Private Repository - localStorage mode';
                     } else {
                         console.log('⚠️ GitHub API not available, status:', response.status);
                         githubStatus = 'Not Available';
@@ -3220,9 +3231,9 @@ function renderPelabuhanCards(data) {
             
             // Show debug info if there are issues
             const debugElement = document.getElementById('githubDebug');
-            if (githubStatus !== 'Connected' && githubStatus !== 'Loading...') {
+            if (!githubStatus.includes('Connected') && githubStatus !== 'Loading...') {
                 if (isProductionEnvironment()) {
-                    debugElement.textContent = 'Mode: Production - GitHub API connection issue';
+                    debugElement.textContent = `Mode: Production - ${githubStatus}`;
                 } else {
                     const apiUrl = getApiUrl();
                     debugElement.textContent = `API: ${apiUrl}/abaikan`;
@@ -3243,7 +3254,7 @@ function renderPelabuhanCards(data) {
             
             // Determine primary storage type
             let storageType = 'localStorage';
-            if (githubCount > 0 && githubStatus === 'Connected') {
+            if (githubCount > 0 && githubStatus.includes('Connected')) {
                 storageType = 'GitHub + localStorage';
             }
             
@@ -3261,10 +3272,10 @@ function renderPelabuhanCards(data) {
             
             if (!syncIndicator || !syncText) return;
             
-            if (githubStatus === 'Connected') {
+            if (githubStatus.includes('Connected')) {
                 if (localCount === githubCount) {
                     syncIndicator.className = 'w-3 h-3 bg-green-500 rounded-full animate-pulse';
-                    syncText.textContent = 'Synchronized';
+                    syncText.textContent = 'Synchronized with GitHub';
                     syncText.className = 'text-green-600 text-sm font-medium';
                 } else if (githubCount > localCount) {
                     syncIndicator.className = 'w-3 h-3 bg-blue-500 rounded-full animate-pulse';
@@ -3275,6 +3286,10 @@ function renderPelabuhanCards(data) {
                     syncText.textContent = 'Local has more data';
                     syncText.className = 'text-orange-600 text-sm font-medium';
                 }
+            } else if (githubStatus.includes('localStorage mode') || githubStatus.includes('Private Repository')) {
+                syncIndicator.className = 'w-3 h-3 bg-yellow-500 rounded-full';
+                syncText.textContent = 'localStorage only';
+                syncText.className = 'text-yellow-600 text-sm font-medium';
             } else {
                 syncIndicator.className = 'w-3 h-3 bg-red-500 rounded-full';
                 syncText.textContent = 'GitHub not available';
