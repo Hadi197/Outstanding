@@ -2101,7 +2101,11 @@
         
         // Detect if running on localhost or production
         function getApiUrl() {
-            // Always try localhost first (works for development and local production)
+            if (isProductionEnvironment()) {
+                // Production mode - no API server, localStorage only
+                return null;
+            }
+            // Development mode - use local server
             return 'http://localhost:8001/api';
         }
 
@@ -2208,7 +2212,8 @@
         function updateServerStatus(isActive, message) {
             const statusDiv = document.getElementById('serverStatus');
             const toggleBtn = document.getElementById('toggleServerBtn');
-            const isLocal = getApiUrl().includes('localhost');
+            const apiUrl = getApiUrl();
+            const isLocal = apiUrl && apiUrl.includes('localhost');
             
             if (isActive) {
                 statusDiv.innerHTML = `
@@ -2241,7 +2246,8 @@
         }
         
         async function toggleAbaikanServer() {
-            const isLocal = getApiUrl().includes('localhost');
+            const apiUrl = getApiUrl();
+            const isLocal = apiUrl && apiUrl.includes('localhost');
             
             if (!isLocal) {
                 showNotification('Mode production: menggunakan Netlify Functions', 'info', 3000);
@@ -3107,9 +3113,9 @@ function renderPelabuhanCards(data) {
                 githubStatus = 'Production mode - localStorage only';
             } else {
                 try {
-                    console.log('🔄 Fetching GitHub data...');
+                    console.log('🔄 Fetching server data...');
                     const apiUrl = getApiUrl();
-                    console.log('📡 API URL:', apiUrl);
+                    console.log('📡 API URL:', apiUrl || 'No server (production mode)');
                     const response = await fetch(`${apiUrl}/status`);
                     
                     console.log('📡 Response status:', response.status);
@@ -3140,8 +3146,12 @@ function renderPelabuhanCards(data) {
             // Show debug info if there are issues
             const debugElement = document.getElementById('githubDebug');
             if (githubStatus !== 'Connected' && githubStatus !== 'Loading...') {
-                const apiUrl = getApiUrl();
-                debugElement.textContent = `API: ${apiUrl}/abaikan`;
+                if (isProductionEnvironment()) {
+                    debugElement.textContent = 'Mode: Production - localStorage only';
+                } else {
+                    const apiUrl = getApiUrl();
+                    debugElement.textContent = `API: ${apiUrl}/abaikan`;
+                }
                 debugElement.style.display = 'block';
             } else {
                 debugElement.style.display = 'none';
