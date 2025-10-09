@@ -2115,6 +2115,12 @@
         }
 
         function isProductionEnvironment() {
+            // Check URL parameter to force GitHub API mode for testing
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('github') === 'true') {
+                return true;
+            }
+            
             return window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
         }
 
