@@ -2102,11 +2102,17 @@
         // Detect if running on localhost or production
         function getApiUrl() {
             if (isProductionEnvironment()) {
-                // Production mode - no API server, localStorage only
-                return null;
+                // Production mode - use GitHub API
+                return 'https://api.github.com/repos/Hadi197/Outstanding/contents';
             }
             // Development mode - use local server
             return 'http://localhost:8001/api';
+        }
+
+        function getGitHubToken() {
+            // For production, we'll use GitHub API without token for read operations
+            // For write operations, we need to implement GitHub API calls
+            return null;
         }
 
         function isProductionEnvironment() {
@@ -2177,11 +2183,22 @@
         }
         
         async function checkServerStatus() {
-            // Skip server calls in production - use localStorage only
             if (isProductionEnvironment()) {
-                console.log('🌐 Production mode: Using localStorage only');
-                updateServerStatus(false, 'Production mode - localStorage only');
-                return false;
+                // Production mode - check GitHub API
+                console.log('🌐 Production mode: Checking GitHub API');
+                try {
+                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv');
+                    if (response.ok) {
+                        updateServerStatus(true, 'Connected to GitHub API');
+                        return true;
+                    } else {
+                        throw new Error('GitHub API not accessible');
+                    }
+                } catch (error) {
+                    console.error('GitHub API error:', error);
+                    updateServerStatus(false, 'GitHub API not available');
+                    return false;
+                }
             }
 
             try {
@@ -2310,7 +2327,7 @@
                 
                 // Check if we're in production environment
                 const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-                const actualServerActive = isProduction ? false : serverActive; // Production uses localStorage only
+                const actualServerActive = isProduction ? false : serverActive; // Production uses GitHub API, local server not available
                 
                 console.log('🚀 DEBUG: Production mode:', isProduction, 'Actual server active:', actualServerActive);
                 
@@ -2944,16 +2961,41 @@ function renderPelabuhanCards(data) {
         async function fetchAbaiData() {
             let abaiSet = new Set();
             
-            // Skip server calls in production, use localStorage only
+            // Use different data sources for production vs development
             if (isProductionEnvironment()) {
-                console.log('🌐 Production mode: Using localStorage only');
-                abaiSet = getAbaiFromLocalStorage();
-                console.log(`� Loaded ${abaiSet.size} entries from localStorage`);
-                return abaiSet;
-            }
-            
-            try {
-                const apiUrl = getApiUrl();
+                console.log('🌐 Production mode: Fetching from GitHub API');
+                try {
+                    // Fetch from GitHub API
+                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv');
+                    if (response.ok) {
+                        const data = await response.json();
+                        const content = atob(data.content); // Decode base64 content
+                        const lines = content.split('\n').filter(line => line.trim());
+                        
+                        // Skip header line and process data
+                        for (let i = 1; i < lines.length; i++) {
+                            const row = lines[i].split(',');
+                            if (row.length > 0 && row[0].trim()) {
+                                abaiSet.add(row[0].trim());
+                            }
+                        }
+                        
+                        console.log(`✅ Loaded ${abaiSet.size} entries from GitHub API`);
+                        
+                        // Sync with localStorage for offline access
+                        saveAbaiToLocalStorage(abaiSet);
+                    } else {
+                        throw new Error('GitHub API request failed');
+                    }
+                } catch (error) {
+                    console.warn('⚠️ GitHub API not available, using localStorage fallback:', error);
+                    abaiSet = getAbaiFromLocalStorage();
+                    console.log(`📱 Loaded ${abaiSet.size} entries from localStorage`);
+                }
+            } else {
+                // Development environment - use local server
+                try {
+                    const apiUrl = getApiUrl();
                 console.log('🔄 Fetching persistent abai data from:', apiUrl);
                 
                 // Try to get abai list from server first (local development)
@@ -2994,15 +3036,14 @@ function renderPelabuhanCards(data) {
                     saveAbaiToLocalStorage(abaiSet);
                 }
                 
-            } catch (e) {
-                console.warn("Could not load abai data from server, using localStorage:", e);
-                abaiSet = getAbaiFromLocalStorage();
+                } catch (e) {
+                    console.warn("Could not load abai data from server, using localStorage:", e);
+                    abaiSet = getAbaiFromLocalStorage();
+                }
             }
             
             return abaiSet;
-        }
-
-        async function main() {
+        }        async function main() {
             // Initialize GitHub connection icon
             updateGithubConnectionIcon('Loading...');
             
@@ -3103,22 +3144,56 @@ function renderPelabuhanCards(data) {
             // Update localStorage count immediately
             document.getElementById('localStorageCount').textContent = localCount;
             
-            // Try to get GitHub data (skip in production)
+            // Try to get GitHub data
             let githubCount = 0;
             let githubStatus = 'Loading...';
             
-            if (isProductionEnvironment()) {
-                console.log('🌐 Production mode: Skipping server calls');
-                githubCount = 0;
-                githubStatus = 'Production mode - localStorage only';
-            } else {
-                try {
-                    console.log('🔄 Fetching server data...');
-                    const apiUrl = getApiUrl();
-                    console.log('📡 API URL:', apiUrl || 'No server (production mode)');
+            try {
+                console.log('🔄 Fetching data...');
+                const apiUrl = getApiUrl();
+                console.log('📡 API URL:', apiUrl);
+                
+                if (isProductionEnvironment()) {
+                    // Production: Use GitHub API
+                    console.log('🌐 Production mode: Using GitHub API');
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/vnd.github.v3+json',
+                            'User-Agent': 'Outstanding-Dashboard'
+                        }
+                    });
+                    
+                    console.log('📡 GitHub API Response status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.content) {
+                            // Decode base64 content
+                            const csvContent = atob(data.content.replace(/\n/g, ''));
+                            const lines = csvContent.split('\n').filter(line => line.trim());
+                            githubCount = Math.max(0, lines.length - 1); // Subtract header row
+                            githubStatus = 'Connected';
+                            
+                            console.log(`✅ GitHub Response: ${githubCount} entries`);
+                        } else {
+                            console.log('⚠️ No content in GitHub response');
+                            githubStatus = 'No Data';
+                        }
+                    } else if (response.status === 404) {
+                        console.log('� File not found in GitHub, assuming empty');
+                        githubCount = 0;
+                        githubStatus = 'Connected';
+                    } else {
+                        console.log('⚠️ GitHub API not available, status:', response.status);
+                        githubStatus = 'Not Available';
+                    }
+                } else {
+                    // Development: Use local server
+                    console.log('🏠 Development mode: Using local server');
                     const response = await fetch(`${apiUrl}/status`);
                     
-                    console.log('📡 Response status:', response.status);
+                    console.log('📡 Local server response status:', response.status);
                     
                     if (response.ok) {
                         const data = await response.json();
@@ -3133,10 +3208,10 @@ function renderPelabuhanCards(data) {
                         console.log('⚠️ Server not available, status:', response.status);
                         githubStatus = 'Not Available';
                     }
-                } catch (error) {
-                    console.error('❌ Error fetching server data:', error);
-                    githubStatus = 'Connection Error';
                 }
+            } catch (error) {
+                console.error('❌ Error fetching data:', error);
+                githubStatus = 'Connection Error';
             }
             
             // Update GitHub count and status
@@ -3147,7 +3222,7 @@ function renderPelabuhanCards(data) {
             const debugElement = document.getElementById('githubDebug');
             if (githubStatus !== 'Connected' && githubStatus !== 'Loading...') {
                 if (isProductionEnvironment()) {
-                    debugElement.textContent = 'Mode: Production - localStorage only';
+                    debugElement.textContent = 'Mode: Production - GitHub API connection issue';
                 } else {
                     const apiUrl = getApiUrl();
                     debugElement.textContent = `API: ${apiUrl}/abaikan`;
