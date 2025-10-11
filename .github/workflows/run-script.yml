@@ -33,11 +33,12 @@ jobs:
       - name: Debug changed files
         run: git status
 
-      - name: Commit and push gabung.csv
+      - name: Commit and push outputs (gabung.csv, bill.csv)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git pull --rebase --autostash origin main
-          git add gabung.csv
-          git commit -m "Update gabung.csv" || echo "No changes to commit"
+          # Add both gabung.csv and bill.csv if present/changed
+          git add gabung.csv bill.csv
+          git commit -m "Update gabung.csv and bill.csv" || echo "No changes to commit"
           git push origin main

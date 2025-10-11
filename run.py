@@ -94,7 +94,8 @@ def concat_csv_files(input_files, output_file):
 def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     # Urutan eksekusi sesuai permintaan
-    scripts = ["lhgk.py", "wasop.py", "spb.py", "lookup.py"]
+    # Include bill.py so billing scraper runs as part of the pipeline
+    scripts = ["lhgk.py", "wasop.py", "spb.py", "lookup.py", "bill.py"]
     SCRIPT_TIMEOUT = 1500
 
     for scr in scripts:
@@ -112,12 +113,15 @@ def main():
     wasop_path = os.path.join(data_dir, "wasop.csv")
     gabung_path = os.path.join(data_dir, "gabung.csv")
     lhgk_path = os.path.join(data_dir, "lhgk.csv")
+    bill_path = os.path.join(data_dir, "bill.csv")
 
+    # Expect lhgk, spb, wasop, and bill outputs to exist after running scripts
     missing = [
         name for name, path in (
             ("lhgk.csv", lhgk_path),
             ("spb.csv", spb_path),
-            ("wasop.csv", wasop_path)
+            ("wasop.csv", wasop_path),
+            ("bill.csv", bill_path)
         )
         if not os.path.exists(path)
     ]
@@ -138,6 +142,7 @@ def main():
     print(f" - {lhgk_path}")
     print(f" - {wasop_path}")
     print(f" - {spb_path}")
+    print(f" - {bill_path}")
     print(f" - {gabung_path}")
 
 
