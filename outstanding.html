@@ -2335,9 +2335,10 @@
 	return chart;
 }
 
-        let globalData = [];
-        let globalHeaders = [];
-        let barChart;
+    let globalData = [];
+    let globalCardData = []; // used by cards/charts (filtered by abai)
+    let globalHeaders = [];
+    let barChart;
         
         // Server management functions
         let serverCheckInterval;
@@ -2384,26 +2385,43 @@
                 
                 // Filter data with updated abai set
                 let debugCount = 0;
-                const filtered = rawData.filter(r => {
-                    const key = (r["no_pkk_inaportnet"] || "").trim();
-                    const shouldExclude = key && abaiSet.has(key);
-                    if (shouldExclude) {
-                        debugCount++;
-                        console.log(`🚫 DEBUG: Excluding row with PKK: "${key}"`);
+                // Recompute reduced dataset for cards/charts
+                function rowHasAnyAbaiPKK(row, abaiSet) {
+                    if (!row || !abaiSet || abaiSet.size === 0) return false;
+                    const candidateFields = ['no_pkk_inaportnet','no_pkk','no_pkk_spb','no_pkk_wasop','nomor_spb','nomor_pkk','pkk','no_pkk_lhgk'];
+                    for (const f of candidateFields) {
+                        if (row.hasOwnProperty(f)) {
+                            const v = (row[f] || '').toString().trim();
+                            if (v && abaiSet.has(v)) return true;
+                        }
                     }
-                    return !shouldExclude;
+                    for (const k of Object.keys(row)) {
+                        const kl = k.toLowerCase();
+                        if (kl.includes('pkk') || kl.includes('no_') || kl.includes('nomor')) {
+                            const v = (row[k] || '').toString().trim();
+                            if (v && abaiSet.has(v)) return true;
+                        }
+                    }
+                    return false;
+                }
+
+                const filteredForCards = rawData.filter(r => {
+                    const matched = rowHasAnyAbaiPKK(r, abaiSet);
+                    if (matched) debugCount++;
+                    return !matched;
                 });
-                
-                const removedCount = rawData.length - filtered.length;
-                console.log(`🔍 DEBUG: Found ${debugCount} matches, removed ${removedCount} rows`);
-                console.log(`🗂️ After refresh: ${removedCount} rows excluded from persistent abai data`);
-                
-                // Update global data
-                globalData = filtered;
-                
-                // Re-render components
-                renderPelabuhanCards(filtered);
-                populateTable(headers, filtered);
+
+                const removedCount = rawData.length - filteredForCards.length;
+                console.log(`🔍 DEBUG: Found ${debugCount} matches, removed ${removedCount} rows from cards/charts`);
+                console.log(`🗂️ After refresh: ${removedCount} rows excluded from persistent abai data (cards/charts)`);
+
+                // Update both globalCardData and globalData so table and cards exclude abai rows
+                globalCardData = filteredForCards;
+                globalData = filteredForCards;
+
+                // Re-render components: table and cards use filtered dataset
+                renderPelabuhanCards(globalCardData);
+                populateTable(globalHeaders, globalData);
                 
                 // Clear and repopulate filters
                 const pelabuhanFilter = document.getElementById('pelabuhanFilter');
@@ -2411,16 +2429,16 @@
                 
                 if (pelabuhanFilter) {
                     pelabuhanFilter.innerHTML = '<option value="ALL">Semua Pelabuhan</option>';
-                    populatePelabuhanFilter(filtered);
+                    populatePelabuhanFilter(globalData);
                 }
-                
+
                 if (yearFilter) {
                     yearFilter.innerHTML = '<option value="ALL">Semua Tahun</option>';
-                    populateYearFilter(filtered);
+                    populateYearFilter(globalData);
                 }
-                
-                // Update chart
-                updateBarChart(filtered);
+
+                // Update chart using filtered dataset
+                updateBarChart(globalCardData);
                 
                 showNotification(`✅ Data berhasil diperbarui. ${removedCount} item diabaikan secara permanen.`, 'success', 4000);
                 
@@ -3351,31 +3369,55 @@ function renderPelabuhanCards(data) {
             // Fetch persistent abai data
             const abaiSet = await fetchAbaiData();
 
-            // Filter out rows whose no_pkk_inaportnet appears in abaiSet
-            const filtered = rawData.filter(r => {
-                const key = (r["no_pkk_inaportnet"] || "").trim();
-                return !key || !abaiSet.has(key);
-            });
-            const removedCount = rawData.length - filtered.length;
+            // Helper: determine if a row contains any PKK that appears in abaiSet
+            function rowHasAnyAbaiPKK(row, abaiSet) {
+                if (!row || !abaiSet || abaiSet.size === 0) return false;
+                // Check common PKK-like fields first for performance
+                const candidateFields = [
+                    'no_pkk_inaportnet','no_pkk','no_pkk_spb','no_pkk_wasop','nomor_spb','nomor_pkk','pkk','no_pkk_lhgk'
+                ];
+                for (const f of candidateFields) {
+                    if (row.hasOwnProperty(f)) {
+                        const v = (row[f] || '').toString().trim();
+                        if (v && abaiSet.has(v)) return true;
+                    }
+                }
+                // Fallback: scan all fields that look like PKK identifiers
+                for (const k of Object.keys(row)) {
+                    const kl = k.toLowerCase();
+                    if (kl.includes('pkk') || kl.includes('no_') || kl.includes('nomor')) {
+                        const v = (row[k] || '').toString().trim();
+                        if (v && abaiSet.has(v)) return true;
+                    }
+                }
+                return false;
+            }
+
+            // Compute two datasets:
+            // - rawData = full dataset (used by table and filters)
+            // - filteredForCards = dataset with all rows removed that match any PKK in abai.csv (used by cards/charts)
+            const filteredForCards = rawData.filter(r => !rowHasAnyAbaiPKK(r, abaiSet));
+            const removedCount = rawData.length - filteredForCards.length;
             if (removedCount > 0) {
-                console.info(`🗂️ Excluded ${removedCount} rows based on persistent abai data`);
-                // Hidden: Data filter notification on page load
-                // showNotification(`Data ter-filter: ${removedCount} baris diabaikan dari tampilan`, 'info', 3000);
+                console.info(`🗂️ Excluded ${removedCount} rows from cards/charts based on persistent abai data`);
             }
 
             globalHeaders = headers;
-            globalData = filtered;
+            // Table and cards should use the filtered dataset (exclude abai rows)
+            globalData = filteredForCards;
+            globalCardData = filteredForCards; // reduced data for cards/charts
 
-            renderPelabuhanCards(filtered);
-            populateTable(headers, filtered);
-            populatePelabuhanFilter(filtered);
-            populateYearFilter(filtered);
+            // Render using filtered dataset so table excludes abai entries
+            renderPelabuhanCards(globalCardData);
+            populateTable(headers, globalData);
+            populatePelabuhanFilter(globalData);
+            populateYearFilter(globalData);
             attachPelabuhanFilterListener();
             attachYearFilterListener();
-            
-            // Initialize and update chart
-            initializeChart(filtered);
-            updateChartStats(filtered);
+
+            // Initialize and update chart using reduced dataset
+            initializeChart(globalCardData);
+            updateChartStats(globalCardData);
 
             console.log('Dashboard initialized with chart');
          }

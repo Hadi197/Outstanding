@@ -61,22 +61,47 @@ def save_to_csv(data, filename=None):
         # Default to current directory (root)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         filename = os.path.join(script_dir, "spb.csv")
+
     try:
         df = pd.DataFrame(data)
+
         # Pastikan kolom yang dibutuhkan ada, jika tidak, tampilkan kolom yang tersedia
-        required_cols = ["nomor_pkk", "nomor_spb", "vessel_name", "gt", "loa", "name_branch", "departure_date"]
+        required_cols = ["nomor_pkk", "nomor_spb", "vessel_name", "gt", "loa", "name_branch", "departure_date", "waktu_tolak"]
         available_cols = [col for col in required_cols if col in df.columns]
         if len(available_cols) < len(required_cols):
             print(f"[!] Kolom berikut tidak ditemukan di data: {set(required_cols) - set(available_cols)}")
         if not available_cols:
             print("[!] Tidak ada kolom yang bisa diekspor.")
             return
+
         filtered_df = df[available_cols]
+
+        # Filter GT > 500 if column available
         if "gt" in filtered_df.columns:
             filtered_df = filtered_df.assign(gt=pd.to_numeric(filtered_df["gt"], errors="coerce"))
             filtered_df = filtered_df[filtered_df["gt"] > 500]
+
+        # Filter by waktu_tolak year == 2025 when available
+        if "waktu_tolak" in filtered_df.columns:
+            # Try parsing common datetime formats; fallback to substring match for '2025'
+            try:
+                wt_parsed = pd.to_datetime(filtered_df["waktu_tolak"], errors="coerce")
+                if wt_parsed.notna().any():
+                    filtered_df = filtered_df[wt_parsed.dt.year == 2025]
+                else:
+                    filtered_df = filtered_df[filtered_df["waktu_tolak"].astype(str).str.contains("2025")]
+            except Exception:
+                filtered_df = filtered_df[filtered_df["waktu_tolak"].astype(str).str.contains("2025")]
+        else:
+            print('[!] Column "waktu_tolak" not found in data; no waktu_tolak filtering applied.')
+
+        if filtered_df.empty:
+            print(f"[!] No rows match the filters (GT>500 and waktu_tolak=2025). No file written.")
+            return
+
         filtered_df.to_csv(filename, index=False)
-        print(f"[i] Filtered data saved to {filename} (GT > 500 only, columns: {available_cols})")
+        print(f"[i] Filtered data saved to {filename} (GT > 500, waktu_tolak=2025, columns: {available_cols})")
+
     except Exception as e:
         print(f"[!] Error saving to CSV: {e}")
 
