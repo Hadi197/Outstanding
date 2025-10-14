@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rata-rata Terbit Nota Sejak Kapal Keluar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 </head>
 <body class="bg-gray-50">
     <div class="container mx-auto px-4 py-8">
@@ -14,11 +16,21 @@
         </div>
 
         <!-- Branch Cards -->
-        <div class="mb-12">
-            <div class="text-center mb-8">
-                <h2 class="text-lg font-bold text-gray-900 mb-2">Kategori Durasi Penerbitan Nota - 2025</h2>
-                <p class="text-gray-600 text-sm">(Berdasarkan Lama_Nota)</p>
-                <div class="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 mx-auto mt-4 rounded-full"></div>
+            <div class="mb-8">
+                <div id="lowPctCard" class="mx-auto bg-white rounded-xl p-6 shadow-lg" style="width:1600px; max-width:100%;">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">Persentase 0 - &lt;1 Hari per Cabang</h3>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-gray-50 rounded-md p-3 mb-3">
+                        <canvas id="lowPctChart" width="1600" height="350" style="width:100%; height:350px; display:block;"></canvas>
+                    </div>
+
+                    <div id="lowPctLegend" class="flex flex-wrap gap-2 items-center mt-2"></div>
+                    <div id="lowPctFallback" class="hidden text-sm text-gray-600 mt-2"></div>
+                </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8" id="branchCards">
                 <!-- Branch cards will be populated dynamically -->
@@ -29,7 +41,41 @@
     </div>
 
     <script>
-        let rawData = [];
+    let rawData = [];
+    let lowPctChart = null;
+    // When true, sensitive labels/values are masked in the chart and legend
+    let privacyMode = false;
+    // Hide the chart card and clear legend when DOM is ready if privacy mode is enabled
+    window.addEventListener('DOMContentLoaded', () => {
+        if (privacyMode) {
+            const _c = document.getElementById('lowPctCard');
+            if (_c) _c.classList.add('hidden');
+            const _legend = document.getElementById('lowPctLegend');
+            if (_legend) _legend.innerHTML = '';
+            const _fallback = document.getElementById('lowPctFallback');
+            if (_fallback) _fallback.classList.add('hidden');
+            // destroy chart if already created
+            try { if (lowPctChart) { lowPctChart.destroy(); lowPctChart = null; } } catch(e){}
+        }
+    });
+
+        // Small helper to shade a hex color by percent (negative darker)
+        function shadeColor(hex, percent) {
+            try {
+                const num = parseInt(hex.replace('#',''),16);
+                const r = (num >> 16) + percent;
+                const g = ((num >> 8) & 0x00FF) + percent;
+                const b = (num & 0x0000FF) + percent;
+                return '#' + (
+                    (1 << 24) +
+                    (Math.max(0, Math.min(255, r)) << 16) +
+                    (Math.max(0, Math.min(255, g)) << 8) +
+                    Math.max(0, Math.min(255, b))
+                ).toString(16).slice(1);
+            } catch (e) {
+                return hex;
+            }
+        }
 
         // Load and parse CSV data
         async function loadCSVData() {
@@ -130,6 +176,22 @@
 
             // Calculate averages and sort branches
             const branches = Object.keys(branchData).sort();
+
+            // Build dataset from 0 - <1 Hari (sameDay) percentage for every branch
+            const sameDayItems = branches.map(branch => {
+                const d = branchData[branch];
+                const total = d.total || 1;
+                return {
+                    label: branch,
+                    value: parseFloat(((d.sameDay / total) * 100).toFixed(3))
+                };
+            });
+
+            // Sort items by value descending (largest first) so largest appears on the left
+            sameDayItems.sort((a, b) => b.value - a.value);
+
+            // Pass the full sorted list to the chart renderer
+            renderLowPctChart(sameDayItems);
             const branchCardsContainer = document.getElementById('branchCards');
             
             branchCardsContainer.innerHTML = '';
@@ -317,6 +379,145 @@
                 
                 branchCardsContainer.appendChild(card);
             });
+        }
+
+        // Render bar chart for low percentage items (<1%)
+        function renderLowPctChart(items) {
+            const canvas = document.getElementById('lowPctChart');
+            const fallback = document.getElementById('lowPctFallback');
+
+            // If privacyMode is enabled, make sure chart and legend are hidden and do not render
+            if (privacyMode) {
+                try { if (lowPctChart) { lowPctChart.destroy(); lowPctChart = null; } } catch(e){}
+                const c = document.getElementById('lowPctCard'); if (c) c.classList.add('hidden');
+                const lg = document.getElementById('lowPctLegend'); if (lg) lg.style.display = 'none';
+                if (fallback) fallback.classList.add('hidden');
+                return;
+            }
+
+            if (!items || items.length === 0) {
+                // No small percentages to show
+                if (fallback) {
+                    fallback.classList.remove('hidden');
+                    fallback.textContent = 'Tidak ada kategori dengan persentase kecil (< 1%) untuk ditampilkan.';
+                }
+                if (canvas && canvas.parentElement) canvas.parentElement.classList.add('opacity-60');
+                return;
+            }
+
+            const labels = items.map(i => i.label);
+            const data = items.map(i => i.value);
+
+            // Tailwind-inspired palette (hex)
+            const palette = [
+                '#0ea5e9', // sky-500
+                '#2563eb', // blue-600
+                '#7c3aed', // violet-600
+                '#10b981', // emerald-500
+                '#f59e0b', // amber-500
+                '#ef4444', // red-500
+                '#f97316', // orange-500
+                '#06b6d4', // cyan-500
+                '#8b5cf6', // purple-500
+                '#06b6a4'  // teal-500
+            ];
+            const bgColors = labels.map((_, i) => palette[i % palette.length]);
+            const borderColors = labels.map((_, i) => shadeColor(palette[i % palette.length], -10));
+
+            // Card element that contains the chart; hide if empty to avoid empty container in screenshot
+            const cardElem = document.getElementById('lowPctCard');
+
+            // Destroy previous chart if exists
+            if (lowPctChart) {
+                lowPctChart.destroy();
+                lowPctChart = null;
+            }
+
+            try {
+                // Register datalabels plugin if available
+                if (Chart && Chart.register && window.ChartDataLabels) {
+                    Chart.register(window.ChartDataLabels);
+                }
+
+                lowPctChart = new Chart(canvas.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Persentase (<1%)',
+                            data: data,
+                            backgroundColor: bgColors,
+                            borderColor: borderColors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0, font: {size:12} }, grid: { display: true } },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    callback: function(val) { return privacyMode ? '•' : val.toFixed(3) + '%'; }
+                                }
+                            }
+                        },
+                        elements: { point: { radius: 0 } },
+                        layout: { padding: { bottom: 30 } },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: ctx => privacyMode ? 'Hidden' : `${ctx.parsed.y.toFixed(3)}%` } },
+                            datalabels: {
+                                anchor: 'center',
+                                align: 'center',
+                                formatter: function(value) {
+                                    return privacyMode ? '•' : value.toFixed(2) + '%';
+                                },
+                                font: { weight: '700', size: 12 },
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                });
+                if (fallback) fallback.classList.add('hidden');
+                // Populate legend badges
+                const legend = document.getElementById('lowPctLegend');
+                if (legend) {
+                    legend.innerHTML = '';
+                    labels.forEach((lab, idx) => {
+                        const badge = document.createElement('div');
+                        badge.className = 'flex items-center space-x-2 px-3 py-1 rounded-full bg-white border';
+                        badge.style.borderColor = borderColors[idx];
+                        const displayLabel = privacyMode ? '•••••' : lab;
+                        const displayVal = privacyMode ? '•••' : data[idx].toFixed(3) + '%';
+                        badge.innerHTML = `<span style="width:12px;height:12px;background:${bgColors[idx]};display:inline-block;border-radius:3px;"></span><span class="text-sm text-gray-700 ml-2">${displayLabel} — ${displayVal}</span>`;
+                        legend.appendChild(badge);
+                    });
+                }
+                // Show or hide the whole card if there are no items to avoid empty container
+                if (cardElem) {
+                    if (!items || items.length === 0) {
+                        cardElem.classList.add('hidden');
+                    } else {
+                        cardElem.classList.remove('hidden');
+                    }
+                }
+            } catch (e) {
+                console.error('Chart.js render failed:', e);
+                if (fallback) {
+                    fallback.classList.remove('hidden');
+                    fallback.textContent = 'Chart gagal dirender. Menampilkan daftar sederhana:';
+                    const ul = document.createElement('ul');
+                    ul.className = 'mt-2 list-disc list-inside text-sm text-gray-700';
+                    items.forEach(it => {
+                        const li = document.createElement('li');
+                        li.textContent = `${it.label}: ${it.value.toFixed(3)}%`;
+                        ul.appendChild(li);
+                    });
+                    fallback.appendChild(ul);
+                }
+            }
         }
 
     // Initialize
