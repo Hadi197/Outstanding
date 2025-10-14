@@ -11,6 +11,8 @@ from datetime import datetime
 import time
 import logging
 from typing import Dict, List, Optional
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -21,6 +23,20 @@ class PelindoBillingScraper:
         self.base_url = "https://phinnisi.pelindo.co.id:9021"
         self.api_endpoint = "/api/billing/invoice/list"
         self.session = requests.Session()
+        # Retry/backoff configuration
+        self.max_retries = 5
+        self.backoff_factor = 1  # base seconds for exponential backoff
+        # Default timeout: (connect timeout, read timeout)
+        self.timeout = (10, 60)
+        # Mount retry adapter for https
+        retry_strategy = Retry(
+            total=self.max_retries,
+            backoff_factor=self.backoff_factor,
+            status_forcelist=[429, 500, 502, 503, 504],
+            allowed_methods=["HEAD", "GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("https://", adapter)
         
         # Headers from the request
         self.headers = {
@@ -42,7 +58,7 @@ class PelindoBillingScraper:
             'sec-fetch-dest': 'empty',
             'sec-fetch-mode': 'cors',
             'sec-fetch-site': 'same-site',
-            'sub-branch': 'NzI=,MTAx,NjE=,ODE=,MjU=,NzU=,ODM=,NzQ=,NzM=,Mjk=,Mjc=,MTY=,NTc=,NjA=',
+            "sub-branch": "OTk5,NzU=,NzI=,MTAx,NjE=,ODE=,MjU=,ODM=,NzQ=,NzM=,Mjk=,Mjc=,MTc=,NTc=,MTY=,MTA4,NjA=",
             'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0'
         }
         
@@ -78,8 +94,41 @@ class PelindoBillingScraper:
             logger.info(f"Making request to: {url}")
             logger.info(f"Payload: {json.dumps(payload, indent=2)}")
             
-            response = self.session.post(url, json=payload, timeout=30)
-            response.raise_for_status()
+            # Try with a manual retry loop to catch read timeouts and other transient issues
+            for attempt in range(1, self.max_retries + 1):
+                try:
+                    response = self.session.post(url, json=payload, timeout=self.timeout)
+                    response.raise_for_status()
+                    logger.info(f"HTTP {response.status_code} - elapsed: {response.elapsed}")
+                    data = response.json()
+                    logger.info(f"Response received: {response.status_code}")
+                    logger.info(f"Response size: {len(response.content)} bytes")
+                    return data
+
+                except requests.exceptions.ReadTimeout as e:
+                    logger.warning(f"Read timeout on attempt {attempt}/{self.max_retries}: {e}")
+                    if attempt == self.max_retries:
+                        logger.error(f"Max retries reached ({self.max_retries}) - giving up")
+                        raise
+                    backoff = self.backoff_factor * (2 ** (attempt - 1))
+                    logger.info(f"Backing off for {backoff} seconds before retrying...")
+                    time.sleep(backoff)
+                    continue
+                except requests.exceptions.RequestException as e:
+                    # Other request issues (connection errors, HTTP errors)
+                    logger.error(f"Request exception on attempt {attempt}/{self.max_retries}: {e}")
+                    # For status codes handled by retry_strategy the adapter may already retry,
+                    # but for other RequestException we perform a manual backoff as well.
+                    if attempt == self.max_retries:
+                        logger.error(f"Max retries reached ({self.max_retries}) - giving up")
+                        raise
+                    backoff = self.backoff_factor * (2 ** (attempt - 1))
+                    logger.info(f"Backing off for {backoff} seconds before retrying...")
+                    time.sleep(backoff)
+                    continue
+
+            # If loop exhausts without returning, return None
+            return None
             
             data = response.json()
             logger.info(f"Response received: {response.status_code}")
