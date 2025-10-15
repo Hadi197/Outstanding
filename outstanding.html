@@ -3544,28 +3544,59 @@ function renderPelabuhanCards(data) {
         }
         
         async function updateGitHubFile(noPkkInaportnet, reasonData, rowData = null) {
-            console.log('🔄 GitHub update handled by Netlify API:', noPkkInaportnet);
+            console.log('🔄 Saving to GitHub via Netlify API:', noPkkInaportnet);
             
-            // GitHub operations are now handled automatically by Netlify functions
-            // This function is kept for compatibility but operations are server-side
-            console.log('✅ GitHub sync handled automatically by Netlify POST endpoint');
-            
-            // Extract data for notification
-            let pelabuhan = '';
-            if (rowData) {
-                pelabuhan = rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '';
+            try {
+                const apiUrl = getApiUrl();
+                const requestData = {
+                    no_pkk_inaportnet: noPkkInaportnet,
+                    timestamp: new Date().toISOString(),
+                    reason: reasonData.reason,
+                    pelabuhan: rowData ? (rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '') : '',
+                    rowData: rowData
+                };
+                
+                console.log('📤 Making POST request to Netlify API:', apiUrl, requestData);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                console.log('📥 Netlify API response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Successfully saved to GitHub via Netlify:', result);
+                    
+                    // Extract data for notification
+                    let pelabuhan = '';
+                    if (rowData) {
+                        pelabuhan = rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '';
+                    }
+                    const reasonText = getReasonDisplayText(reasonData.reason);
+                    
+                    // Show success notification
+                    showProcessSteps(noPkkInaportnet, pelabuhan, reasonText);
+                    showNotification(
+                        `✅ Prosedur Lengkap!\nPKK: ${noPkkInaportnet}\nPelabuhan: ${pelabuhan}\nAlasan: ${reasonText}\nStatus: ${result.message || 'Disimpan ke GitHub'}`,
+                        'success',
+                        5000
+                    );
+                    
+                    return { success: true, message: result.message, data: result };
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Netlify API error:', response.status, errorText);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                console.error('❌ Failed to save to Netlify API:', error);
+                throw error;
             }
-            const reasonText = getReasonDisplayText(reasonData.reason);
-            
-            // Show success notification
-            showProcessSteps(noPkkInaportnet, pelabuhan, reasonText);
-            showNotification(
-                `✅ Prosedur Lengkap!\nPKK: ${noPkkInaportnet}\nPelabuhan: ${pelabuhan}\nAlasan: ${reasonText}\nStatus: Disimpan via Netlify API`,
-                'success',
-                5000
-            );
-            
-            return { success: true, message: 'Handled by Netlify API' };
         }
 
         async function testGitHubConnection() {
