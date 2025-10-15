@@ -23,7 +23,8 @@ exports.handler = async (event, context) => {
   });
 
   // GitHub configuration with your token
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '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';
+  // Token should be set in Netlify environment variables as GITHUB_TOKEN
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = 'Hadi197';
   const GITHUB_REPO = 'Outstanding';
   const FILE_PATH = 'abai.csv';
