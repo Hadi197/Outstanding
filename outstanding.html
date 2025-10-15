@@ -4963,7 +4963,19 @@ function renderPelabuhanCards(data) {
             const downloadBtn = document.getElementById('laporanDownloadBtn');
             
             downloadBtn.addEventListener('click', function() {
+                console.log('Download button clicked');
+                console.log('filteredLaporanData length:', filteredLaporanData.length);
+                console.log('filteredLaporanData sample:', filteredLaporanData.slice(0, 3));
+                
+                if (filteredLaporanData.length === 0) {
+                    showNotification('Tidak ada data untuk didownload', 'warning');
+                    return;
+                }
+                
                 const csvContent = convertToCSV(filteredLaporanData);
+                console.log('CSV content length:', csvContent.length);
+                console.log('CSV content preview:', csvContent.substring(0, 200));
+                
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 
@@ -4976,7 +4988,7 @@ function renderPelabuhanCards(data) {
                     link.click();
                     document.body.removeChild(link);
                     
-                    showNotification('File berhasil didownload', 'success');
+                    showNotification(`File berhasil didownload: ${filteredLaporanData.length} records`, 'success');
                 }
             });
         }
@@ -4985,7 +4997,10 @@ function renderPelabuhanCards(data) {
         function convertToCSV(data) {
             if (data.length === 0) return '';
             
-            const headers = ['no_pkk_inaportnet', 'no_pkk', 'zone', 'status_nota'];
+            const headers = ['NAMA KAPAL', 'GT', 'LOA', 'DARI', 'KE', 'PERUSAHAAN', 
+                           'NO SPK PANDU', 'NO PKK INAPORTNET', 'NO PKK', 'NAMA PANDU', 
+                           'MULAI PANDU', 'SELESAI PANDU', 'KAPAL TUNDA 1', 'KAPAL TUNDA 2', 
+                           'KAPAL TUNDA 3', 'MULAI TUNDA', 'SELESAI TUNDA', 'ZONA'];
             const csvRows = [];
             
             // Add headers
@@ -4996,7 +5011,7 @@ function renderPelabuhanCards(data) {
                 const values = headers.map(header => {
                     const value = row[header] || '';
                     // Escape quotes and wrap in quotes if contains comma or quote
-                    if (value.includes(',') || value.includes('"')) {
+                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
                         return `"${value.replace(/"/g, '""')}"`;
                     }
                     return value;
