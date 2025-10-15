@@ -138,6 +138,8 @@ exports.handler = async (event, context) => {
       const queryParams = event.queryStringParameters || {};
       const action = queryParams.action;
 
+      console.log('🔍 GET request - action:', action, 'queryParams:', queryParams);
+
       // Handle status check (no action parameter)
       if (!action) {
         try {
