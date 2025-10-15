@@ -140,17 +140,45 @@ exports.handler = async (event, context) => {
 
       // Handle status check (no action parameter)
       if (!action) {
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({
-            status: 'running',
-            total_entries: 0, // We'll get this from GitHub if needed
-            source: 'netlify_function',
-            success: true,
-            message: 'Netlify function is operational'
-          })
-        };
+        try {
+          const fileData = await getGitHubFile();
+          let totalEntries = 0;
+          let source = 'netlify_function';
+          if (fileData && fileData.exists && fileData.content) {
+            const lines = fileData.content.split('\n').filter(l => l.trim());
+            if (lines.length && /no_pkk_inaportnet/i.test(lines[0])) {
+              totalEntries = Math.max(0, lines.length - 1);
+            } else {
+              totalEntries = lines.length;
+            }
+            source = 'github';
+          }
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              status: 'running',
+              total_entries: totalEntries,
+              source: source,
+              success: true,
+              message: 'Netlify function is operational'
+            })
+          };
+        } catch (err) {
+          console.error('Status handler: failed to read GitHub file for status:', err && err.message);
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              status: 'running',
+              total_entries: 0,
+              source: 'netlify_function',
+              success: true,
+              message: 'Netlify function is operational (could not read GitHub)'
+            })
+          };
+        }
       }
 
       if (action === 'list') {
