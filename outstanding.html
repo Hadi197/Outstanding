@@ -2390,13 +2390,21 @@
         
         async function checkServerStatus() {
             if (isProductionEnvironment()) {
-                // Production mode - check Netlify API
-                console.log('🌐 Production mode: Checking Netlify API');
+                // Production mode - check Netlify API and determine if it proxies to GitHub
+                console.log('🌐 Production mode: Checking Netlify API -> list action (detect GitHub)');
                 try {
                     const apiUrl = getApiUrl();
-                    const response = await fetch(`${apiUrl}/status`);
+                    const listUrl = `${apiUrl}?action=list&_t=${Date.now()}`;
+                    const response = await fetch(listUrl, { cache: 'no-cache' });
                     if (response.ok) {
-                        updateServerStatus(true, 'Connected to Netlify API');
+                        const data = await response.json();
+                        // If the Netlify function returned GitHub-backed data, mark as connected to GitHub
+                        if (data && (data.success === true) && (data.source === 'github' || Array.isArray(data.abai_list))) {
+                            updateServerStatus(true, 'Connected to GitHub');
+                        } else {
+                            // Netlify function is up but no GitHub data available
+                            updateServerStatus(true, 'Connected to Netlify API (no GitHub data)');
+                        }
                         return true;
                     } else {
                         throw new Error(`Netlify API error: ${response.status}`);
