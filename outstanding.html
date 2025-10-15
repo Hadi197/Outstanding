@@ -263,7 +263,38 @@
     <div class="w-full px-2 sm:px-4 lg:px-6 mb-8">
         <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-6">
             <div id="pelabuhanCardsContainer">
-                <!-- Regional groups will be inserted here -->
+                <!-- Dashboard subtabs for regions -->
+                <div class="mb-4">
+                    <div class="flex justify-center">
+                        <div class="bg-gray-100 p-1 rounded-lg">
+                            <button id="dashKalimantanTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 bg-white text-gray-800 shadow-sm">🌳 Kalimantan</button>
+                            <button id="dashJawaTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">🏛️ Jawa</button>
+                            <button id="dashBaliTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">🏝️ Bali Nusatenggara</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subtab contents -->
+                <div id="dashKalimantanContent" class="subtab-content">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🌳 Kalimantan</h3>
+                    </div>
+                    <div id="dashKalimantanCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                </div>
+
+                <div id="dashJawaContent" class="subtab-content hidden">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🏛️ Jawa</h3>
+                    </div>
+                    <div id="dashJawaCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                </div>
+
+                <div id="dashBaliContent" class="subtab-content hidden">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🏝️ Bali Nusatenggara</h3>
+                    </div>
+                    <div id="dashBaliCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -917,6 +948,7 @@
 
             // Initialize subtabs
             initVerifikatorSubTabs();
+            initDashboardSubTabs();
 
             function switchTab(activeTab, activeContent) {
                 // Reset all tabs to inactive state
@@ -993,6 +1025,34 @@
             kalimantanTab.addEventListener('click', () => showSubTab(kalimantanTab, kalimantanContent));
             jawaTab.addEventListener('click', () => showSubTab(jawaTab, jawaContent));
             baliTab.addEventListener('click', () => showSubTab(baliTab, baliContent));
+        }
+
+        // Dashboard subtab functionality (Kalimantan, Jawa, Bali Nusatenggara)
+        function initDashboardSubTabs() {
+            const kTab = document.getElementById('dashKalimantanTab');
+            const jTab = document.getElementById('dashJawaTab');
+            const bTab = document.getElementById('dashBaliTab');
+            const kContent = document.getElementById('dashKalimantanContent');
+            const jContent = document.getElementById('dashJawaContent');
+            const bContent = document.getElementById('dashBaliContent');
+
+            if (!kTab || !jTab || !bTab) return;
+
+            function show(activeTab, activeContent) {
+                [kTab, jTab, bTab].forEach(t => {
+                    t.classList.remove('bg-white','text-gray-800','shadow-sm');
+                    t.classList.add('text-gray-600');
+                });
+                [kContent, jContent, bContent].forEach(c => c.classList.add('hidden'));
+
+                activeTab.classList.add('bg-white','text-gray-800','shadow-sm');
+                activeTab.classList.remove('text-gray-600');
+                if (activeContent) activeContent.classList.remove('hidden');
+            }
+
+            kTab.addEventListener('click', () => show(kTab, kContent));
+            jTab.addEventListener('click', () => show(jTab, jContent));
+            bTab.addEventListener('click', () => show(bTab, bContent));
         }
         
         // Verifikator functionality
@@ -3126,55 +3186,44 @@ function renderPelabuhanCards(data) {
     });
 
     const container = document.getElementById("pelabuhanCardsContainer");
-    container.innerHTML = "";
+    // keep subtab markup we injected earlier - do not clear container.innerHTML here
 
-    // Render setiap region
+    // Get subtab card containers
+    const dashKalimantanCards = document.getElementById('dashKalimantanCards');
+    const dashJawaCards = document.getElementById('dashJawaCards');
+    const dashBaliCards = document.getElementById('dashBaliCards');
+
+    if (!dashKalimantanCards || !dashJawaCards || !dashBaliCards) {
+        console.error('Dashboard subtab containers not found');
+        return;
+    }
+
+    dashKalimantanCards.innerHTML = '';
+    dashJawaCards.innerHTML = '';
+    dashBaliCards.innerHTML = '';
+
+    // Render and append cards into subtab containers
     Object.entries(regionGroups).forEach(([regionName, zones]) => {
-        if (zones.length === 0) return; // Skip empty regions
+        if (zones.length === 0) return;
 
-        // Create region section
-        const regionSection = document.createElement("div");
-        regionSection.className = "mb-8";
+        // Decide which subtab this region belongs to
+        let targetContainer = dashJawaCards; // default
+        if (regionName === 'Kalimantan') targetContainer = dashKalimantanCards;
+        else if (regionName === 'Jawa') targetContainer = dashJawaCards;
+        else if (regionName === 'Bali Nusatenggara') targetContainer = dashBaliCards;
 
-        // Region header
-        const regionHeader = document.createElement("div");
-        regionHeader.className = "flex items-center gap-3 mb-4 pb-2 border-b-2 border-gray-200";
-        
-        const regionIcon = document.createElement("span");
-        regionIcon.className = "text-2xl";
-        regionIcon.textContent = regionMapping[regionName]?.icon || '📍';
-        
-        const regionTitle = document.createElement("h3");
-        regionTitle.className = "text-xl font-bold text-gray-800";
-        regionTitle.textContent = regionName;
-        
-        const regionCount = document.createElement("span");
-        regionCount.className = "text-sm bg-gray-100 px-3 py-1 rounded-full font-medium text-gray-600";
-        const totalCount = zones.reduce((sum, {rows}) => sum + rows.length, 0);
-        regionCount.textContent = `${zones.length} lokasi • ${totalCount} data`;
-        
-        regionHeader.appendChild(regionIcon);
-        regionHeader.appendChild(regionTitle);
-        regionHeader.appendChild(regionCount);
-        
-        // Cards grid for this region - reduce columns for better layout
-        const cardsGrid = document.createElement("div");
-        cardsGrid.className = "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full";
-
-        // Render cards for this region
         zones.forEach(({zone, rows}, idx) => {
             const count = rows.length;
-            const manualCount = rows.filter(r => !((r["no_pkk_inaportnet"] || "").trim())).length;
+            const manualCount = rows.filter(r => !((r['no_pkk_inaportnet'] || '').trim())).length;
             let pct = 0;
             if (count > 0) pct = (manualCount / count) * 100;
             const pctText = (Math.abs(pct - Math.round(pct)) < 0.05) ? Math.round(pct).toString() : pct.toFixed(1);
 
-            const dnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.DN")).length;
-            const lnCount = rows.filter(r => (r["no_pkk_inaportnet"] || "").includes("PKK.LN")).length;
+            const dnCount = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.DN')).length;
+            const lnCount = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.LN')).length;
 
-            const card = document.createElement("div");
-            card.className = "bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group min-h-[160px]";
-            
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group min-h-[160px]';
             card.innerHTML = `
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center space-x-3 flex-1 min-w-0">
@@ -3194,7 +3243,6 @@ function renderPelabuhanCards(data) {
                         <div class="text-xs text-gray-500 uppercase">TOTAL</div>
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-blue-50 rounded-lg p-3 text-center">
                         <div class="text-xs font-medium text-blue-700 mb-1">DN</div>
@@ -3205,7 +3253,6 @@ function renderPelabuhanCards(data) {
                         <div class="text-lg font-bold text-green-900">${lnCount}</div>
                     </div>
                 </div>
-                
                 ${manualCount > 0 ? `
                 <div class="mt-3 p-3 bg-red-50 rounded-lg">
                     <div class="flex items-center justify-between">
@@ -3216,12 +3263,8 @@ function renderPelabuhanCards(data) {
                 ` : ''}
             `;
 
-            cardsGrid.appendChild(card);
+            targetContainer.appendChild(card);
         });
-
-        regionSection.appendChild(regionHeader);
-        regionSection.appendChild(cardsGrid);
-        container.appendChild(regionSection);
     });
 }
 
