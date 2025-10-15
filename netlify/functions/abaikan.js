@@ -217,6 +217,40 @@ exports.handler = async (event, context) => {
         }
       }
 
+      if (action === 'clear') {
+        // Clear all abai data
+        try {
+          console.log('🗑️ Clearing all abai data from GitHub...');
+          
+          // Create empty file with just header
+          const emptyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan\n';
+          
+          await updateGitHubFile(emptyContent, null);
+          
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: 'All abai data cleared',
+              total_entries: 0,
+              source: 'github'
+            })
+          };
+        } catch (error) {
+          console.error('❌ Error clearing abai data:', error.message);
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              success: false,
+              error: error.message,
+              message: 'Failed to clear abai data'
+            })
+          };
+        }
+      }
+
       // Regular status check
       try {
         const fileData = await getGitHubFile();

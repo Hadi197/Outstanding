@@ -1,5 +1,5 @@
 // Test repository creation and access permissions
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 async function checkRepositoryStatus() {
     console.log('🔍 Checking repository status and permissions...');

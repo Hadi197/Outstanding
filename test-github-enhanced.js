@@ -1,5 +1,5 @@
 // Enhanced GitHub API test with different approaches
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 
 async function testGitHubAccess() {
     console.log('🔍 Testing GitHub token and repository access...');

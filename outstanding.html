@@ -1827,148 +1827,43 @@
         }
 
         async function removeFromGitHubCSV(pkkNumber) {
-            console.log('🗑️ Removing PKK from GitHub repository:', pkkNumber);
+            console.log('🗑️ PKK restoration - GitHub sync handled by Netlify API:', pkkNumber);
             
-            try {
-                const token = getGitHubToken();
-                if (!token) {
-                    throw new Error('GitHub token not available');
-                }
-                
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${token}`,
-                    'User-Agent': 'Outstanding-Dashboard'
-                };
-                
-                // Get current file
-                console.log('📖 Getting current file content from GitHub...');
-                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    headers: headers
-                });
-                
-                if (!getResponse.ok) {
-                    throw new Error(`Failed to get current file: ${getResponse.status}`);
-                }
-                
-                const fileData = await getResponse.json();
-                const currentContent = atob(fileData.content.replace(/\n/g, ''));
-                const lines = currentContent.trim().split('\n');
-                
-                console.log(`📄 Current file has ${lines.length} lines`);
-                
-                // Filter out the PKK entry
-                const filteredLines = lines.filter(line => {
-                    const cols = line.split(',');
-                    const linePkk = cols[0];
-                    return linePkk !== pkkNumber; // Keep lines that don't match the PKK to remove
-                });
-                
-                console.log(`🔍 After filtering: ${filteredLines.length} lines (removed ${lines.length - filteredLines.length} entries)`);
-                
-                // If no changes needed
-                if (filteredLines.length === lines.length) {
-                    console.log('ℹ️ PKK not found in GitHub CSV, no changes needed');
-                    return true;
-                }
-                
-                const updatedContent = filteredLines.join('\n');
-                const encodedContent = btoa(updatedContent);
-                
-                // Update file in GitHub
-                console.log('⬆️ Updating file in GitHub repository...');
-                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify({
-                        message: `Remove restored PKK: ${pkkNumber}`,
-                        content: encodedContent,
-                        sha: fileData.sha
-                    })
-                });
-                
-                if (!updateResponse.ok) {
-                    const errorData = await updateResponse.json();
-                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
-                }
-                
-                const updateResult = await updateResponse.json();
-                console.log('✅ PKK successfully removed from GitHub:', updateResult.commit.sha);
-                
-                showNotification(
-                    `✅ PKK ${pkkNumber} berhasil dihapus dari GitHub repository!`,
-                    'success'
-                );
-                
-                return updateResult;
-                
-            } catch (error) {
-                console.error('❌ Error removing PKK from GitHub:', error);
-                showNotification(`⚠️ Error removing from GitHub: ${error.message}`, 'warning');
-                throw error;
-            }
+            // Since main abaikan operations are handled by Netlify API,
+            // GitHub sync is automatic. This function is called during restoration.
+            console.log('✅ GitHub sync handled automatically by Netlify functions');
+            
+            showNotification(
+                `✅ PKK ${pkkNumber} berhasil direstore - data tersinkron otomatis!`,
+                'success'
+            );
+            
+            return true;
         }
 
         async function clearGitHubCSV() {
-            console.log('🗑️ Clearing all data from GitHub CSV repository...');
+            console.log('🗑️ Clearing all data from repository via Netlify API...');
             
             try {
-                const token = getGitHubToken();
-                if (!token) {
-                    throw new Error('GitHub token not available');
-                }
-                
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${token}`,
-                    'User-Agent': 'Outstanding-Dashboard'
-                };
-                
-                // Get current file
-                console.log('📖 Getting current file content from GitHub...');
-                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    headers: headers
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}?action=clear`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
                 });
                 
-                if (!getResponse.ok) {
-                    throw new Error(`Failed to get current file: ${getResponse.status}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('✅ Repository cleared via Netlify API');
+                    showNotification('✅ Semua data berhasil dihapus dari repository!', 'success');
+                    return data;
+                } else {
+                    throw new Error(`Netlify API error: ${response.status}`);
                 }
-                
-                const fileData = await getResponse.json();
-                
-                // Create content with only header
-                const headerOnlyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan';
-                const encodedContent = btoa(headerOnlyContent);
-                
-                console.log('⬆️ Updating file in GitHub repository with header only...');
-                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify({
-                        message: 'Clear all ignored PKK data - keep header only',
-                        content: encodedContent,
-                        sha: fileData.sha
-                    })
-                });
-                
-                if (!updateResponse.ok) {
-                    const errorData = await updateResponse.json();
-                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
-                }
-                
-                const updateResult = await updateResponse.json();
-                console.log('✅ GitHub CSV successfully cleared:', updateResult.commit.sha);
-                
-                showNotification(
-                    '✅ Semua data berhasil dihapus dari GitHub repository!',
-                    'success'
-                );
-                
-                return updateResult;
-                
             } catch (error) {
-                console.error('❌ Error clearing GitHub CSV:', error);
-                showNotification(`⚠️ Error clearing GitHub: ${error.message}`, 'warning');
+                console.error('❌ Error clearing repository via Netlify API:', error);
+                showNotification(`⚠️ Error clearing repository: ${error.message}`, 'warning');
                 throw error;
             }
         }
@@ -2390,8 +2285,8 @@
         // Detect if running on localhost or production
         function getApiUrl() {
             if (isProductionEnvironment()) {
-                // Production mode - use GitHub API
-                return 'https://api.github.com/repos/Hadi197/Outstanding/contents';
+                // Production mode - use Netlify API
+                return '/api';
             }
             // Development mode - use local server
             return 'http://localhost:8001/api';
@@ -3310,43 +3205,28 @@ function renderPelabuhanCards(data) {
             
             // Use different data sources for production vs development
             if (isProductionEnvironment()) {
-                console.log('🌐 Production mode: Fetching from GitHub API');
+                console.log('🌐 Production mode: Fetching from Netlify API');
                 try {
-                    // Fetch from GitHub API with token
-                    const token = getGitHubToken();
-                    const headers = {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'User-Agent': 'Outstanding-Dashboard'
-                    };
-                    if (token) {
-                        headers['Authorization'] = `Bearer ${token}`;
-                    }
+                    // Fetch from Netlify API
+                    const apiUrl = getApiUrl();
+                    const response = await fetch(`${apiUrl}?action=list`);
                     
-                    const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                        headers: headers
-                    });
                     if (response.ok) {
                         const data = await response.json();
-                        const content = atob(data.content); // Decode base64 content
-                        const lines = content.split('\n').filter(line => line.trim());
-                        
-                        // Skip header line and process data
-                        for (let i = 1; i < lines.length; i++) {
-                            const row = lines[i].split(',');
-                            if (row.length > 0 && row[0].trim()) {
-                                abaiSet.add(row[0].trim());
-                            }
+                        if (data.abai_list && Array.isArray(data.abai_list)) {
+                            data.abai_list.forEach(pkk => abaiSet.add(pkk));
+                            console.log(`✅ Loaded ${abaiSet.size} entries from Netlify API`);
+                            
+                            // Sync with localStorage for offline access
+                            saveAbaiToLocalStorage(abaiSet);
+                        } else {
+                            throw new Error('Invalid response format');
                         }
-                        
-                        console.log(`✅ Loaded ${abaiSet.size} entries from GitHub API`);
-                        
-                        // Sync with localStorage for offline access
-                        saveAbaiToLocalStorage(abaiSet);
                     } else {
-                        throw new Error('GitHub API request failed');
+                        throw new Error(`Netlify API error: ${response.status}`);
                     }
                 } catch (error) {
-                    console.warn('⚠️ GitHub API not available, using localStorage fallback:', error);
+                    console.warn('⚠️ Netlify API not available, using localStorage fallback:', error);
                     abaiSet = getAbaiFromLocalStorage();
                     console.log(`📱 Loaded ${abaiSet.size} entries from localStorage`);
                 }
@@ -3656,140 +3536,60 @@ function renderPelabuhanCards(data) {
         }
         
         async function updateGitHubFile(noPkkInaportnet, reasonData, rowData = null) {
-            console.log('🔄 Updating GitHub repository with new entry:', noPkkInaportnet);
+            console.log('🔄 GitHub update handled by Netlify API:', noPkkInaportnet);
             
-            try {
-                const token = getGitHubToken();
-                if (!token) {
-                    throw new Error('GitHub token not available');
-                }
-                
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${token}`,
-                    'User-Agent': 'Outstanding-Dashboard'
-                };
-                
-                // First, get current file content and SHA
-                console.log('📖 Getting current file content from GitHub...');
-                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    headers: headers
-                });
-                
-                if (!getResponse.ok) {
-                    throw new Error(`Failed to get current file: ${getResponse.status}`);
-                }
-                
-                const fileData = await getResponse.json();
-                const currentContent = atob(fileData.content.replace(/\n/g, ''));
-                console.log('📄 Current file content retrieved, SHA:', fileData.sha);
-                
-                // Extract pelabuhan from rowData
-                let pelabuhan = '';
-                if (rowData) {
-                    pelabuhan = rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '';
-                }
-                
-                // Get reason text
-                const reasonText = getReasonDisplayText(reasonData.reason);
-                const notes = reasonData.notes || '';
-                
-                // Ensure all fields are properly filled (avoid empty trailing fields)
-                const cleanPelabuhan = pelabuhan.trim() || 'Unknown Port';
-                const cleanReasonText = reasonText.trim() || 'Not Specified';
-                const cleanNotes = notes.trim() || `Ignored at ${new Date().toLocaleString('id-ID')}`;
-                
-                // Prepare new row with all fields properly filled
-                const newRow = `${noPkkInaportnet},${cleanPelabuhan},${cleanReasonText},${cleanNotes}`;
-                
-                // Add new row to existing content
-                const updatedContent = currentContent.trim() + '\n' + newRow;
-                
-                console.log('📝 New row to add:', newRow);
-                console.log('📄 Updated content preview:', updatedContent.substring(0, 200) + '...');
-                
-                // Encode content to base64
-                const encodedContent = btoa(updatedContent);
-                
-                // Update file in GitHub
-                console.log('⬆️ Updating file in GitHub repository...');
-                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify({
-                        message: `Add ignored PKK: ${noPkkInaportnet} - ${cleanReasonText}`,
-                        content: encodedContent,
-                        sha: fileData.sha
-                    })
-                });
-                
-                if (!updateResponse.ok) {
-                    const errorData = await updateResponse.json();
-                    throw new Error(`Failed to update file: ${updateResponse.status} - ${errorData.message}`);
-                }
-                
-                const updateResult = await updateResponse.json();
-                console.log('✅ File updated successfully in GitHub:', updateResult.commit.sha);
-                
-                // Show success notification to user
-                showProcessSteps(noPkkInaportnet, cleanPelabuhan, cleanReasonText);
-                showNotification(
-                    `✅ Prosedur Lengkap!\nPKK: ${noPkkInaportnet}\nPelabuhan: ${cleanPelabuhan}\nAlasan: ${cleanReasonText}\nStatus: Disimpan ke GitHub`,
-                    'success',
-                    5000
-                );
-                
-                return updateResult;
-                
-            } catch (error) {
-                console.error('❌ Error updating GitHub file:', error);
-                throw error;
+            // GitHub operations are now handled automatically by Netlify functions
+            // This function is kept for compatibility but operations are server-side
+            console.log('✅ GitHub sync handled automatically by Netlify POST endpoint');
+            
+            // Extract data for notification
+            let pelabuhan = '';
+            if (rowData) {
+                pelabuhan = rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '';
             }
+            const reasonText = getReasonDisplayText(reasonData.reason);
+            
+            // Show success notification
+            showProcessSteps(noPkkInaportnet, pelabuhan, reasonText);
+            showNotification(
+                `✅ Prosedur Lengkap!\nPKK: ${noPkkInaportnet}\nPelabuhan: ${pelabuhan}\nAlasan: ${reasonText}\nStatus: Disimpan via Netlify API`,
+                'success',
+                5000
+            );
+            
+            return { success: true, message: 'Handled by Netlify API' };
         }
 
         async function testGitHubConnection() {
-            console.log('🔧 Testing GitHub API connection manually...');
+            console.log('🔧 Testing Netlify API connection...');
             
             try {
-                const token = getGitHubToken();
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'User-Agent': 'Outstanding-Dashboard-Manual-Test'
-                };
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}?action=list`);
                 
-                const response = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    headers: headers
-                });
-                
-                console.log('🔧 Manual test response status:', response.status);
+                console.log('🔧 Netlify API test response status:', response.status);
                 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('🔧 Manual test data:', {
-                        name: data.name,
-                        size: data.size,
-                        hasContent: !!data.content,
-                        contentPreview: data.content ? data.content.substring(0, 100) + '...' : null
+                    console.log('🔧 Netlify API test data:', {
+                        success: data.success,
+                        total_entries: data.total_entries,
+                        source: data.source,
+                        hasList: !!data.abai_list,
+                        listLength: data.abai_list ? data.abai_list.length : 0
                     });
                     
-                    if (data.content) {
-                        const csvContent = atob(data.content.replace(/\n/g, ''));
-                        const lines = csvContent.split('\n').filter(line => line.trim());
-                        console.log('🔧 Manual test decoded lines:', lines.length, 'entries:', lines.length - 1);
-                        alert(`✅ GitHub API Test SUCCESS!\nFile: ${data.name}\nSize: ${data.size} bytes\nEntries: ${lines.length - 1}`);
-                    } else {
-                        alert('⚠️ GitHub API responded but no content found');
-                    }
+                    showNotification('✅ Netlify API connection successful!', 'success');
+                    return true;
                 } else {
-                    console.error('🔧 Manual test failed:', response.status, response.statusText);
-                    alert(`❌ GitHub API Test FAILED!\nStatus: ${response.status}\nError: ${response.statusText}`);
+                    console.error('❌ Netlify API test failed:', response.status);
+                    showNotification(`❌ Netlify API test failed: ${response.status}`, 'error');
+                    return false;
                 }
             } catch (error) {
-                console.error('🔧 Manual test error:', error);
-                alert(`❌ GitHub API Test ERROR!\n${error.message}`);
+                console.error('❌ Netlify API test error:', error);
+                showNotification(`❌ Netlify API test error: ${error.message}`, 'error');
+                return false;
             }
         }
 

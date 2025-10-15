@@ -1,5 +1,5 @@
 // Test GitHub API connection for debugging
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = 'Hadi197';
 const GITHUB_REPO = 'Outstanding';
 

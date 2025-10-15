@@ -10,7 +10,7 @@
  * 4. Test the complete integration
  */
 
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const REPO_NAME = 'Outstanding';
 
 async function githubRequest(url, options = {}) {
