@@ -254,7 +254,7 @@ exports.handler = async (event, context) => {
           console.log('🗑️ Clearing all abai data from GitHub...');
 
           // Create empty file with just header
-          const emptyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan\n';
+          const emptyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan,timestamp\n';
 
           // Get existing file to obtain SHA (if it exists)
           const fileData = await getGitHubFile();
@@ -511,12 +511,17 @@ exports.handler = async (event, context) => {
 
         // Prepare CSV content
         if (!csvContent || csvContent.trim() === '') {
-          csvContent = 'no_pkk_inaportnet,timestamp,status\n';
+          csvContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan,timestamp\n';
         } else if (!csvContent.endsWith('\n')) {
           csvContent += '\n';
         }
         
-        csvContent += `${data.no_pkk_inaportnet},${timestamp},diabaikan\n`;
+        // Extract data fields with fallbacks
+        const pelabuhan = data.pelabuhan || '';
+        const alasan = data.reason || '';
+        const keterangan = data.notes || '';
+        
+        csvContent += `"${data.no_pkk_inaportnet}","${pelabuhan.replace(/"/g, '""')}","${alasan.replace(/"/g, '""')}","${keterangan.replace(/"/g, '""')}",${timestamp}\n`;
 
         // Update GitHub file
         const result = await updateGitHubFile(csvContent, fileData.sha);

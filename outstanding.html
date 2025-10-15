@@ -3572,6 +3572,7 @@ function renderPelabuhanCards(data) {
                     no_pkk_inaportnet: noPkkInaportnet,
                     timestamp: new Date().toISOString(),
                     reason: reasonData.reason,
+                    notes: reasonData.notes || '',
                     pelabuhan: rowData ? (rowData.PELABUHAN || rowData.name_branch || rowData.pelabuhan || '') : '',
                     rowData: rowData
                 };
