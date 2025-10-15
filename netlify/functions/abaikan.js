@@ -538,8 +538,8 @@ exports.handler = async (event, context) => {
           console.log('➕ Appending new PKK row to abai.csv for', data.no_pkk_inaportnet);
         }
 
-        // Update GitHub file
-        const result = await updateGitHubFile(csvContent, fileData.sha);
+  // Update GitHub file using the modified content (newContent)
+  const result = await updateGitHubFile(newContent, fileData.sha);
         
         return {
           statusCode: 200,
