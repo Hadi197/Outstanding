@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 // Test GitHub API connection and token permissions
-const GITHUB_TOKEN = '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';
+const GITHUB_TOKEN = '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';
 const GITHUB_OWNER = 'Hadi197';
 const GITHUB_REPO = 'Outstanding';
 const FILE_PATH = 'abai.csv';
