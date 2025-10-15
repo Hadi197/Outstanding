@@ -1600,102 +1600,125 @@
         };
 
         function populateTable(headers, data) {
-        const tableHeader = document.getElementById("table-header");
-        const tableBody = document.getElementById("table-body");
-        const tableFilterRow = document.getElementById("table-filter-row");
+            const tableHeader = document.getElementById("table-header");
+            const tableBody = document.getElementById("table-body");
+            const tableFilterRow = document.getElementById("table-filter-row");
 
-        // Clear existing table content
-        tableHeader.innerHTML = "";
-        tableBody.innerHTML = "";
-        tableFilterRow.innerHTML = "";
-
-        // Kolom yang ingin disembunyikan
-        const hiddenCols = new Set([
-            "name_branch", "no_pkk_wasop", "waktu_tolak",
-            "zone_lhgk", "no_pkk_lhgk", "PKK", "no_pkk",
-            "status_nota",
-            "nomor_pkk",           // hide kolom nomor_pkk
-            "vessel_name_wasop"    // hide kolom vessel_name_wasop
-        ]);
-        const updatedHeaders = [
-            "NO",
-            ...headers.filter(h => !hiddenCols.has(h)),
-            "PELABUHAN",
-            "PELAYARAN",
-            "AKSI"
-        ];
-
-        // Populate table headers (pakai label tampilan)
-        updatedHeaders.forEach(header => {
-            const th = document.createElement("th");
-            th.className = "px-4 py-3 text-xs font-semibold uppercase tracking-wider";
-            th.textContent = HEADER_MAP[header] || header;
-            tableHeader.appendChild(th);
-        });
-
-        // --- Filter row ---
-        updatedHeaders.forEach(header => {
-            const th = document.createElement("th");
-            th.className = "px-4 py-2";
-            if (header === "NO" || header === "AKSI") {
-                th.innerHTML = "";
-            } else {
-                const input = document.createElement("input");
-                input.type = "text";
-                input.className = "w-full px-2 py-1 text-xs text-gray-800 bg-white border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none";
-                input.style.minWidth = "60px";
-                input.placeholder = "Filter";
-                input.addEventListener("input", function() {
-                    filterTableByHeader();
-                });
-                th.appendChild(input);
+            // Clear existing table content
+            if (!tableHeader || !tableBody || !tableFilterRow) {
+                console.error('Table elements not found');
+                return;
             }
-            tableFilterRow.appendChild(th);
-        });
+            tableHeader.innerHTML = "";
+            tableBody.innerHTML = "";
+            tableFilterRow.innerHTML = "";
 
-        // Populate table rows (tetap pakai key asli untuk ambil data)
-        data.forEach((row, index) => {
-            const tr = document.createElement("tr");
-            tr.className = "hover:bg-gray-50 transition-colors duration-150";
-            updatedHeaders.forEach(header => {
-                const td = document.createElement("td");
-                td.className = "px-4 py-3 text-xs whitespace-nowrap";
-                if (header === "NO") {
-                    td.textContent = index + 1;
-                    td.className += " font-medium text-gray-900";
-                } else if (header === "PELABUHAN") {
-                    td.textContent = row["name_branch"] || "";
-                } else if (header === "PELAYARAN") {
-                    if (row["no_pkk_inaportnet"]?.includes("PKK.DN")) {
-                        td.textContent = "Dalam Negeri";
-                        td.className += " text-green-600 font-medium";
-                    } else if (row["no_pkk_inaportnet"]?.includes("PKK.LN")) {
-                        td.textContent = "Luar Negeri";
-                        td.className += " text-blue-600 font-medium";
-                    } else {
-                        td.textContent = "";
-                    }
-                } else if (header === "AKSI") {
-                    // Tambahkan tombol Abaikan jika ada no_pkk_inaportnet
-                    if (row["no_pkk_inaportnet"]) {
-                        const button = document.createElement("button");
-                        button.className = "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1";
-                        button.textContent = "Abaikan";
-                        // Pass full row data to capture port name and other details
-                        button.onclick = () => handleAbaikan(row["no_pkk_inaportnet"], button, tr, row);
-                        td.appendChild(button);
-                    } else {
-                        td.textContent = "-";
-                        td.className += " text-gray-400";
-                    }
-                } else {
-                    td.textContent = row[header] || "";
-                }
-                tr.appendChild(td);
+            // Desired columns (as requested)
+            const desired = [
+                'no_pkk',
+                'no_pkk_inaportnet',
+                'vessel_name_spb',
+                'company_name',
+                'name_process_code',
+                'gt',
+                'loa',
+                'departure_date',
+                'ZONA',
+                'name_branch'
+            ];
+
+            // Helper: find best matching header from CSV headers (case-insensitive)
+            function findHeader(csvHeaders, candidate) {
+                if (!csvHeaders || !candidate) return null;
+                const cl = candidate.toString().toLowerCase();
+                // exact match (case-insensitive)
+                let found = csvHeaders.find(h => (h || '').toString().toLowerCase() === cl);
+                if (found) return found;
+                // permissive contains
+                found = csvHeaders.find(h => (h || '').toString().toLowerCase().includes(cl));
+                if (found) return found;
+                // sometimes csv header is uppercase no spaces: compare normalized
+                const normCandidate = cl.replace(/[^a-z0-9]/g, '');
+                found = csvHeaders.find(h => ((h || '').toString().toLowerCase().replace(/[^a-z0-9]/g, '')) === normCandidate);
+                if (found) return found;
+                return null;
+            }
+
+            const srcHeaders = [];
+            // map desired list to actual CSV headers (preserve order)
+            desired.forEach(d => {
+                const h = findHeader(headers, d) || d; // fallback to candidate itself
+                if (!srcHeaders.includes(h)) srcHeaders.push(h);
             });
-            tableBody.appendChild(tr);
-        });
-    }
+
+            const updatedHeaders = ["NO", ...srcHeaders, "AKSI"];
+
+            // display label helper
+            function displayLabelFor(h) {
+                if (!h) return '';
+                return HEADER_MAP[h] || HEADER_MAP[h.toLowerCase()] || h;
+            }
+
+            // Populate table headers (pakai label tampilan)
+            updatedHeaders.forEach(header => {
+                const th = document.createElement("th");
+                th.className = "px-4 py-3 text-xs font-semibold uppercase tracking-wider";
+                th.textContent = displayLabelFor(header);
+                tableHeader.appendChild(th);
+            });
+
+            // --- Filter row ---
+            updatedHeaders.forEach(header => {
+                const th = document.createElement("th");
+                th.className = "px-4 py-2";
+                if (header === "NO" || header === "AKSI") {
+                    th.innerHTML = "";
+                } else {
+                    const input = document.createElement("input");
+                    input.type = "text";
+                    input.className = "w-full px-2 py-1 text-xs text-gray-800 bg-white border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none";
+                    input.style.minWidth = "60px";
+                    input.placeholder = "Filter";
+                    input.addEventListener("input", function() {
+                        filterTableByHeader();
+                    });
+                    th.appendChild(input);
+                }
+                tableFilterRow.appendChild(th);
+            });
+
+            // Populate table rows using CSV keys (srcHeaders)
+            data.forEach((row, index) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-gray-50 transition-colors duration-150";
+
+                updatedHeaders.forEach(header => {
+                    const td = document.createElement("td");
+                    td.className = "px-4 py-3 text-xs whitespace-nowrap";
+                    if (header === "NO") {
+                        td.textContent = index + 1;
+                        td.className += " font-medium text-gray-900";
+                    } else if (header === "AKSI") {
+                        if (row["no_pkk_inaportnet"]) {
+                            const button = document.createElement("button");
+                            button.className = "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1";
+                            button.textContent = "Abaikan";
+                            button.onclick = () => handleAbaikan(row["no_pkk_inaportnet"], button, tr, row);
+                            td.appendChild(button);
+                        } else {
+                            td.textContent = "-";
+                            td.className += " text-gray-400";
+                        }
+                    } else {
+                        // Normal case: header is a source key (from srcHeaders)
+                        const val = row[header];
+                        td.textContent = (val !== undefined && val !== null) ? val : "";
+                    }
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
 
     // Filter table by filter row input
     function filterTableByHeader() {
@@ -3156,28 +3179,57 @@ function renderPelabuhanCards(data) {
         return 'Lainnya'; // Default untuk yang tidak cocok
     }
 
-    // Gunakan kolom zone sebagai referensi utama
+    // Gunakan kolom zona (ZONA) sebagai referensi utama; fallback ke name_branch
     let zoneKey = null;
     let branchKey = null;
     for (const h of globalHeaders) {
-        if (h.toLowerCase() === "zone" || h.toLowerCase().includes("zone")) {
+        const hl = (h || '').toString().toLowerCase();
+        if (!zoneKey && (hl === 'zona' || hl.includes('zona') || hl === 'zone' || hl.includes('zone') || hl.includes('zona '))) {
             zoneKey = h;
         }
-        if (h.toLowerCase() === "name_branch" || h.toLowerCase().includes("name_branch")) {
+        if (!branchKey && (hl === 'name_branch' || hl.includes('name_branch') || hl.includes('branch') || hl.includes('cabang') || hl.includes('pelabuhan'))) {
             branchKey = h;
         }
     }
-    if (!zoneKey) zoneKey = globalHeaders[0];
-    if (!branchKey) branchKey = "name_branch";
+    // sensible defaults
+    if (!branchKey) branchKey = globalHeaders.find(h => (h || '').toString().toLowerCase().includes('branch')) || 'name_branch';
 
-    // Kelompokkan data berdasarkan zone/branch
+    // Helper to resolve zone value for a row: prefer zona, then branch, then scan
+    function resolveZoneValue(row) {
+        if (!row) return null;
+        // direct by zoneKey
+        if (zoneKey && row.hasOwnProperty(zoneKey)) {
+            const v = (row[zoneKey] || '').toString().trim();
+            if (v) return v;
+        }
+        // try common capitalized key variants
+        for (const keyCandidate of ['ZONA', 'zona', 'Zone']) {
+            if (row.hasOwnProperty(keyCandidate)) {
+                const v = (row[keyCandidate] || '').toString().trim();
+                if (v) return v;
+            }
+        }
+        // fallback to branchKey
+        if (branchKey && row.hasOwnProperty(branchKey)) {
+            const v = (row[branchKey] || '').toString().trim();
+            if (v) return v;
+        }
+        // scan for any key that looks like zona or pelabuhan
+        for (const k of Object.keys(row)) {
+            const kl = k.toLowerCase();
+            if (kl.includes('zona') || kl.includes('pelabuhan') || kl.includes('port') || kl.includes('branch')) {
+                const v = (row[k] || '').toString().trim();
+                if (v) return v;
+            }
+        }
+        return null;
+    }
+
+    // Kelompokkan data berdasarkan zone/branch resolved
     const zoneGroups = {};
     data.forEach(row => {
-        let key = (row[zoneKey] || "").trim();
-        if (!key && branchKey && row[branchKey]) {
-            key = (row[branchKey] || "Unknown").trim();
-        }
-        if (!key) key = "Unknown";
+        let key = resolveZoneValue(row) || 'Unknown';
+        if (!key) key = 'Unknown';
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -4601,8 +4653,6 @@ function renderPelabuhanCards(data) {
         let filteredLaporanData = [];
         let currentLaporanPage = 1;
         let laporanRowsPerPage = 25;
-        let currentSortColumn = 'MULAI PANDU';
-        let currentSortDirection = 'desc'; // 'asc' or 'desc'
 
         // Load Laporan data from CSV
         async function loadLaporanData() {
@@ -4624,11 +4674,8 @@ function renderPelabuhanCards(data) {
                 laporanData = parsedResult.data;
                 filteredLaporanData = [...laporanData];
                 
-                // Sort by MULAI PANDU descending by default
-                filteredLaporanData = applySorting(filteredLaporanData);
-                
                 // Apply current filters after loading data
-                applyAllLaporanFilters();
+                applyLaporanFilters();
                 
                 showNotification(`Data laporan berhasil dimuat: ${laporanData.length} records`, 'success');
                 
@@ -4658,15 +4705,7 @@ function renderPelabuhanCards(data) {
             ];
             tableHead.innerHTML = `
                 <tr class="bg-blue-700 text-white">
-                    ${headers.map((header, index) => {
-                        const sortIcon = currentSortColumn === header ? 
-                            (currentSortDirection === 'asc' ? ' ↑' : ' ↓') : '';
-                        const isSortable = header !== 'No';
-                        
-                        return `<th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap ${columnWidths[index] || 'w-32'}">
-                            ${isSortable ? `<span class="cursor-pointer hover:bg-blue-800 px-1 py-1 rounded inline-block" onclick="sortLaporanData('${header}')">${header}${sortIcon}</span>` : header}
-                        </th>`;
-                    }).join('')}
+                    ${headers.map((header, index) => `<th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap ${columnWidths[index] || 'w-32'}">${header}</th>`).join('')}
                 </tr>
             `;
             
@@ -4701,75 +4740,6 @@ function renderPelabuhanCards(data) {
             `).join('');
             
             updateLaporanInfo();
-        }
-
-        // Internal sorting function
-        function applySorting(data) {
-            if (!currentSortColumn) return data;
-            
-            return data.sort((a, b) => {
-                let aVal = (a[currentSortColumn] || '').toString().toLowerCase();
-                let bVal = (b[currentSortColumn] || '').toString().toLowerCase();
-                
-                // Special handling for date columns
-                if (currentSortColumn.includes('MULAI') || currentSortColumn.includes('SELESAI')) {
-                    // Convert date strings to comparable format (assuming DD-MM-YYYY HH:MM format)
-                    aVal = aVal.replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1'); // Convert to YYYY-MM-DD
-                    bVal = bVal.replace(/(\d{2})-(\d{2})-(\d{4})/, '$3-$2-$1');
-                }
-                
-                let comparison = 0;
-                if (aVal < bVal) comparison = -1;
-                if (aVal > bVal) comparison = 1;
-                
-                return currentSortDirection === 'asc' ? comparison : -comparison;
-            });
-        }
-
-        // Extract date from string for comparison
-        function extractDateFromString(dateString) {
-            if (!dateString) return null;
-            
-            // Try to match DD-MM-YYYY format
-            const ddmmyyyyMatch = dateString.match(/(\d{2})-(\d{2})-(\d{4})/);
-            if (ddmmyyyyMatch) {
-                return `${ddmmyyyyMatch[3]}-${ddmmyyyyMatch[2]}-${ddmmyyyyMatch[1]}`;
-            }
-            
-            // Try to match YYYY-MM-DD format
-            const yyyymmddMatch = dateString.match(/(\d{4})-(\d{2})-(\d{2})/);
-            if (yyyymmddMatch) {
-                return dateString;
-            }
-            
-            return null;
-        }
-
-        // Check if date string matches selected date
-        function dateMatches(dateString, selectedDate) {
-            if (!selectedDate || !dateString) return false;
-            
-            const extractedDate = extractDateFromString(dateString);
-            return extractedDate === selectedDate;
-        }
-
-        // Sort laporan data by column
-        function sortLaporanData(columnName) {
-            if (currentSortColumn === columnName) {
-                // Toggle sort direction if same column
-                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                // New column, default to descending for dates, ascending for others
-                currentSortColumn = columnName;
-                currentSortDirection = (columnName.includes('MULAI') || columnName.includes('SELESAI')) ? 'desc' : 'asc';
-            }
-            
-            // Apply sorting to filtered data
-            filteredLaporanData = applySorting([...filteredLaporanData]);
-            
-            currentLaporanPage = 1;
-            renderLaporanTable();
-            updateLaporanPagination();
         }
 
         // Update pagination info
@@ -4824,7 +4794,7 @@ function renderPelabuhanCards(data) {
             const searchInput = document.getElementById('laporanSearchInput');
             
             searchInput.addEventListener('input', function() {
-                applyAllLaporanFilters();
+                applyLaporanFilters();
             });
         }
 
@@ -4834,10 +4804,10 @@ function renderPelabuhanCards(data) {
             const filterBtn = document.getElementById('laporanFilterDateBtn');
             
             filterBtn.addEventListener('click', function() {
-                applyAllLaporanFilters();
+                applyLaporanFilters();
                 
                 const selectedDate = datePicker.value;
-                showNotification(`Filter diterapkan untuk tanggal MULAI PANDU: ${selectedDate || 'Semua'}`, 'info');
+                showNotification(`Filter diterapkan untuk tanggal: ${selectedDate || 'Semua'}`, 'info');
             });
         }
 
@@ -4847,26 +4817,12 @@ function renderPelabuhanCards(data) {
             
             wilayahSelect.addEventListener('change', function() {
                 const selectedWilayah = this.value;
-                applyAllLaporanFilters();
+                applyLaporanFilters();
             });
         }
 
-        // Rows per page functionality
-        function setupLaporanRowsPerPage() {
-            const rowsSelect = document.getElementById('laporanRowsPerPage');
-            
-            rowsSelect.addEventListener('change', function() {
-                laporanRowsPerPage = parseInt(this.value);
-                currentLaporanPage = 1;
-                renderLaporanTable();
-                updateLaporanPagination();
-            });
-        }
-
-
-
-        // Apply all filters
-        function applyAllLaporanFilters() {
+        // Apply all filters (search, date, wilayah)
+        function applyLaporanFilters() {
             const searchInput = document.getElementById('laporanSearchInput');
             const datePicker = document.getElementById('laporanDatePicker');
             const wilayahSelect = document.getElementById('laporanWilayahFilter');
@@ -4899,10 +4855,10 @@ function renderPelabuhanCards(data) {
                 
                 // Date filter
                 const matchesDate = selectedDate === '' ||
-                    dateMatches(row['MULAI PANDU'], selectedDate) ||
-                    dateMatches(row['SELESAI PANDU'], selectedDate) ||
-                    dateMatches(row['MULAI TUNDA'], selectedDate) ||
-                    dateMatches(row['SELESAI TUNDA'], selectedDate);
+                    (row['MULAI PANDU'] || '').includes(selectedDate) ||
+                    (row['SELESAI PANDU'] || '').includes(selectedDate) ||
+                    (row['MULAI TUNDA'] || '').includes(selectedDate) ||
+                    (row['SELESAI TUNDA'] || '').includes(selectedDate);
                 
                 // Wilayah filter
                 let matchesWilayah = true;
@@ -4915,34 +4871,22 @@ function renderPelabuhanCards(data) {
                                            zona.includes('SAMPIT') || 
                                            zona.includes('BATULICIN') ||
                                            zona.includes('PONTIANAK') ||
-                                           zona.includes('BANJARMASIN') ||
-                                           zona.includes('KOTABARU') ||
-                                           zona.includes('SATUI') ||
-                                           zona.includes('BAGENDANG') ||
-                                           zona.includes('BUMIHARJO');
+                                           zona.includes('BANJARMASIN');
                             break;
                         case 'jawa':
                             matchesWilayah = zona.includes('JAWA') || 
                                            zona.includes('SEMARANG') || 
                                            zona.includes('SURABAYA') ||
                                            zona.includes('JAKARTA') ||
-                                           zona.includes('TANJUNG PRIOK') ||
-                                           zona.includes('GRESIK') ||
-                                           zona.includes('TANJUNG INTAN') ||
-                                           zona.includes('TANJUNG WANGI');
+                                           zona.includes('TANJUNG PRIOK');
                             break;
                         case 'bali-nusatenggara':
-                            matchesWilayah = zona.includes('BENO') || 
-                                           zona.includes('KUPANG') ||
-                                           zona.includes('LEMBAR') ||
-                                           zona.includes('MATARAM') ||
-                                           zona.includes('WAINGAPU') ||
-                                           zona.includes('LARANTUKA') ||
-                                           zona.includes('ENDE') ||
-                                           zona.includes('MAUMERE') ||
-                                           zona.includes('ATAMBUA') ||
-                                           zona.includes('KUPANG') ||
-                                           zona.includes('LEMBAR');
+                            matchesWilayah = zona.includes('BALI') || 
+                                           zona.includes('NUSA TENGGARA') ||
+                                           zona.includes('LOMBOK') ||
+                                           zona.includes('SUMBA') ||
+                                           zona.includes('FLORES') ||
+                                           zona.includes('TIMOR');
                             break;
                     }
                 }
@@ -4950,12 +4894,21 @@ function renderPelabuhanCards(data) {
                 return matchesSearch && matchesDate && matchesWilayah;
             });
             
-            // Apply current sorting
-            filteredLaporanData = applySorting(filteredLaporanData);
-            
             currentLaporanPage = 1;
             renderLaporanTable();
             updateLaporanPagination();
+        }
+
+        // Rows per page functionality
+        function setupLaporanRowsPerPage() {
+            const rowsSelect = document.getElementById('laporanRowsPerPage');
+            
+            rowsSelect.addEventListener('change', function() {
+                laporanRowsPerPage = parseInt(this.value);
+                currentLaporanPage = 1;
+                renderLaporanTable();
+                updateLaporanPagination();
+            });
         }
 
         // Download functionality
@@ -4963,19 +4916,7 @@ function renderPelabuhanCards(data) {
             const downloadBtn = document.getElementById('laporanDownloadBtn');
             
             downloadBtn.addEventListener('click', function() {
-                console.log('Download button clicked');
-                console.log('filteredLaporanData length:', filteredLaporanData.length);
-                console.log('filteredLaporanData sample:', filteredLaporanData.slice(0, 3));
-                
-                if (filteredLaporanData.length === 0) {
-                    showNotification('Tidak ada data untuk didownload', 'warning');
-                    return;
-                }
-                
                 const csvContent = convertToCSV(filteredLaporanData);
-                console.log('CSV content length:', csvContent.length);
-                console.log('CSV content preview:', csvContent.substring(0, 200));
-                
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement('a');
                 
@@ -4988,7 +4929,7 @@ function renderPelabuhanCards(data) {
                     link.click();
                     document.body.removeChild(link);
                     
-                    showNotification(`File berhasil didownload: ${filteredLaporanData.length} records`, 'success');
+                    showNotification('File berhasil didownload', 'success');
                 }
             });
         }
@@ -4997,10 +4938,7 @@ function renderPelabuhanCards(data) {
         function convertToCSV(data) {
             if (data.length === 0) return '';
             
-            const headers = ['NAMA KAPAL', 'GT', 'LOA', 'DARI', 'KE', 'PERUSAHAAN', 
-                           'NO SPK PANDU', 'NO PKK INAPORTNET', 'NO PKK', 'NAMA PANDU', 
-                           'MULAI PANDU', 'SELESAI PANDU', 'KAPAL TUNDA 1', 'KAPAL TUNDA 2', 
-                           'KAPAL TUNDA 3', 'MULAI TUNDA', 'SELESAI TUNDA', 'ZONA'];
+            const headers = ['no_pkk_inaportnet', 'no_pkk', 'zone', 'status_nota'];
             const csvRows = [];
             
             // Add headers
@@ -5011,7 +4949,7 @@ function renderPelabuhanCards(data) {
                 const values = headers.map(header => {
                     const value = row[header] || '';
                     // Escape quotes and wrap in quotes if contains comma or quote
-                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                    if (value.includes(',') || value.includes('"')) {
                         return `"${value.replace(/"/g, '""')}"`;
                     }
                     return value;
@@ -5179,7 +5117,7 @@ function renderPelabuhanCards(data) {
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Filter Tanggal (MULAI PANDU)</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
                             <input id="laporanDatePicker"
                                    type="date"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
