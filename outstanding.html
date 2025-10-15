@@ -1617,6 +1617,7 @@
             const desired = [
                 'no_pkk',
                 'no_pkk_inaportnet',
+                'nomor_spb',
                 'vessel_name_spb',
                 'company_name',
                 'name_process_code',
@@ -1624,8 +1625,7 @@
                 'loa',
                 'departure_date',
                 'ZONA',
-                'name_branch',
-                'nomor_spb'
+                'name_branch'
             ];
 
             // Helper: find best matching header from CSV headers (case-insensitive)
@@ -1652,7 +1652,7 @@
                 if (!srcHeaders.includes(h)) srcHeaders.push(h);
             });
 
-            const updatedHeaders = ["NO", ...srcHeaders, "AKSI"];
+            const updatedHeaders = ["NO", "AKSI", ...srcHeaders];
 
             // display label helper
             function displayLabelFor(h) {
