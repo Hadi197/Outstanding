@@ -247,15 +247,27 @@ exports.handler = async (event, context) => {
       }
 
       if (action === 'clear') {
-        // Clear all abai data
+        // Clear all abai data (overwrite file with header) - ensure we pass existing SHA when updating
         try {
           console.log('🗑️ Clearing all abai data from GitHub...');
-          
+
           // Create empty file with just header
           const emptyContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan\n';
-          
-          await updateGitHubFile(emptyContent, null);
-          
+
+          // Get existing file to obtain SHA (if it exists)
+          const fileData = await getGitHubFile();
+          let result;
+
+          if (fileData && fileData.exists && fileData.sha) {
+            // Overwrite existing file by providing its SHA
+            result = await updateGitHubFile(emptyContent, fileData.sha);
+            console.log('🗑️ Overwrote existing abai.csv with header, commit:', result && result.commit && result.commit.sha);
+          } else {
+            // File does not exist - create it (no sha)
+            result = await updateGitHubFile(emptyContent, null);
+            console.log('🗑️ Created new abai.csv with header, commit:', result && result.commit && result.commit.sha);
+          }
+
           return {
             statusCode: 200,
             headers,
@@ -263,17 +275,18 @@ exports.handler = async (event, context) => {
               success: true,
               message: 'All abai data cleared',
               total_entries: 0,
-              source: 'github'
+              source: 'github',
+              github_commit: result && (result.commit ? result.commit.sha : (result.content ? result.content.sha : null))
             })
           };
         } catch (error) {
-          console.error('❌ Error clearing abai data:', error.message);
+          console.error('❌ Error clearing abai data:', error && error.message);
           return {
             statusCode: 500,
             headers,
             body: JSON.stringify({
               success: false,
-              error: error.message,
+              error: error && error.message,
               message: 'Failed to clear abai data'
             })
           };
