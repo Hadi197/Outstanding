@@ -3244,14 +3244,25 @@ function renderPelabuhanCards(data) {
 
                         // If backend returns detailed entries, use them
                         if (data.abai_entries && Array.isArray(data.abai_entries)) {
-                            // Save detailed entries to localStorage for UI
+                            // Map backend entries to the detailed format the UI expects
                             const detailedKey = ABAI_STORAGE_KEY + '_detailed';
-                            localStorage.setItem(detailedKey, JSON.stringify(data.abai_entries));
+                            const mapped = data.abai_entries.map(e => ({
+                                pkk: e.no_pkk_inaportnet || e.pkk || '',
+                                port_name: e.Pelabuhan || e.pelabuhan || e.name_branch || 'Unknown Port',
+                                reason: e.Alasan || e.reason || '',
+                                notes: e.Keterangan || e.Keterangan || e.notes || '',
+                                timestamp: e.timestamp || new Date().toISOString(),
+                                added_at: new Date().toISOString(),
+                                full_row_data: e
+                            }));
 
-                            data.abai_entries.forEach(entry => {
-                                if (entry && entry.no_pkk_inaportnet) abaiSet.add(entry.no_pkk_inaportnet);
+                            // Save the mapped detailed entries to localStorage for UI consumption
+                            localStorage.setItem(detailedKey, JSON.stringify(mapped));
+
+                            mapped.forEach(entry => {
+                                if (entry && entry.pkk) abaiSet.add(entry.pkk);
                             });
-                            console.log(`✅ Loaded ${abaiSet.size} detailed entries from Netlify API`);
+                            console.log(`✅ Loaded ${abaiSet.size} detailed entries from Netlify API (mapped)`);
 
                             // Sync simple set for main persistence
                             saveAbaiToLocalStorage(abaiSet);
