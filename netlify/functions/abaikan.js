@@ -492,36 +492,51 @@ exports.handler = async (event, context) => {
         let csvContent = fileData.content || '';
         console.log('Retrieved file data, exists:', fileData.exists, 'content length:', csvContent.length);
         
-        // Check for duplicates
-        if (csvContent && csvContent.includes(data.no_pkk_inaportnet)) {
-          return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-              status: 'success',
-              message: 'Data sudah ada dalam abai.csv (GitHub)',
-              no_pkk_inaportnet: data.no_pkk_inaportnet,
-              timestamp: timestamp,
-              storage_type: 'persistent (GitHub)',
-              persistent: true,
-              duplicate: true
-            })
-          };
-        }
-
-        // Prepare CSV content
+        // Prepare CSV and handle duplicates by updating existing row if present
         if (!csvContent || csvContent.trim() === '') {
           csvContent = 'no_pkk_inaportnet,Pelabuhan,Alasan,Keterangan,timestamp\n';
         } else if (!csvContent.endsWith('\n')) {
           csvContent += '\n';
         }
-        
-        // Extract data fields with fallbacks
-        const pelabuhan = data.pelabuhan || '';
-        const alasan = data.reason || '';
-        const keterangan = data.notes || '';
-        
-        csvContent += `"${data.no_pkk_inaportnet}","${pelabuhan.replace(/"/g, '""')}","${alasan.replace(/"/g, '""')}","${keterangan.replace(/"/g, '""')}",${timestamp}\n`;
+
+        // Extract data fields with fallbacks and escape quotes
+        const pelabuhan = (data.pelabuhan || '').toString();
+        const alasan = (data.reason || '').toString();
+        const keterangan = (data.notes || '').toString();
+        const esc = s => s.replace(/"/g, '""');
+
+        // Try to update existing PKK row rather than treating as duplicate
+        const lines = csvContent.split('\n');
+        let updated = false;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          // keep header as-is
+          if (/no_pkk_inaportnet/i.test(line)) continue;
+
+          // crude CSV first-column parse (works with exported format "PKK",...)
+          const cols = line.split(',');
+          const firstCol = cols[0] ? cols[0].replace(/^\"|\"$/g, '').trim() : '';
+          if (firstCol === data.no_pkk_inaportnet) {
+            // Build updated CSV row preserving quoting
+            const newRow = `"${esc(data.no_pkk_inaportnet)}","${esc(pelabuhan)}","${esc(alasan)}","${esc(keterangan)}",${timestamp}`;
+            lines[i] = newRow;
+            updated = true;
+            break;
+          }
+        }
+
+        let newContent;
+        if (updated) {
+          newContent = lines.join('\n');
+          console.log('🔁 Updating existing PKK row in abai.csv for', data.no_pkk_inaportnet);
+        } else {
+          // Append new row
+          const newRow = `"${esc(data.no_pkk_inaportnet)}","${esc(pelabuhan)}","${esc(alasan)}","${esc(keterangan)}",${timestamp}`;
+          newContent = csvContent + newRow + '\n';
+          console.log('➕ Appending new PKK row to abai.csv for', data.no_pkk_inaportnet);
+        }
 
         // Update GitHub file
         const result = await updateGitHubFile(csvContent, fileData.sha);
