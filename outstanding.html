@@ -1818,67 +1818,12 @@
         }
 
         async function cleanupGitHubCSV() {
-            console.log('🧹 Membersihkan format CSV di GitHub...');
+            console.log('🧹 CSV cleanup skipped - using Netlify API for data management');
             
-            try {
-                const token = getGitHubToken();
-                if (!token) {
-                    throw new Error('GitHub token not available');
-                }
-                
-                const headers = {
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Authorization': `Bearer ${token}`,
-                    'User-Agent': 'Outstanding-Dashboard'
-                };
-                
-                // Get current file
-                const getResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    headers: headers
-                });
-                
-                if (!getResponse.ok) return false;
-                
-                const fileData = await getResponse.json();
-                const currentContent = atob(fileData.content.replace(/\n/g, ''));
-                const lines = currentContent.trim().split('\n');
-                
-                // Clean up each line to ensure 4 columns
-                const cleanedLines = lines.map(line => {
-                    const cols = line.split(',');
-                    const pkk = cols[0] || '';
-                    const pelabuhan = cols[1] || 'Unknown Port';
-                    const alasan = cols[2] || 'Not Specified';
-                    const keterangan = cols[3] || `Cleaned at ${new Date().toLocaleString('id-ID')}`;
-                    
-                    return `${pkk},${pelabuhan},${alasan},${keterangan}`;
-                });
-                
-                const cleanedContent = cleanedLines.join('\n');
-                const encodedContent = btoa(cleanedContent);
-                
-                // Update file
-                const updateResponse = await fetch('https://api.github.com/repos/Hadi197/Outstanding/contents/abai.csv', {
-                    method: 'PUT',
-                    headers: headers,
-                    body: JSON.stringify({
-                        message: 'Clean up CSV format - ensure all 4 columns are filled',
-                        content: encodedContent,
-                        sha: fileData.sha
-                    })
-                });
-                
-                if (updateResponse.ok) {
-                    console.log('✅ CSV cleanup completed!');
-                    showNotification('✅ Format CSV berhasil dibersihkan - semua kolom lengkap!', 'success');
-                    return true;
-                }
-                return false;
-                
-            } catch (error) {
-                console.error('❌ Error cleaning CSV:', error);
-                return false;
-            }
+            // Since we're now using Netlify API for all GitHub operations,
+            // cleanup is handled automatically by the server-side functions
+            showNotification('✅ Data dikelola melalui Netlify API - cleanup otomatis!', 'info');
+            return true;
         }
 
         async function removeFromGitHubCSV(pkkNumber) {
