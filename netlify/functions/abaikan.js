@@ -23,7 +23,7 @@ exports.handler = async (event, context) => {
   });
 
   // GitHub configuration with your token
-  // Token should be set in Netlify environment variables as GITHUB_TOKEN
+  // Use environment variable only; do NOT hardcode tokens in the repository
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const GITHUB_OWNER = 'Hadi197';
   const GITHUB_REPO = 'Outstanding';
