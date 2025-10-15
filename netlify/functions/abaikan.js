@@ -293,6 +293,102 @@ exports.handler = async (event, context) => {
         }
       }
 
+      if (action === 'remove') {
+        // Remove specific PKK from abai data
+        try {
+          const pkkToRemove = queryParams.pkk || queryParams.no_pkk_inaportnet;
+          
+          if (!pkkToRemove) {
+            return {
+              statusCode: 400,
+              headers,
+              body: JSON.stringify({
+                success: false,
+                error: 'Missing pkk parameter',
+                message: 'PKK number is required for removal'
+              })
+            };
+          }
+
+          console.log('🗑️ Removing PKK from abai data:', pkkToRemove);
+
+          // Get current file content from GitHub
+          const fileData = await getGitHubFile();
+          
+          if (!fileData.exists || !fileData.content) {
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify({
+                success: true,
+                message: 'PKK not found (file does not exist)',
+                no_pkk_inaportnet: pkkToRemove,
+                source: 'github'
+              })
+            };
+          }
+
+          // Parse CSV and filter out the PKK to remove
+          const lines = fileData.content.split('\n').filter(line => line.trim());
+          const filteredLines = lines.filter(line => {
+            if (!line.trim() || line.toLowerCase().includes('no_pkk_inaportnet')) {
+              return true; // Keep header and empty lines
+            }
+            
+            const columns = line.split(',');
+            if (columns.length > 0 && columns[0].trim() === pkkToRemove.trim()) {
+              console.log('🗑️ Removing line:', line);
+              return false; // Remove this line
+            }
+            
+            return true; // Keep other lines
+          });
+
+          const newContent = filteredLines.join('\n');
+          
+          // If no lines were removed, the PKK wasn't found
+          if (filteredLines.length === lines.length) {
+            return {
+              statusCode: 200,
+              headers,
+              body: JSON.stringify({
+                success: true,
+                message: 'PKK not found in abai.csv',
+                no_pkk_inaportnet: pkkToRemove,
+                source: 'github'
+              })
+            };
+          }
+
+          // Update GitHub file
+          const result = await updateGitHubFile(newContent, fileData.sha);
+          
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: 'PKK berhasil dihapus dari abai.csv',
+              no_pkk_inaportnet: pkkToRemove,
+              total_entries: Math.max(0, filteredLines.length - 1), // Subtract header
+              source: 'github',
+              github_commit: result.commit.sha
+            })
+          };
+        } catch (error) {
+          console.error('❌ Error removing PKK from abai data:', error && error.message);
+          return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+              success: false,
+              error: error && error.message,
+              message: 'Failed to remove PKK from abai data'
+            })
+          };
+        }
+      }
+
       // Regular status check
       try {
         const fileData = await getGitHubFile();

@@ -1827,18 +1827,38 @@
         }
 
         async function removeFromGitHubCSV(pkkNumber) {
-            console.log('🗑️ PKK restoration - GitHub sync handled by Netlify API:', pkkNumber);
+            console.log('🗑️ Removing PKK from GitHub via Netlify API:', pkkNumber);
             
-            // Since main abaikan operations are handled by Netlify API,
-            // GitHub sync is automatic. This function is called during restoration.
-            console.log('✅ GitHub sync handled automatically by Netlify functions');
-            
-            showNotification(
-                `✅ PKK ${pkkNumber} berhasil direstore - data tersinkron otomatis!`,
-                'success'
-            );
-            
-            return true;
+            try {
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}?action=remove&pkk=${encodeURIComponent(pkkNumber)}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                console.log('📥 Netlify API remove response status:', response.status);
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Successfully removed from GitHub via Netlify:', result);
+                    
+                    showNotification(
+                        `✅ PKK ${pkkNumber} berhasil direstore - data dihapus dari GitHub!`,
+                        'success'
+                    );
+                    
+                    return { success: true, message: result.message, data: result };
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Netlify API remove error:', response.status, errorText);
+                    throw new Error(`API Error: ${response.status} - ${errorText}`);
+                }
+            } catch (error) {
+                console.error('❌ Failed to remove from Netlify API:', error);
+                throw error;
+            }
         }
 
         async function clearGitHubCSV() {
