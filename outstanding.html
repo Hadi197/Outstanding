@@ -3241,7 +3241,21 @@ function renderPelabuhanCards(data) {
                     
                     if (response.ok) {
                         const data = await response.json();
-                        if (data.abai_list && Array.isArray(data.abai_list)) {
+
+                        // If backend returns detailed entries, use them
+                        if (data.abai_entries && Array.isArray(data.abai_entries)) {
+                            // Save detailed entries to localStorage for UI
+                            const detailedKey = ABAI_STORAGE_KEY + '_detailed';
+                            localStorage.setItem(detailedKey, JSON.stringify(data.abai_entries));
+
+                            data.abai_entries.forEach(entry => {
+                                if (entry && entry.no_pkk_inaportnet) abaiSet.add(entry.no_pkk_inaportnet);
+                            });
+                            console.log(`✅ Loaded ${abaiSet.size} detailed entries from Netlify API`);
+
+                            // Sync simple set for main persistence
+                            saveAbaiToLocalStorage(abaiSet);
+                        } else if (data.abai_list && Array.isArray(data.abai_list)) {
                             data.abai_list.forEach(pkk => abaiSet.add(pkk));
                             console.log(`✅ Loaded ${abaiSet.size} entries from Netlify API`);
                             

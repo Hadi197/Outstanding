@@ -194,22 +194,50 @@ exports.handler = async (event, context) => {
           });
           
           const abaiList = [];
+          const abaiEntries = []; // structured entries for frontend
 
           if (fileData.exists && fileData.content) {
             const lines = fileData.content.split('\n').filter(line => line.trim());
             console.log(`📋 Processing ${lines.length} lines from GitHub file...`);
-            
-            for (let i = 0; i < lines.length; i++) {
+
+            // Parse header to determine column order (CSV may contain quoted fields)
+            const splitCsv = (str) => str.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/);
+
+            let headers = [];
+            if (lines.length > 0) {
+              headers = splitCsv(lines[0]).map(h => h.replace(/^\"|\"$/g, '').trim());
+            }
+
+            for (let i = 1; i < lines.length; i++) {
               const line = lines[i].trim();
-              if (line && !line.toLowerCase().includes('no_pkk_inaportnet')) {
-                // Extract PKK number (first column)
-                const columns = line.split(',');
-                if (columns.length > 0 && columns[0].trim()) {
-                  abaiList.push(columns[0].trim());
+              if (!line) continue;
+
+              const cols = splitCsv(line).map(c => c.replace(/^\"|\"$/g, '').trim());
+
+              // Build an object using header names when available, otherwise fall back to known ordering
+              const entry = {};
+              const mapField = (name, idx) => {
+                if (headers && headers.length && headers.includes(name)) {
+                  return cols[headers.indexOf(name)] || '';
                 }
+                return cols[idx] || '';
+              };
+
+              // Expected columns: no_pkk_inaportnet, Pelabuhan, Alasan, Keterangan, timestamp
+              entry.no_pkk_inaportnet = (mapField('no_pkk_inaportnet', 0) || mapField('NO_PKK_INAPORTNET', 0) || mapField('No_PKK_Inaportnet', 0)).toString();
+              entry.Pelabuhan = (mapField('Pelabuhan', 1) || mapField('PELABUHAN', 1) || mapField('name_branch', 1) || '').toString();
+              entry.Alasan = (mapField('Alasan', 2) || mapField('Reason', 2) || '').toString();
+              entry.Keterangan = (mapField('Keterangan', 3) || mapField('Keterangan ', 3) || mapField('notes', 3) || '').toString();
+              entry.timestamp = (mapField('timestamp', 4) || mapField('time', 4) || '').toString();
+
+              // Push both structured and simple variants
+              if (entry.no_pkk_inaportnet) {
+                abaiEntries.push(entry);
+                abaiList.push(entry.no_pkk_inaportnet);
               }
             }
-            console.log(`✅ Extracted ${abaiList.length} PKK entries from GitHub`);
+
+            console.log(`✅ Extracted ${abaiList.length} PKK entries from GitHub (detailed: ${abaiEntries.length})`);
           } else {
             console.log('⚠️ GitHub file does not exist or has no content');
           }
@@ -219,6 +247,7 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({
               abai_list: abaiList,
+              abai_entries: abaiEntries,
               total_entries: abaiList.length,
               source: 'github',
               success: true
