@@ -1,0 +1,42 @@
+{
+    "success": true,
+    "message": "success in getting the requested data",
+    "data": {
+        "totalRow": 1,
+        "totalPage": 1,
+        "totalData": 1,
+        "dataRec": [
+            {
+                "total": 1,
+                "total_page": 1,
+                "id_pkk": "VTJGc2RHVmtYMThwbmc0dlhsY1o4UFlIbzV6SitJaWJhMGxrKzkrejVmYz0=",
+                "id_ppkb": 686553,
+                "no_pkk": "DRI013000428",
+                "no_pkk_inaportnet": "PKK.DN.IDSUB.2510.000589",
+                "ppkb_code": "251301017268",
+                "arrive_date": "2025-10-15T11:00:00.000Z",
+                "departure_date": "2025-10-16T16:00:00.000Z",
+                "voyage_in": "1510",
+                "voyage_out": "1510",
+                "visit_name": "KAPAL NIAGA",
+                "cruise_name": "DALAM NEGERI",
+                "vessel_name": "DHARMA RUCITRA I",
+                "call_sign": "JZMG",
+                "imo_number": "8921767",
+                "flag_name": "INDONESIA",
+                "company_name": "DHARMA LAUTAN UTAMA, PT",
+                "code_customer": "00121",
+                "name_process_code": "Preinvoice",
+                "process_code": "2",
+                "gt": 11479,
+                "loa": 134.6,
+                "dwt": 19200,
+                "name_branch": "TANJUNG PERAK",
+                "name_unit": "PELINDO",
+                "port_code": "IDSUB",
+                "no_nota_origin": null,
+                "no_nota_origin_air": null
+            }
+        ]
+    }
+}
