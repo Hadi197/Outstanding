@@ -5015,13 +5015,9 @@ function renderPelabuhanCards(data) {
 
                     // Use same zone resolution logic as dashboard cards
                     const resolvedZone = resolveZoneValue(row) || 'Unknown';
-                    const zoneUpper = zone.toUpperCase();
-                    const resolvedZoneUpper = resolvedZone.toUpperCase();
-
-                    // Check if zone matches (case insensitive partial match)
-                    const zoneMatch = resolvedZoneUpper.includes(zoneUpper) || zoneUpper.includes(resolvedZoneUpper);
-
-                    if (!zoneMatch) return false;
+                    
+                    // Use exact zone matching (same as dashboard grouping)
+                    if (resolvedZone !== zone) return false;
 
                     // Apply type filter
                     switch(type) {
