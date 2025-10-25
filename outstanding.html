@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Outstanding Wilayah 3</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -5187,8 +5188,8 @@ function renderPelabuhanCards(data) {
             modal.classList.add('hidden');
         }
 
-        // Function to export zone detail data
-        function exportZoneDetailData() {
+        // Function to export zone detail data to Excel
+        function exportZoneDetailExcel() {
             const table = document.getElementById('zoneDetailTableBody');
             const rows = table.querySelectorAll('tr');
 
@@ -5197,33 +5198,46 @@ function renderPelabuhanCards(data) {
                 return;
             }
 
-            // Create CSV content
-            const headers = ['Aksi', 'PKK', 'PKK Inaportnet', 'SPB', 'Nama Kapal', 'GRT', 'Agen', 'Status'];
-            let csvContent = headers.join(',') + '\n';
+            // Prepare data for Excel
+            const headers = ['PKK', 'PKK Inaportnet', 'SPB', 'Nama Kapal', 'GRT', 'Agen', 'Status'];
+            const data = [headers];
 
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                const rowData = Array.from(cells).map(cell => {
-                    // Remove action button text, keep only data
+                const rowData = Array.from(cells).slice(1).map(cell => { // Skip first column (Aksi button)
                     const text = cell.textContent.trim();
-                    if (text.includes('Detail')) return '';
-                    return text.replace(/"/g, '""'); // Escape quotes
+                    return text;
                 });
-                csvContent += rowData.map(field => `"${field}"`).join(',') + '\n';
+                data.push(rowData);
             });
 
-            // Download CSV
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            link.setAttribute('href', url);
-            link.setAttribute('download', `detail_${document.getElementById('modalZoneTitle').textContent}_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            // Create workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
 
-            showNotification('Data berhasil diexport', 'success');
+            // Set column widths
+            const colWidths = [
+                { wch: 15 }, // PKK
+                { wch: 20 }, // PKK Inaportnet
+                { wch: 15 }, // SPB
+                { wch: 25 }, // Nama Kapal
+                { wch: 10 }, // GRT
+                { wch: 20 }, // Agen
+                { wch: 15 }  // Status
+            ];
+            ws['!cols'] = colWidths;
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Detail Data');
+
+            // Generate filename
+            const zoneTitle = document.getElementById('modalZoneTitle').textContent;
+            const fileName = `detail_${zoneTitle}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+            // Save file
+            XLSX.writeFile(wb, fileName);
+
+            showNotification('Data berhasil diexport ke Excel', 'success');
         }
 
         // Add event listeners when DOM is loaded
@@ -5435,11 +5449,11 @@ function renderPelabuhanCards(data) {
                         Menampilkan <span id="detailDataCount">0</span> data
                     </div>
                     <div class="flex space-x-3">
-                        <button onclick="exportZoneDetailData()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center">
+                        <button onclick="exportZoneDetailExcel()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
-                            Export CSV
+                            Export Excel
                         </button>
                         <button onclick="closeZoneDetailModal()" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-md transition-colors">
                             Tutup
