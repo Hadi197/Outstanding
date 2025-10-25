@@ -375,7 +375,11 @@
                                 <p id="dnCount" class="text-3xl font-black text-emerald-900 tabular-nums">-</p>
                                 <div class="flex items-center mt-1">
                                     <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse mr-2"></div>
-                                    <span class="text-xs text-emerald-600/70 font-medium">Domestik</span>
+                                    <span class="text-xs text-emerald-600/70 font-medium">Outstanding</span>
+                                </div>
+                                <div class="mt-2 pt-2 border-t border-emerald-200/30">
+                                    <p class="text-xs text-emerald-600/80 font-medium">SPB Total</p>
+                                    <p id="dnSpbCount" class="text-lg font-bold text-emerald-800 tabular-nums">-</p>
                                 </div>
                             </div>
                             <div class="flex-shrink-0">
@@ -399,6 +403,10 @@
                                 <div class="flex items-center mt-1">
                                     <div class="w-2 h-2 bg-purple-400 rounded-full animate-pulse mr-2"></div>
                                     <span class="text-xs text-purple-600/70 font-medium">Internasional</span>
+                                </div>
+                                <div class="mt-2 pt-2 border-t border-purple-200/30">
+                                    <p class="text-xs text-purple-600/80 font-medium">SPB Total</p>
+                                    <p id="lnSpbCount" class="text-lg font-bold text-purple-800 tabular-nums">-</p>
                                 </div>
                             </div>
                             <div class="flex-shrink-0">
@@ -3017,12 +3025,69 @@
             if (dnEl) dnEl.textContent = dnCount.toLocaleString();
             if (lnEl) lnEl.textContent = lnCount.toLocaleString();
             if (manualEl) manualEl.textContent = manualCount.toLocaleString();
+
+            // Load and update SPB counts
+            loadSpbData();
+            loadSpbNomorPkkData();
+        }
+
+        // Global variable to store SPB nomor_pkk set for quick lookup
+        let spbNomorPkkSet = new Set();
+        let spbDataLoaded = false;
+
+        // Function to load SPB nomor_pkk data for lookup
+        async function loadSpbNomorPkkData() {
+            try {
+                const response = await fetch("spb_lookup.json");
+                if (!response.ok) {
+                    console.log("SPB lookup data not available");
+                    return;
+                }
+
+                const nomorPkkArray = await response.json();
+                spbNomorPkkSet = new Set(nomorPkkArray);
+                spbDataLoaded = true;
+
+                console.log(`SPB lookup data loaded: ${spbNomorPkkSet.size} nomor_pkk entries`);
+            } catch (error) {
+                console.error("Failed to load SPB lookup data:", error);
+            }
+        }
+
+        async function loadSpbData() {
+            try {
+                const response = await fetch("spb_summary.json");
+                if (!response.ok) {
+                    console.log("SPB summary data not available");
+                    return;
+                }
+
+                const summary = await response.json();
+                const dnSpbCount = summary.dn_spb_count || 0;
+                const lnSpbCount = summary.ln_spb_count || 0;
+
+                // Update SPB count elements
+                const dnSpbEl = document.getElementById("dnSpbCount");
+                const lnSpbEl = document.getElementById("lnSpbCount");
+
+                if (dnSpbEl) dnSpbEl.textContent = dnSpbCount.toLocaleString();
+                if (lnSpbEl) lnSpbEl.textContent = lnSpbCount.toLocaleString();
+
+                console.log(`SPB Data loaded: DN=${dnSpbCount}, LN=${lnSpbCount}`);
+            } catch (error) {
+                console.error("Failed to load SPB data:", error);
+            }
         }
 
         /* Updated renderPelabuhanCards: Group by regions (Kalimantan, Jawa, Bali Nusatenggara) */
 function renderPelabuhanCards(data) {
-    // Store data globally for modal access
-    currentDashboardData = data;
+    // Check if SPB data is loaded
+    if (!spbDataLoaded) {
+        console.log("SPB data not loaded yet, skipping render");
+        // Try again in 1 second
+        setTimeout(() => renderPelabuhanCards(data), 1000);
+        return;
+    }
     // Definisi mapping region berdasarkan nama pelabuhan/cabang
     const regionMapping = {
         'Kalimantan': {
@@ -3041,6 +3106,17 @@ function renderPelabuhanCards(data) {
             icon: '🏝️'
         }
     };
+
+    // Function to get SPB counts for outstanding data in a zone
+    function getSpbCountsForOutstanding(rows) {
+        const dnRows = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.DN'));
+        const lnRows = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.LN'));
+
+        const dnSpbCount = dnRows.filter(r => spbNomorPkkSet.has(r['no_pkk_inaportnet'])).length;
+        const lnSpbCount = lnRows.filter(r => spbNomorPkkSet.has(r['no_pkk_inaportnet'])).length;
+
+        return { dn: dnSpbCount, ln: lnSpbCount };
+    }
 
     // Fungsi untuk menentukan region berdasarkan nama
     function getRegion(name) {
@@ -3167,6 +3243,9 @@ function renderPelabuhanCards(data) {
             const dnCount = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.DN')).length;
             const lnCount = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.LN')).length;
 
+            // Get SPB counts for this zone
+            const spbCounts = getSpbCountsForOutstanding(rows);
+
             const card = document.createElement('div');
             card.className = 'bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300 border border-gray-200 group min-h-[160px]';
             card.setAttribute('data-zone', zone);
@@ -3194,10 +3273,14 @@ function renderPelabuhanCards(data) {
                     <div class="bg-blue-50 rounded-lg p-3 text-center">
                         <div class="text-xs font-medium text-blue-700 mb-1">DN</div>
                         <div class="text-lg font-bold text-blue-900 cursor-pointer hover:text-blue-700 transition-colors zone-clickable" data-type="dn" data-zone="${zone}" data-region="${regionName}">${dnCount}</div>
+                        <div class="text-xs font-medium text-blue-600 mt-1">SPB</div>
+                        <div class="text-sm font-bold text-blue-800">${spbCounts.dn.toLocaleString()}</div>
                     </div>
                     <div class="bg-green-50 rounded-lg p-3 text-center">
                         <div class="text-xs font-medium text-green-700 mb-1">LN</div>
                         <div class="text-lg font-bold text-green-900 cursor-pointer hover:text-green-700 transition-colors zone-clickable" data-type="ln" data-zone="${zone}" data-region="${regionName}">${lnCount}</div>
+                        <div class="text-xs font-medium text-green-600 mt-1">SPB</div>
+                        <div class="text-sm font-bold text-green-800">${spbCounts.ln.toLocaleString()}</div>
                     </div>
                 </div>
                 ${manualCount > 0 ? `

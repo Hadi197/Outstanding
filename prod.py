@@ -28,16 +28,11 @@ headers = {
     "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36 OPR/120.0.0.0"
 }
 
-# Body request (dengan parameter lengkap)
-body = {
-    "start_date": "2025-10-01",
-    "end_date": "2025-10-31",
-    "id_unit": "",
-    "id_zone": ""
-}
+# Payload untuk POST (kosong, sesuaikan jika perlu)
+payload = {}
 
 # Mengirim request POST
-response = requests.post(url, headers=headers, json=body)
+response = requests.post(url, headers=headers, json=payload)
 
 # Mengecek status response
 if response.status_code == 200:
