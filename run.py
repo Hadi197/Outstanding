@@ -59,6 +59,50 @@ def run_script(script_name, base_dir, timeout=600):
         return 128
 
 
+def generate_spb_summary(base_dir):
+    """Generate SPB summary and lookup files for dashboard"""
+    try:
+        import pandas as pd
+        import json
+
+        spb_csv_path = os.path.join(base_dir, "spb.csv")
+        if not os.path.exists(spb_csv_path):
+            print("Warning: spb.csv not found, skipping SPB summary generation")
+            return False
+
+        print("\nGenerating SPB summary files for dashboard...")
+
+        # Generate spb_summary.json (total counts)
+        spb_df = pd.read_csv(spb_csv_path, usecols=['nomor_pkk'])
+        dn_count = spb_df[spb_df['nomor_pkk'].str.contains('PKK.DN', na=False)].shape[0]
+        ln_count = spb_df[spb_df['nomor_pkk'].str.contains('PKK.LN', na=False)].shape[0]
+
+        summary = {
+            "dn_spb_count": dn_count,
+            "ln_spb_count": ln_count,
+            "total_spb_count": dn_count + ln_count,
+            "last_updated": pd.Timestamp.now().isoformat()
+        }
+
+        summary_path = os.path.join(base_dir, "spb_summary.json")
+        with open(summary_path, 'w') as f:
+            json.dump(summary, f, indent=2)
+
+        # Generate spb_lookup.json (nomor_pkk array for fast lookup)
+        nomor_pkk_list = spb_df['nomor_pkk'].dropna().tolist()
+        lookup_path = os.path.join(base_dir, "spb_lookup.json")
+        with open(lookup_path, 'w') as f:
+            json.dump(nomor_pkk_list, f)
+
+        print(f"Generated SPB summary: DN={dn_count}, LN={ln_count}, Total={dn_count + ln_count}")
+        print(f"Created {summary_path} and {lookup_path}")
+        return True
+
+    except Exception as e:
+        print(f"Error generating SPB summary: {e}")
+        return False
+
+
 def concat_csv_files(input_files, output_file):
     """Concatenate CSV files vertically, preserving header from the first file."""
     header_written = False
@@ -138,12 +182,17 @@ def main():
     else:
         print("\ngabung.csv produced by lookup.py")
 
+    # Generate SPB summary files for dashboard
+    generate_spb_summary(base_dir)
+
     print("\nAll done. Outputs available:")
     print(f" - {lhgk_path}")
     print(f" - {wasop_path}")
     print(f" - {spb_path}")
     print(f" - {bill_path}")
     print(f" - {gabung_path}")
+    print(f" - spb_summary.json (SPB totals for dashboard)")
+    print(f" - spb_lookup.json (SPB lookup data for dashboard)")
 
 
 if __name__ == "__main__":
