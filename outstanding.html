@@ -550,6 +550,24 @@
                         </select>
                     </div>
                     <div>
+                        <label for="monthFilter" class="hidden">Filter by Bulan:</label>
+                        <select id="monthFilter" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-100 min-w-[140px]">
+                            <option value="ALL">Semua Bulan</option>
+                            <option value="01">Januari</option>
+                            <option value="02">Februari</option>
+                            <option value="03">Maret</option>
+                            <option value="04">April</option>
+                            <option value="05">Mei</option>
+                            <option value="06">Juni</option>
+                            <option value="07">Juli</option>
+                            <option value="08">Agustus</option>
+                            <option value="09">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                    </div>
+                    <div>
                         <label for="yearFilter" class="hidden">Filter by Tahun:</label>
                         <select id="yearFilter" class="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-100 min-w-[120px]">
                             <option value="ALL">Semua Tahun</option>
@@ -2919,10 +2937,11 @@
 		});
 	}
 
-        // Unified filter: pelabuhan + year (+ optional month)
+        // Unified filter: pelabuhan + year + month
         function filterByPelabuhanAndYear() {
             const pelabuhan = document.getElementById("pelabuhanFilter").value || "ALL";
             const year = document.getElementById("yearFilter") ? document.getElementById("yearFilter").value : "ALL";
+            const month = document.getElementById("monthFilter") ? document.getElementById("monthFilter").value : "ALL";
             let pelabuhanKey = "PELABUHAN";
             if (!globalHeaders.includes("PELABUHAN")) {
                 if (globalHeaders.includes("name_branch")) pelabuhanKey = "name_branch";
@@ -2933,7 +2952,14 @@
 
             if (pelabuhan !== "ALL") filtered = filtered.filter(r => (r[pelabuhanKey] || "") === pelabuhan);
             if (year !== "ALL") filtered = filtered.filter(r => (r["departure_date"] || "").startsWith(year));
-            if (selectedMonth) filtered = filtered.filter(r => (r["departure_date"] || "").slice(0,7) === selectedMonth);
+            
+            // Filter by month if selected
+            if (month !== "ALL" && year !== "ALL") {
+                const yearMonth = `${year}-${month}`;
+                filtered = filtered.filter(r => (r["departure_date"] || "").startsWith(yearMonth));
+            } else if (selectedMonth) {
+                filtered = filtered.filter(r => (r["departure_date"] || "").slice(0,7) === selectedMonth);
+            }
 
             populateTable(globalHeaders, filtered);
             updateBarChart(filtered);
@@ -2943,6 +2969,7 @@
             // Reset combobox
             document.getElementById("pelabuhanFilter").value = "ALL";
             document.getElementById("yearFilter").value = "ALL";
+            document.getElementById("monthFilter").value = "ALL";
             // Reset selected month
             selectedMonth = null;
             // Show all data in table and chart
@@ -2970,6 +2997,15 @@
         function attachYearFilterListener() {
 		const yearFilter = document.getElementById("yearFilter");
 		yearFilter.addEventListener("change", () => {
+			selectedMonth = null;
+			filterByPelabuhanAndYear();
+		});
+	}
+
+        // Month filter listener
+        function attachMonthFilterListener() {
+		const monthFilter = document.getElementById("monthFilter");
+		monthFilter.addEventListener("change", () => {
 			selectedMonth = null;
 			filterByPelabuhanAndYear();
 		});
@@ -3498,6 +3534,7 @@ function renderPelabuhanCards(data) {
             populateYearFilter(globalData);
             attachPelabuhanFilterListener();
             attachYearFilterListener();
+            attachMonthFilterListener();
 
             // Initialize and update chart using reduced dataset
             initializeChart(globalCardData);
