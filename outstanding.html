@@ -3221,12 +3221,21 @@ function renderPelabuhanCards(data) {
         let key = resolveZoneValue(row) || 'Unknown';
         if (!key) key = 'Unknown';
         
-        // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
+        // Gabungkan zona-zona yang perlu digabung
         const keyLower = key.toLowerCase();
+        
+        // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
         if (keyLower.includes('zona surabaya') || keyLower.includes('zona gresik')) {
             key = 'TANJUNG PERAK';
         } else if (keyLower.includes('tanjung perak')) {
             key = 'TANJUNG PERAK';
+        }
+        
+        // Gabungkan ZONA TANJUNG WANGI ke TANJUNG WANGI
+        if (keyLower.includes('zona tanjung wangi')) {
+            key = 'TANJUNG WANGI';
+        } else if (keyLower.includes('tanjung wangi')) {
+            key = 'TANJUNG WANGI';
         }
         
         if (!zoneGroups[key]) zoneGroups[key] = [];
@@ -5147,10 +5156,18 @@ function renderPelabuhanCards(data) {
                     
                     // Apply same merging logic as dashboard cards
                     const resolvedZoneLower = resolvedZone.toLowerCase();
+                    
+                    // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
                     if (resolvedZoneLower.includes('zona surabaya') || 
                         resolvedZoneLower.includes('zona gresik') ||
                         resolvedZoneLower.includes('tanjung perak')) {
                         resolvedZone = 'TANJUNG PERAK';
+                    }
+                    
+                    // Gabungkan ZONA TANJUNG WANGI ke TANJUNG WANGI
+                    if (resolvedZoneLower.includes('zona tanjung wangi') ||
+                        resolvedZoneLower.includes('tanjung wangi')) {
+                        resolvedZone = 'TANJUNG WANGI';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
