@@ -5143,7 +5143,15 @@ function renderPelabuhanCards(data) {
                     if (hasAbaiPKK) return false;
 
                     // Use same zone resolution logic as dashboard cards
-                    const resolvedZone = resolveZoneValue(row) || 'Unknown';
+                    let resolvedZone = resolveZoneValue(row) || 'Unknown';
+                    
+                    // Apply same merging logic as dashboard cards
+                    const resolvedZoneLower = resolvedZone.toLowerCase();
+                    if (resolvedZoneLower.includes('zona surabaya') || 
+                        resolvedZoneLower.includes('zona gresik') ||
+                        resolvedZoneLower.includes('tanjung perak')) {
+                        resolvedZone = 'TANJUNG PERAK';
+                    }
                     
                     // Use exact zone matching (same as dashboard grouping)
                     if (resolvedZone !== zone) return false;
