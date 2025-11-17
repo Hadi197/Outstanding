@@ -3220,6 +3220,15 @@ function renderPelabuhanCards(data) {
     data.forEach(row => {
         let key = resolveZoneValue(row) || 'Unknown';
         if (!key) key = 'Unknown';
+        
+        // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
+        const keyLower = key.toLowerCase();
+        if (keyLower.includes('zona surabaya') || keyLower.includes('zona gresik')) {
+            key = 'TANJUNG PERAK';
+        } else if (keyLower.includes('tanjung perak')) {
+            key = 'TANJUNG PERAK';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
