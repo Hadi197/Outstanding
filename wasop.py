@@ -1,7 +1,10 @@
 import requests
 import json
 import os
-import pandas as pd  # Added for CSV export
+import pandas as pd
+import asyncio
+import aiohttp
+import time
 
 API_URL = "https://phinnisi.pelindo.co.id:9018/api/executing/monitoring-operational"
 HEADERS = {
@@ -55,26 +58,138 @@ def save_to_csv(data, filename=None):
     except Exception as e:
         print(f"[!] Error saving to CSV: {e}")
 
+async def scrape_data_async(session, page, record, semaphore):
+    """Async version untuk concurrent scraping"""
+    params = {
+        "page": page,
+        "record": record,
+        "data":""
+    }
+    
+    async with semaphore:
+        try:
+            print(f"  ⏳ Fetching page {page}...", end='', flush=True)
+            async with session.get(API_URL, params=params, timeout=aiohttp.ClientTimeout(total=120)) as response:
+                response.raise_for_status()
+                data = await response.json()
+                print(f" ✓", flush=True)
+                return data, page
+        except Exception as e:
+            print(f" ✗ ERROR", flush=True)
+            print(f"[!] Error during async request for page {page}: {e}")
+            return None, page
+
+async def scrape_all_data_async(record=1000):
+    """
+    Scrape all data menggunakan async concurrent requests untuk speed up
+    """
+    print("=" * 70)
+    print("🚀 WASOP ASYNC SCRAPER - Starting...")
+    print("=" * 70)
+    
+    # Headers untuk aiohttp
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "accept-encoding": "gzip, deflate, br, zstd",
+        "accept-language": "en-US,en;q=0.9,id;q=0.8,ms;q=0.7",
+        "access-token": HEADERS["access-token"],
+        "access_token": HEADERS["access_token"],
+        "connection": "keep-alive",
+        "host": "phinnisi.pelindo.co.id:9018",
+        "origin": "https://phinnisi.pelindo.co.id",
+        "referer": "https://phinnisi.pelindo.co.id/",
+        "user-agent": HEADERS["user-agent"],
+        "sub-branch": HEADERS["sub-branch"],
+        "id-unit": "",
+        "id-zone": "",
+    }
+    
+    # Semaphore untuk limit concurrent requests
+    semaphore = asyncio.Semaphore(8)
+    all_data = []
+    start_time = time.time()
+    
+    print(f"⚙️  Max concurrent requests: 8")
+    print(f"📦 Batch size: 10 pages per batch")
+    print(f"⏱️  Timeout: 120 seconds per request")
+    print("=" * 70)
+    
+    async with aiohttp.ClientSession(headers=headers) as session:
+        page = 1
+        batch_size = 10
+        batch_num = 1
+        
+        while True:
+            print(f"\n📊 BATCH #{batch_num} - Processing pages {page} to {page + batch_size - 1}...")
+            
+            # Create tasks for batch of pages
+            tasks = []
+            for i in range(batch_size):
+                current_page = page + i
+                task = scrape_data_async(session, current_page, record, semaphore)
+                tasks.append(task)
+            
+            # Execute batch concurrently
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # Process results
+            has_data = False
+            batch_records = 0
+            for result in results:
+                if isinstance(result, Exception):
+                    print(f"  ✗ Exception: {result}")
+                    continue
+                    
+                data, p = result
+                if not data or "data" not in data or "dataRec" not in data["data"]:
+                    continue
+                    
+                batch = data["data"]["dataRec"]
+                if batch:
+                    all_data.extend(batch)
+                    batch_records += len(batch)
+                    has_data = True
+                    
+                    # Check if this is the last page
+                    if len(batch) < record:
+                        print(f"\n✅ Batch #{batch_num} completed: {batch_records} records")
+                        print(f"🏁 Last page reached at page {p}")
+                        elapsed = time.time() - start_time
+                        print("=" * 70)
+                        print(f"✅ SCRAPING COMPLETED!")
+                        print(f"📊 Total records: {len(all_data):,}")
+                        print(f"⏱️  Time elapsed: {elapsed:.2f} seconds")
+                        print(f"⚡ Speed: {len(all_data)/elapsed:.1f} records/sec")
+                        print("=" * 70)
+                        return all_data
+            
+            if batch_records > 0:
+                elapsed_so_far = time.time() - start_time
+                print(f"✅ Batch #{batch_num} completed: {batch_records} records in {elapsed_so_far:.1f}s")
+                print(f"📊 Total so far: {len(all_data):,} records")
+            
+            # If no data in entire batch, we're done
+            if not has_data:
+                print(f"\n🏁 No more data found")
+                break
+                
+            page += batch_size
+            batch_num += 1
+    
+    elapsed = time.time() - start_time
+    print("=" * 70)
+    print(f"✅ SCRAPING COMPLETED!")
+    print(f"📊 Total records: {len(all_data):,}")
+    print(f"⏱️  Time elapsed: {elapsed:.2f} seconds")
+    print(f"⚡ Speed: {len(all_data)/elapsed:.1f} records/sec")
+    print("=" * 70)
+    return all_data
+
 def scrape_all_data(record=1000):
     """
-    Scrape all data in batches of `record` size.
+    Wrapper to run async scraping
     """
-    all_data = []
-    page = 1
-    while True:
-        print(f"[i] Fetching page {page}...")
-        data = scrape_data(page=page, record=record)
-        if not data or "data" not in data or "dataRec" not in data["data"]:
-            print("[!] No more data or error in response.")
-            break
-        batch = data["data"]["dataRec"]
-        all_data.extend(batch)
-        print(f"[i] Retrieved {len(batch)} records.")
-        if len(batch) < record:  # Last page
-            break
-        page += 1
-    print(f"[i] Total records fetched: {len(all_data)}")
-    return all_data
+    return asyncio.run(scrape_all_data_async(record))
 
 if __name__ == "__main__":
     print("[i] Starting data scraping...")

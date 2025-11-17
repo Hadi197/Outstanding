@@ -13,6 +13,8 @@ import logging
 from typing import Dict, List, Optional
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import asyncio
+import aiohttp
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -157,29 +159,55 @@ class PelindoBillingScraper:
             logger.error(f"Unexpected error: {e}")
             return None
     
-    def get_all_invoices(self, search_params: Dict = None) -> List[Dict]:
+    
+    async def get_invoice_page_async(self, session: aiohttp.ClientSession, payload: Dict, semaphore) -> Optional[Dict]:
+        """Async version untuk fetch single page"""
+        async with semaphore:
+            try:
+                page_num = payload.get('page', '?')
+                print(f"  ⏳ Fetching page {page_num}...", end='', flush=True)
+                url = f"{self.base_url}{self.api_endpoint}"
+                async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=120)) as response:
+                    response.raise_for_status()
+                    data = await response.json()
+                    print(f" ✓", flush=True)
+                    return data
+            except Exception as e:
+                print(f" ✗ ERROR", flush=True)
+                logger.error(f"Async request error for page {payload.get('page', '?')}: {e}")
+                return None
+    
+    async def get_all_invoices_async(self, search_params: Dict = None) -> List[Dict]:
         """
-        Fetch all invoices with pagination
+        Async version - Fetch all invoices with concurrent page requests
+        """
+        print("=" * 70)
+        print("🚀 BILLING ASYNC SCRAPER - Starting...")
+        print("=" * 70)
         
-        Args:
-            search_params: Search parameters for filtering
-            
-        Returns:
-            List of all invoice records
-        """
         all_invoices = []
-        page = 1
-        record = 10000  # 10,000 records per batch
+        record = 10000
         
         if search_params is None:
             search_params = {}
         
-        # Remove page limit to fetch all data
-        # max_pages = None (unlimited)
+        # Semaphore untuk limit concurrent requests
+        semaphore = asyncio.Semaphore(5)
         
-        while True:
-            payload = {
-                "page": page,
+        print(f"⚙️  Max concurrent requests: 5")
+        print(f"📦 Batch size: 10 pages per batch")
+        print(f"⏱️  Timeout: 120 seconds per request")
+        print(f"💰 Record per page: {record:,}")
+        print("=" * 70)
+        
+        # Headers untuk aiohttp
+        headers = dict(self.headers)
+        headers.pop('content-length', None)  # Remove if exists
+        
+        async with aiohttp.ClientSession(headers=headers) as session:
+            # First, get page 1 to know total pages
+            first_payload = {
+                "page": 1,
                 "record": record,
                 "data": search_params.get("data", ""),
                 "filterByStatus": search_params.get("filterByStatus", ""),
@@ -189,53 +217,109 @@ class PelindoBillingScraper:
                 "end_date": search_params.get("end_date", "2025-12-31")
             }
             
-            logger.info(f"Fetching page {page}...")
-            data = self.get_invoice_list(payload)
+            logger.info("Fetching first page to determine total pages...")
+            print(f"\n📄 Fetching first page to determine total pages...")
+            first_data = await self.get_invoice_page_async(session, first_payload, semaphore)
             
-            if not data:
-                logger.error(f"Failed to fetch page {page}")
-                break
+            if not first_data or 'data' not in first_data:
+                logger.error("Failed to fetch first page")
+                print("❌ Failed to fetch first page")
+                return []
             
-            # Extract invoice data based on actual response structure
-            if 'data' in data:
-                response_data = data['data']
-                
-                # Check if data contains dataRec (actual invoice records)
-                if isinstance(response_data, dict) and 'dataRec' in response_data:
-                    invoices = response_data['dataRec']
-                elif isinstance(response_data, list):
-                    invoices = response_data
-                else:
-                    invoices = []
-                    
-                # Get pagination info
-                total_pages = 1
-                if isinstance(response_data, dict):
-                    total_pages = response_data.get('totalPage', 1)
-                    total_rows = response_data.get('totalRow', 0)
-                    logger.info(f"Total rows available: {total_rows}, Total pages: {total_pages}")
-                    
+            # Extract first page data
+            response_data = first_data['data']
+            if isinstance(response_data, dict) and 'dataRec' in response_data:
+                all_invoices.extend(response_data['dataRec'])
+                total_pages = response_data.get('totalPage', 1)
+                total_rows = response_data.get('totalRow', 0)
+                logger.info(f"Total rows: {total_rows}, Total pages: {total_pages}")
+                print(f"📊 Total available: {total_rows:,} rows across {total_pages} pages")
+                print(f"✅ Page 1 loaded: {len(response_data['dataRec']):,} records")
             else:
-                invoices = []
-                total_pages = 1
+                logger.warning("Unexpected response structure")
+                print("⚠️  Unexpected response structure")
+                return []
             
-            if not invoices:
-                logger.info("No more invoices found")
-                break
+            # If only 1 page, return
+            if total_pages <= 1:
+                print("=" * 70)
+                print(f"✅ SCRAPING COMPLETED! (Only 1 page)")
+                print(f"📊 Total records: {len(all_invoices):,}")
+                print("=" * 70)
+                return all_invoices
             
-            all_invoices.extend(invoices)
-            logger.info(f"Page {page}/{total_pages}: {len(invoices)} invoices fetched. Total so far: {len(all_invoices)}")
+            # Fetch remaining pages concurrently in batches
+            batch_size = 10  # Process 10 pages at a time
+            start_time = time.time()
+            batch_num = 1
             
-            if page >= total_pages:
-                logger.info("All pages fetched")
-                break
+            for batch_start in range(2, total_pages + 1, batch_size):
+                batch_end = min(batch_start + batch_size, total_pages + 1)
+                
+                print(f"\n📊 BATCH #{batch_num} - Processing pages {batch_start} to {batch_end - 1}...")
+                
+                # Create tasks for this batch
+                tasks = []
+                for page in range(batch_start, batch_end):
+                    payload = {
+                        "page": page,
+                        "record": record,
+                        "data": search_params.get("data", ""),
+                        "filterByStatus": search_params.get("filterByStatus", ""),
+                        "filterByType": search_params.get("filterByType", ""),
+                        "filterByNota": search_params.get("filterByNota", ""),
+                        "start_date": search_params.get("start_date", "2025-01-01"),
+                        "end_date": search_params.get("end_date", "2025-12-31")
+                    }
+                    task = self.get_invoice_page_async(session, payload, semaphore)
+                    tasks.append((page, task))
+                
+                # Execute batch
+                logger.info(f"Fetching pages {batch_start} to {batch_end - 1}...")
+                results = await asyncio.gather(*[t[1] for t in tasks], return_exceptions=True)
+                
+                # Process results
+                batch_records = 0
+                for (page, _), result in zip(tasks, results):
+                    if isinstance(result, Exception):
+                        logger.error(f"Exception on page {page}: {result}")
+                        print(f"  ✗ Exception on page {page}")
+                        continue
+                    
+                    if not result or 'data' not in result:
+                        continue
+                    
+                    resp_data = result['data']
+                    if isinstance(resp_data, dict) and 'dataRec' in resp_data:
+                        invoices = resp_data['dataRec']
+                        all_invoices.extend(invoices)
+                        batch_records += len(invoices)
+                        logger.info(f"Page {page}: {len(invoices)} records. Total: {len(all_invoices)}")
+                
+                # Batch summary
+                if batch_records > 0:
+                    elapsed_so_far = time.time() - start_time
+                    print(f"✅ Batch #{batch_num} completed: {batch_records:,} records in {elapsed_so_far:.1f}s")
+                    print(f"📊 Total so far: {len(all_invoices):,} records")
+                
+                batch_num += 1
             
-            page += 1
-            logger.info(f"Moving to next page ({page}/{total_pages})...")
-            time.sleep(2)  # Rate limiting - increased to 2 seconds for larger requests
+            elapsed = time.time() - start_time
+            logger.info(f"Total invoices fetched: {len(all_invoices)} in {elapsed:.2f} seconds")
+            print("=" * 70)
+            print(f"✅ SCRAPING COMPLETED!")
+            print(f"📊 Total invoices: {len(all_invoices):,}")
+            print(f"⏱️  Time elapsed: {elapsed:.2f} seconds")
+            print(f"⚡ Speed: {len(all_invoices)/elapsed:.1f} records/sec")
+            print("=" * 70)
         
-        logger.info(f"Total invoices fetched: {len(all_invoices)}")
         return all_invoices
+    
+    def get_all_invoices(self, search_params: Dict = None) -> List[Dict]:
+        """
+        Wrapper untuk run async version
+        """
+        return asyncio.run(self.get_all_invoices_async(search_params))
     
     def save_to_csv(self, data: List[Dict], filename: str = None) -> str:
         """
@@ -422,49 +506,34 @@ def main():
         "end_date": f"{current_year}-12-31"     # End of current year
     }
     
-    print("Starting Pelindo Billing Invoice Scraper...")
-    print(f"Target URL: {scraper.base_url}{scraper.api_endpoint}")
-    print(f"Scraping data for year: {current_year}")
-    print(f"Date range: {search_params['start_date']} to {search_params['end_date']}")
-    print(f"📊 Batch size: 10,000 records per page")
-    print("⚠️  Note: This will fetch ALL data and may take several minutes...")
+    print("\n" + "=" * 70)
+    print("💰 PELINDO BILLING INVOICE SCRAPER")
+    print("=" * 70)
+    print(f"🎯 Target: {scraper.base_url}{scraper.api_endpoint}")
+    print(f"📅 Year: {current_year}")
+    print(f"📆 Date range: {search_params['start_date']} to {search_params['end_date']}")
+    print("=" * 70)
     
-    # Test single request first
-    print("\nTesting connection...")
-    test_data = scraper.get_invoice_list()
+    # Fetch invoices using async version (no need to test first)
+    print("\n🚀 Starting async scraping (this may take a few minutes)...")
+    all_invoices = scraper.get_all_invoices(search_params)
     
-    if test_data:
-        print("✅ Connection successful!")
-        print(f"Response keys: {list(test_data.keys()) if isinstance(test_data, dict) else 'Not a dict'}")
+    if all_invoices:
+        # Save with specific filename
+        print(f"\n💾 Saving to CSV...")
+        csv_file = scraper.save_to_csv(all_invoices, "bill.csv")
         
-        # Show estimated data size
-        if isinstance(test_data, dict) and 'data' in test_data:
-            data_info = test_data['data']
-            if isinstance(data_info, dict):
-                total_pages = data_info.get('totalPage', 'Unknown')
-                total_data = data_info.get('totalData', 'Unknown')
-                print(f"📈 Estimated total records: {total_data}")
-                print(f"📄 Total pages to fetch: {total_pages}")
+        # Print summary
+        scraper.print_summary(all_invoices)
         
-        # Fetch current year invoices
-        print("\n🚀 Starting full data scraping...")
-        print("This may take several minutes depending on data size...")
-        all_invoices = scraper.get_all_invoices(search_params)
-        
-        if all_invoices:
-            # Save with specific filename
-            csv_file = scraper.save_to_csv(all_invoices, "bill.csv")
-            
-            # Print summary
-            scraper.print_summary(all_invoices)
-            
-            print(f"\n✅ Successfully scraped {len(all_invoices)} invoices for year {current_year}")
-            if csv_file:
-                print(f"📄 CSV file: {csv_file}")
-        else:
-            print(f"❌ No invoice data found for year {current_year}")
+        print(f"\n" + "=" * 70)
+        print(f"✅ SUCCESS!")
+        print(f"📊 Total invoices scraped: {len(all_invoices):,}")
+        if csv_file:
+            print(f"📄 Saved to: {csv_file}")
+        print("=" * 70)
     else:
-        print("❌ Connection failed - check credentials and network")
+        print(f"\n❌ No invoice data found for year {current_year}")
 
 if __name__ == "__main__":
     main()

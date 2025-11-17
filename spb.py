@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 import brotli
 import json
 import os
+import asyncio
+import aiohttp
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 API_URL = "https://phinnisi.pelindo.co.id:9018/api/monitoring/ina-spb"
 HEADERS = {
@@ -105,27 +109,98 @@ def save_to_csv(data, filename=None):
     except Exception as e:
         print(f"[!] Error saving to CSV: {e}")
 
-def scrape_all_data():
-    all_data = []
+async def scrape_data_async(session, page, record, periode, semaphore):
+    """Async version untuk scraping dengan semaphore untuk kontrol concurrency"""
+    params = {
+        "page": page,
+        "record": record,
+        "data": "",
+        "periode": periode
+    }
+    
+    async with semaphore:
+        try:
+            async with session.get(API_URL, params=params, timeout=aiohttp.ClientTimeout(total=120)) as response:
+                response.raise_for_status()
+                data = await response.json()
+                return data, periode, page
+        except Exception as e:
+            print(f"[!] Error during async request for {periode} page {page}: {e}")
+            return None, periode, page
+
+async def scrape_period_async(session, start, end, semaphore):
+    """Scrape semua halaman untuk satu periode"""
+    periode_str = f"{start} s/d {end}"
+    print(f"[i] Scraping periode: {periode_str}")
+    
+    all_batch_data = []
+    page = 1
+    
+    while True:
+        data, _, _ = await scrape_data_async(session, page, 1000000, periode_str, semaphore)
+        
+        if not data or "data" not in data or "dataRec" not in data["data"]:
+            break
+            
+        batch = data["data"]["dataRec"]
+        all_batch_data.extend(batch)
+        print(f"  {periode_str} - Page {page}: {len(batch)} records")
+        
+        if len(batch) < 1000:
+            break
+        page += 1
+    
+    return all_batch_data
+
+async def scrape_all_data_async():
+    """Scrape semua periode secara concurrent dengan async"""
     periods = get_month_periods(start_year=2025)
-    for start, end in periods:
-        periode_str = f"{start} s/d {end}"
-        print(f"[i] Scraping periode: {periode_str}")
-        page = 1
-        while True:
-            print(f"  Page {page}...")
-            data = scrape_data(page=page, record=1000000, periode=periode_str)
-            if not data or "data" not in data or "dataRec" not in data["data"]:
-                print("  [!] No more data or error in response.")
-                break
-            batch = data["data"]["dataRec"]
-            all_data.extend(batch)
-            print(f"  Retrieved {len(batch)} records.")
-            if len(batch) < 1000:
-                break
-            page += 1
-    print(f"[i] Total records fetched: {len(all_data)}")
+    print(f"[i] Total {len(periods)} periods to scrape with async concurrency...")
+    
+    # Semaphore untuk membatasi concurrent requests (max 6 bersamaan)
+    semaphore = asyncio.Semaphore(6)
+    
+    # Custom headers untuk aiohttp
+    headers = {
+        "accept": "application/json, text/plain, */*",
+        "accept-encoding": "gzip, deflate, br, zstd",
+        "accept-language": "en-US,en;q=0.9,id;q=0.8,ms;q=0.7",
+        "access-token": HEADERS["access-token"],
+        "access_token": HEADERS["access_token"],
+        "origin": "https://phinnisi.pelindo.co.id",
+        "referer": "https://phinnisi.pelindo.co.id/",
+        "user-agent": HEADERS["user-agent"],
+        "host": "phinnisi.pelindo.co.id:9018",
+        "sub-branch": HEADERS["sub-branch"],
+        "id-unit": "",
+        "id-zone": ""
+    }
+    
+    start_time = time.time()
+    all_data = []
+    
+    async with aiohttp.ClientSession(headers=headers) as session:
+        # Create tasks untuk semua periode
+        tasks = [scrape_period_async(session, start, end, semaphore) for start, end in periods]
+        
+        # Execute all tasks concurrently
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Collect all data
+        for result in results:
+            if isinstance(result, Exception):
+                print(f"[!] Exception in period task: {result}")
+                continue
+            if result:
+                all_data.extend(result)
+    
+    elapsed = time.time() - start_time
+    print(f"[i] Total records fetched: {len(all_data)} in {elapsed:.2f} seconds")
     return all_data
+
+def scrape_all_data():
+    """Wrapper function untuk menjalankan async scraping"""
+    return asyncio.run(scrape_all_data_async())
 
 def fetch_data(base_url, headers, params):
     """

@@ -11,3 +11,5 @@ tzdata
 aiohttp>=3.8.0
 asyncio-mqtt
 python-dotenv
+aiodns
+cchardet
