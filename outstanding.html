@@ -3224,6 +3224,7 @@ function renderPelabuhanCards(data) {
         // Gabungkan zona-zona yang perlu digabung
         const keyLower = key.toLowerCase();
         
+        // === REGION JAWA ===
         // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
         if (keyLower.includes('zona surabaya') || keyLower.includes('zona gresik')) {
             key = 'TANJUNG PERAK';
@@ -3243,6 +3244,14 @@ function renderPelabuhanCards(data) {
             key = 'TANJUNG EMAS';
         } else if (keyLower.includes('tanjung emas')) {
             key = 'TANJUNG EMAS';
+        }
+        
+        // === REGION KALIMANTAN ===
+        // Gabungkan BANJARMASIN-TUKS ke BANJARMASIN
+        if (keyLower.includes('banjarmasin-tuks') || keyLower.includes('banjarmasin tuks')) {
+            key = 'BANJARMASIN';
+        } else if (keyLower.includes('banjarmasin')) {
+            key = 'BANJARMASIN';
         }
         
         if (!zoneGroups[key]) zoneGroups[key] = [];
@@ -5164,6 +5173,7 @@ function renderPelabuhanCards(data) {
                     // Apply same merging logic as dashboard cards
                     const resolvedZoneLower = resolvedZone.toLowerCase();
                     
+                    // === REGION JAWA ===
                     // Gabungkan ZONA SURABAYA dan ZONA GRESIK ke TANJUNG PERAK
                     if (resolvedZoneLower.includes('zona surabaya') || 
                         resolvedZoneLower.includes('zona gresik') ||
@@ -5181,6 +5191,14 @@ function renderPelabuhanCards(data) {
                     if (resolvedZoneLower.includes('zona semarang') ||
                         resolvedZoneLower.includes('tanjung emas')) {
                         resolvedZone = 'TANJUNG EMAS';
+                    }
+                    
+                    // === REGION KALIMANTAN ===
+                    // Gabungkan BANJARMASIN-TUKS ke BANJARMASIN
+                    if (resolvedZoneLower.includes('banjarmasin-tuks') ||
+                        resolvedZoneLower.includes('banjarmasin tuks') ||
+                        resolvedZoneLower.includes('banjarmasin')) {
+                        resolvedZone = 'BANJARMASIN';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
