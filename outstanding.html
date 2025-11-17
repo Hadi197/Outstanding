@@ -3238,6 +3238,13 @@ function renderPelabuhanCards(data) {
             key = 'TANJUNG WANGI';
         }
         
+        // Gabungkan ZONA SEMARANG ke TANJUNG EMAS
+        if (keyLower.includes('zona semarang')) {
+            key = 'TANJUNG EMAS';
+        } else if (keyLower.includes('tanjung emas')) {
+            key = 'TANJUNG EMAS';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5168,6 +5175,12 @@ function renderPelabuhanCards(data) {
                     if (resolvedZoneLower.includes('zona tanjung wangi') ||
                         resolvedZoneLower.includes('tanjung wangi')) {
                         resolvedZone = 'TANJUNG WANGI';
+                    }
+                    
+                    // Gabungkan ZONA SEMARANG ke TANJUNG EMAS
+                    if (resolvedZoneLower.includes('zona semarang') ||
+                        resolvedZoneLower.includes('tanjung emas')) {
+                        resolvedZone = 'TANJUNG EMAS';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
