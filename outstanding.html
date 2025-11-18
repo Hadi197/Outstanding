@@ -3285,6 +3285,14 @@ function renderPelabuhanCards(data) {
             key = 'KUMAI';
         }
         
+        // Gabungkan semua varian MEKARPUTIH ke MEKARPUTIH
+        if (keyLower.includes('mekarputih curah cair') || keyLower.includes('mekarputih ck muat') || 
+            keyLower.includes('mekarputih ck bongkar') || keyLower.includes('mekar putih')) {
+            key = 'MEKARPUTIH';
+        } else if (keyLower.includes('mekarputih')) {
+            key = 'MEKARPUTIH';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5262,6 +5270,15 @@ function renderPelabuhanCards(data) {
                         resolvedZoneLower.includes('bumiharjo') ||
                         resolvedZoneLower.includes('kumai')) {
                         resolvedZone = 'KUMAI';
+                    }
+                    
+                    // Gabungkan semua varian MEKARPUTIH ke MEKARPUTIH
+                    if (resolvedZoneLower.includes('mekarputih curah cair') ||
+                        resolvedZoneLower.includes('mekarputih ck muat') ||
+                        resolvedZoneLower.includes('mekarputih ck bongkar') ||
+                        resolvedZoneLower.includes('mekar putih') ||
+                        resolvedZoneLower.includes('mekarputih')) {
+                        resolvedZone = 'MEKARPUTIH';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
