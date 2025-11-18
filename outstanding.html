@@ -318,22 +318,34 @@
 
                 <!-- Subtab contents -->
                 <div id="dashKalimantanContent" class="subtab-content">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🌳 Kalimantan</h3>
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">🌳 Kalimantan</h3>
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg px-4 py-2">
+                            <span class="text-sm text-green-700 font-medium">Total Outstanding: </span>
+                            <span id="kalimantanTotalCount" class="text-lg font-bold text-green-900">0</span>
+                        </div>
                     </div>
                     <div id="dashKalimantanCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
                 </div>
 
                 <div id="dashJawaContent" class="subtab-content hidden">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🏛️ Jawa</h3>
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">🏛️ Jawa</h3>
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg px-4 py-2">
+                            <span class="text-sm text-blue-700 font-medium">Total Outstanding: </span>
+                            <span id="jawaTotalCount" class="text-lg font-bold text-blue-900">0</span>
+                        </div>
                     </div>
                     <div id="dashJawaCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
                 </div>
 
                 <div id="dashBaliContent" class="subtab-content hidden">
-                    <div class="mb-4">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-2">🏝️ Bali Nusatenggara</h3>
+                    <div class="mb-4 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-800">🏝️ Bali Nusatenggara</h3>
+                        <div class="bg-gradient-to-r from-orange-50 to-pink-50 border border-orange-200 rounded-lg px-4 py-2">
+                            <span class="text-sm text-orange-700 font-medium">Total Outstanding: </span>
+                            <span id="baliTotalCount" class="text-lg font-bold text-orange-900">0</span>
+                        </div>
                     </div>
                     <div id="dashBaliCards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
                 </div>
@@ -3493,6 +3505,11 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
     dashJawaCards.innerHTML = '';
     dashBaliCards.innerHTML = '';
 
+    // Initialize counters for each region
+    let kalimantanTotal = 0;
+    let jawaTotal = 0;
+    let baliTotal = 0;
+
     // Render and append cards into subtab containers
     Object.entries(regionGroups).forEach(([regionName, zones]) => {
         if (zones.length === 0) return;
@@ -3505,6 +3522,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
 
         zones.forEach(({zone, rows}, idx) => {
             const count = rows.length;
+            
+            // Add to regional total
+            if (regionName === 'Kalimantan') kalimantanTotal += count;
+            else if (regionName === 'Jawa') jawaTotal += count;
+            else if (regionName === 'Bali Nusatenggara') baliTotal += count;
+            
             const manualCount = rows.filter(r => !((r['no_pkk_inaportnet'] || '').trim())).length;
             let pct = 0;
             if (count > 0) pct = (manualCount / count) * 100;
@@ -3566,6 +3589,15 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             targetContainer.appendChild(card);
         });
     });
+    
+    // Update regional total counters
+    const kalimantanCountEl = document.getElementById('kalimantanTotalCount');
+    const jawaCountEl = document.getElementById('jawaTotalCount');
+    const baliCountEl = document.getElementById('baliTotalCount');
+    
+    if (kalimantanCountEl) kalimantanCountEl.textContent = kalimantanTotal.toLocaleString();
+    if (jawaCountEl) jawaCountEl.textContent = jawaTotal.toLocaleString();
+    if (baliCountEl) baliCountEl.textContent = baliTotal.toLocaleString();
 }
 
         // localStorage key for abai data
