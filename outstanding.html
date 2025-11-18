@@ -3277,6 +3277,14 @@ function renderPelabuhanCards(data) {
             key = 'SAMPIT';
         }
         
+        // Gabungkan ZONA KUMAI dan ZONA BUMIHARJO ke KUMAI
+        if (keyLower.includes('zona kumai') || keyLower.includes('zona bumiharjo') || 
+            keyLower.includes('bumiharjo')) {
+            key = 'KUMAI';
+        } else if (keyLower.includes('kumai')) {
+            key = 'KUMAI';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5246,6 +5254,14 @@ function renderPelabuhanCards(data) {
                         resolvedZoneLower.includes('bagendang') ||
                         resolvedZoneLower.includes('sampit')) {
                         resolvedZone = 'SAMPIT';
+                    }
+                    
+                    // Gabungkan ZONA KUMAI dan ZONA BUMIHARJO ke KUMAI
+                    if (resolvedZoneLower.includes('zona kumai') ||
+                        resolvedZoneLower.includes('zona bumiharjo') ||
+                        resolvedZoneLower.includes('bumiharjo') ||
+                        resolvedZoneLower.includes('kumai')) {
+                        resolvedZone = 'KUMAI';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
