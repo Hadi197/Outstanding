@@ -154,16 +154,21 @@ exports.handler = async (event, context) => {
 // Handle save keterangan
 async function handleSaveKeterangan(data, headers) {
   try {
+    console.log('📝 handleSaveKeterangan called with:', JSON.stringify(data));
+    
     if (!data.pkk) {
+      console.error('❌ Missing PKK in data:', data);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing PKK' }),
+        body: JSON.stringify({ error: 'Missing PKK', received: data }),
       };
     }
 
     const csvPath = path.join('/tmp', 'keterangan.csv');
     const keterangan = data.keterangan || '';
+    
+    console.log(`💾 Saving keterangan for PKK: ${data.pkk}, keterangan: "${keterangan}"`);
     
     // Read existing keterangan
     let existingData = {};
@@ -222,10 +227,15 @@ async function handleSaveKeterangan(data, headers) {
     };
 
   } catch (error) {
+    console.error('❌ Error in handleSaveKeterangan:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message }),
+      body: JSON.stringify({ 
+        error: error.message,
+        stack: error.stack,
+        data: data 
+      }),
     };
   }
 }

@@ -5844,6 +5844,8 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
         
         async function saveKeteranganToGitHub(pkk, keterangan) {
             try {
+                console.log('🚀 Saving keterangan to GitHub:', { pkk, keterangan });
+                
                 // Baca file keterangan.csv dari GitHub
                 const response = await fetch('/api/abaikan-enhanced', {
                     method: 'POST',
@@ -5857,8 +5859,10 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                     })
                 });
                 
+                const result = await response.json();
+                console.log('📡 Response:', response.status, result);
+                
                 if (response.ok) {
-                    const result = await response.json();
                     console.log('✅ Keterangan saved to GitHub:', result);
                     
                     // Update cache
@@ -5870,7 +5874,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                     
                     return true;
                 } else {
-                    throw new Error('GitHub API error');
+                    throw new Error(result.error || 'GitHub API error');
                 }
             } catch (e) {
                 console.error('❌ Error saving to GitHub:', e);
