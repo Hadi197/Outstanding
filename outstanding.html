@@ -272,11 +272,43 @@
             <div id="pelabuhanCardsContainer">
                 <!-- Dashboard subtabs for regions -->
                 <div class="mb-4">
-                    <div class="flex justify-center">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div class="bg-gray-100 p-1 rounded-lg">
                             <button id="dashKalimantanTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 bg-white text-gray-800 shadow-sm">🌳 Kalimantan</button>
                             <button id="dashJawaTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">🏛️ Jawa</button>
                             <button id="dashBaliTab" class="px-5 py-2 font-semibold text-sm rounded-md transition-all duration-200 text-gray-600 hover:text-gray-800">🏝️ Bali Nusatenggara</button>
+                        </div>
+                        
+                        <!-- Dashboard Filters -->
+                        <div class="flex gap-3">
+                            <div>
+                                <select id="dashMonthFilter" class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-50 min-w-[140px] text-sm">
+                                    <option value="ALL">Semua Bulan</option>
+                                    <option value="01">Januari</option>
+                                    <option value="02">Februari</option>
+                                    <option value="03">Maret</option>
+                                    <option value="04">April</option>
+                                    <option value="05">Mei</option>
+                                    <option value="06">Juni</option>
+                                    <option value="07">Juli</option>
+                                    <option value="08">Agustus</option>
+                                    <option value="09">September</option>
+                                    <option value="10">Oktober</option>
+                                    <option value="11">November</option>
+                                    <option value="12">Desember</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select id="dashYearFilter" class="px-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:bg-gray-50 min-w-[120px] text-sm">
+                                    <option value="ALL">Semua Tahun</option>
+                                </select>
+                            </div>
+                            <button id="dashClearFilterBtn" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1">
+                                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                Clear
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3011,6 +3043,64 @@
 		});
 	}
 
+        // Dashboard filter functions
+        function populateDashYearFilter(data) {
+            const yearFilter = document.getElementById("dashYearFilter");
+            if (!yearFilter) return;
+            
+            const years = new Set();
+            data.forEach(row => {
+                const departureDate = row['departure_date'] || '';
+                if (departureDate) {
+                    const year = departureDate.substring(0, 4);
+                    if (year && /^\d{4}$/.test(year)) {
+                        years.add(year);
+                    }
+                }
+            });
+            
+            const sortedYears = Array.from(years).sort().reverse();
+            
+            // Keep "Semua Tahun" option
+            yearFilter.innerHTML = '<option value="ALL">Semua Tahun</option>';
+            sortedYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+            });
+        }
+        
+        function attachDashboardFilterListeners() {
+            const dashMonthFilter = document.getElementById("dashMonthFilter");
+            const dashYearFilter = document.getElementById("dashYearFilter");
+            const dashClearFilterBtn = document.getElementById("dashClearFilterBtn");
+            
+            if (dashMonthFilter) {
+                dashMonthFilter.addEventListener("change", () => {
+                    const month = dashMonthFilter.value;
+                    const year = dashYearFilter.value;
+                    renderPelabuhanCards(globalCardData, month, year);
+                });
+            }
+            
+            if (dashYearFilter) {
+                dashYearFilter.addEventListener("change", () => {
+                    const month = dashMonthFilter.value;
+                    const year = dashYearFilter.value;
+                    renderPelabuhanCards(globalCardData, month, year);
+                });
+            }
+            
+            if (dashClearFilterBtn) {
+                dashClearFilterBtn.addEventListener("click", () => {
+                    dashMonthFilter.value = "ALL";
+                    dashYearFilter.value = "ALL";
+                    renderPelabuhanCards(globalCardData, "ALL", "ALL");
+                });
+            }
+        }
+
         function updateBarChart(filteredData) {
             const { labels, values } = aggregateByMonth(filteredData);
             if (!barChart) return;
@@ -3116,14 +3206,37 @@
         }
 
         /* Updated renderPelabuhanCards: Group by regions (Kalimantan, Jawa, Bali Nusatenggara) */
-function renderPelabuhanCards(data) {
+function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
     // Check if SPB data is loaded
     if (!spbDataLoaded) {
         console.log("SPB data not loaded yet, skipping render");
         // Try again in 1 second
-        setTimeout(() => renderPelabuhanCards(data), 1000);
+        setTimeout(() => renderPelabuhanCards(data, filterMonth, filterYear), 1000);
         return;
     }
+    
+    // Apply month and year filters to data
+    let filteredData = data;
+    if (filterMonth !== 'ALL' || filterYear !== 'ALL') {
+        filteredData = data.filter(row => {
+            const departureDate = row['departure_date'] || '';
+            if (!departureDate) return false;
+            
+            if (filterYear !== 'ALL' && filterMonth !== 'ALL') {
+                const yearMonth = `${filterYear}-${filterMonth}`;
+                return departureDate.startsWith(yearMonth);
+            } else if (filterYear !== 'ALL') {
+                return departureDate.startsWith(filterYear);
+            } else if (filterMonth !== 'ALL') {
+                // Extract month from date (format: YYYY-MM-DD)
+                const month = departureDate.substring(5, 7);
+                return month === filterMonth;
+            }
+            return true;
+        });
+        console.log(`Dashboard filtered: ${filteredData.length} rows (Month: ${filterMonth}, Year: ${filterYear})`);
+    }
+    
     // Definisi mapping region berdasarkan nama pelabuhan/cabang
     const regionMapping = {
         'Kalimantan': {
@@ -3227,7 +3340,7 @@ function renderPelabuhanCards(data) {
 
     // Kelompokkan data berdasarkan zone/branch resolved
     const zoneGroups = {};
-    data.forEach(row => {
+    filteredData.forEach(row => {
         let key = resolveZoneValue(row) || 'Unknown';
         if (!key) key = 'Unknown';
         
@@ -3644,9 +3757,11 @@ function renderPelabuhanCards(data) {
             populateTable(headers, globalData);
             populatePelabuhanFilter(globalData);
             populateYearFilter(globalData);
+            populateDashYearFilter(globalData); // Populate dashboard year filter
             attachPelabuhanFilterListener();
             attachYearFilterListener();
             attachMonthFilterListener();
+            attachDashboardFilterListeners(); // Attach dashboard filter listeners
 
             // Initialize and update chart using reduced dataset
             initializeChart(globalCardData);
