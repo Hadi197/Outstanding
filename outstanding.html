@@ -3261,6 +3261,14 @@ function renderPelabuhanCards(data) {
             key = 'KOTABARU';
         }
         
+        // Gabungkan ZONA SATUI & BUNATI dan ZONA BATULICIN ke BATULICIN
+        if (keyLower.includes('zona satui') || keyLower.includes('bunati') || 
+            keyLower.includes('zona batulicin') || keyLower.includes('satui')) {
+            key = 'BATULICIN';
+        } else if (keyLower.includes('batulicin')) {
+            key = 'BATULICIN';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5213,6 +5221,15 @@ function renderPelabuhanCards(data) {
                         resolvedZoneLower.includes('sts-kotabaru') ||
                         resolvedZoneLower.includes('kotabaru')) {
                         resolvedZone = 'KOTABARU';
+                    }
+                    
+                    // Gabungkan ZONA SATUI & BUNATI dan ZONA BATULICIN ke BATULICIN
+                    if (resolvedZoneLower.includes('zona satui') ||
+                        resolvedZoneLower.includes('bunati') ||
+                        resolvedZoneLower.includes('zona batulicin') ||
+                        resolvedZoneLower.includes('satui') ||
+                        resolvedZoneLower.includes('batulicin')) {
+                        resolvedZone = 'BATULICIN';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
