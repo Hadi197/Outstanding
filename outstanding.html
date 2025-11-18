@@ -3254,6 +3254,13 @@ function renderPelabuhanCards(data) {
             key = 'BANJARMASIN';
         }
         
+        // Gabungkan STS KOTABARU ke KOTABARU
+        if (keyLower.includes('sts kotabaru') || keyLower.includes('sts-kotabaru')) {
+            key = 'KOTABARU';
+        } else if (keyLower.includes('kotabaru')) {
+            key = 'KOTABARU';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5199,6 +5206,13 @@ function renderPelabuhanCards(data) {
                         resolvedZoneLower.includes('banjarmasin tuks') ||
                         resolvedZoneLower.includes('banjarmasin')) {
                         resolvedZone = 'BANJARMASIN';
+                    }
+                    
+                    // Gabungkan STS KOTABARU ke KOTABARU
+                    if (resolvedZoneLower.includes('sts kotabaru') ||
+                        resolvedZoneLower.includes('sts-kotabaru') ||
+                        resolvedZoneLower.includes('kotabaru')) {
+                        resolvedZone = 'KOTABARU';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
