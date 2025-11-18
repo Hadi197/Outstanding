@@ -2375,6 +2375,10 @@
     let globalCardData = []; // used by cards/charts (filtered by abai)
     let globalHeaders = [];
     let barChart;
+    
+    // Dashboard filter state
+    let dashboardFilterMonth = 'ALL';
+    let dashboardFilterYear = 'ALL';
         
         // Server management functions
         let serverCheckInterval;
@@ -3081,17 +3085,17 @@
             
             if (dashMonthFilter) {
                 dashMonthFilter.addEventListener("change", () => {
-                    const month = dashMonthFilter.value;
-                    const year = dashYearFilter.value;
-                    renderPelabuhanCards(globalCardData, month, year);
+                    dashboardFilterMonth = dashMonthFilter.value;
+                    dashboardFilterYear = dashYearFilter.value;
+                    renderPelabuhanCards(globalCardData, dashboardFilterMonth, dashboardFilterYear);
                 });
             }
             
             if (dashYearFilter) {
                 dashYearFilter.addEventListener("change", () => {
-                    const month = dashMonthFilter.value;
-                    const year = dashYearFilter.value;
-                    renderPelabuhanCards(globalCardData, month, year);
+                    dashboardFilterMonth = dashMonthFilter.value;
+                    dashboardFilterYear = dashYearFilter.value;
+                    renderPelabuhanCards(globalCardData, dashboardFilterMonth, dashboardFilterYear);
                 });
             }
             
@@ -3099,6 +3103,8 @@
                 dashClearFilterBtn.addEventListener("click", () => {
                     dashMonthFilter.value = "ALL";
                     dashYearFilter.value = "ALL";
+                    dashboardFilterMonth = "ALL";
+                    dashboardFilterYear = "ALL";
                     renderPelabuhanCards(globalCardData, "ALL", "ALL");
                 });
             }
@@ -5335,12 +5341,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             // Show modal
             modal.classList.remove('hidden');
 
-            // Load and display data
-            loadZoneDetailData(zone, type);
+            // Load and display data with current dashboard filters
+            loadZoneDetailData(zone, type, dashboardFilterMonth, dashboardFilterYear);
         }
 
         // Function to load zone detail data
-        async function loadZoneDetailData(zone, type) {
+        async function loadZoneDetailData(zone, type, filterMonth = 'ALL', filterYear = 'ALL') {
             try {
                 // Use original CSV data for accurate counts
                 if (originalCSVData.length === 0) {
@@ -5362,6 +5368,22 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                     const abaiSet = getAbaiFromLocalStorage();
                     const hasAbaiPKK = rowHasAnyAbaiPKK(row, abaiSet);
                     if (hasAbaiPKK) return false;
+                    
+                    // Apply month/year filter (same as dashboard cards)
+                    if (filterMonth !== 'ALL' || filterYear !== 'ALL') {
+                        const departureDate = row['departure_date'] || '';
+                        if (!departureDate) return false;
+                        
+                        if (filterYear !== 'ALL' && filterMonth !== 'ALL') {
+                            const yearMonth = `${filterYear}-${filterMonth}`;
+                            if (!departureDate.startsWith(yearMonth)) return false;
+                        } else if (filterYear !== 'ALL') {
+                            if (!departureDate.startsWith(filterYear)) return false;
+                        } else if (filterMonth !== 'ALL') {
+                            const month = departureDate.substring(5, 7);
+                            if (month !== filterMonth) return false;
+                        }
+                    }
 
                     // Use same zone resolution logic as dashboard cards
                     let resolvedZone = resolveZoneValue(row) || 'Unknown';
