@@ -1794,6 +1794,7 @@
                             button.className = "px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1";
                             button.textContent = "Abaikan";
                             button.onclick = () => handleAbaikan(row["no_pkk_inaportnet"], button, tr, row);
+                            button.style.display = "none"; // Hide the button
                             td.appendChild(button);
                         } else {
                             td.textContent = "-";
@@ -2407,16 +2408,22 @@
                     const lines = csvText.split('\n');
                     keteranganFromFile = {};
                     
-                    // Skip header, parse CSV
+                    // Skip header, parse CSV (now with 3 columns: PKK, no_pkk_inaportnet, keterangan)
                     for (let i = 1; i < lines.length; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
                         
-                        const match = line.match(/^"([^"]*)","([^"]*)"$/);
+                        // Match 3 columns: "PKK","no_pkk_inaportnet","keterangan"
+                        const match = line.match(/^"([^"]*)","([^"]*)","([^"]*)"$/);
                         if (match) {
                             const pkk = match[1];
-                            const keterangan = match[2];
-                            if (pkk && keterangan) {
+                            const pkkInaportnet = match[2];
+                            const keterangan = match[3];
+                            
+                            // Store by primary key (no_pkk_inaportnet if exists, otherwise PKK)
+                            if (pkkInaportnet && keterangan) {
+                                keteranganFromFile[pkkInaportnet] = keterangan;
+                            } else if (pkk && keterangan) {
                                 keteranganFromFile[pkk] = keterangan;
                             }
                         }
@@ -2448,16 +2455,22 @@
                 const lines = csvText.split('\n');
                 keteranganFromFile = {};
                 
-                // Skip header, parse CSV
+                // Skip header, parse CSV (now with 3 columns)
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
                     if (!line) continue;
                     
-                    const match = line.match(/^"([^"]*)","([^"]*)"$/);
+                    // Match 3 columns: "PKK","no_pkk_inaportnet","keterangan"
+                    const match = line.match(/^"([^"]*)","([^"]*)","([^"]*)"$/);
                     if (match) {
                         const pkk = match[1];
-                        const keterangan = match[2];
-                        if (pkk && keterangan) {
+                        const pkkInaportnet = match[2];
+                        const keterangan = match[3];
+                        
+                        // Store by primary key (no_pkk_inaportnet if exists, otherwise PKK)
+                        if (pkkInaportnet && keterangan) {
+                            keteranganFromFile[pkkInaportnet] = keterangan;
+                        } else if (pkk && keterangan) {
                             keteranganFromFile[pkk] = keterangan;
                         }
                     }
@@ -5669,14 +5682,15 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                         <div class="font-semibold text-yellow-800 mb-1">📝 Keterangan:</div>
                         <div class="break-words">${escapeHtml(existingNote)}</div>
                      </div>` : 
-                    '<span class="text-xs text-gray-400 italic">Belum ada keterangan</span>';
+                    '';
 
                 return `
                     <tr class="hover:bg-gray-50" data-row-index="${index}" data-pkk="${escapeHtml(pkkInaportnet)}">
                         <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">
                             <div class="flex flex-col gap-1">
                                 <button onclick="handleModalAbaikan('${escapeHtml(pkkInaportnet)}', this, this.closest('tr'), ${index})" 
-                                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 w-full">
+                                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 w-full"
+                                        style="display: none;">
                                     Abaikan
                                 </button>
                                 <button onclick="showKeteranganModalByIndex(${index})" 
@@ -5723,11 +5737,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             }
             
             const row = window.currentModalData[index];
-            const pkk = row['no_pkk_inaportnet'] || '';
+            const pkkInaportnet = row['no_pkk_inaportnet'] || '';
+            const pkk = row['PKK'] || row['nomor_spb'] || '';
             const namaKapal = row['NAMA KAPAL'] || row['vessel_name_spb'] || '';
             const spb = row['nomor_spb'] || '';
             
-            showKeteranganModal(pkk, namaKapal, spb, index);
+            showKeteranganModal(pkk, pkkInaportnet, namaKapal, spb, index);
         }
 
         // Function to get status from row data
@@ -5821,6 +5836,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
         // Keterangan Management Functions
         const KETERANGAN_STORAGE_KEY = 'outstanding_keterangan_data';
         let currentKeteranganPKK = '';
+        let currentKeteranganPKKInaportnet = ''; // Store both references
         let currentKeteranganRowIndex = -1;
 
         function getKeteranganForPKK(pkk) {
@@ -5828,12 +5844,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             return keteranganFromFile[pkk] || '';
         }
 
-        async function saveKeteranganToPKK(pkk, keterangan) {
+        async function saveKeteranganToPKK(pkk, pkkInaportnet, keterangan) {
             const isProduction = isProductionEnvironment();
             
             if (isProduction) {
                 // Production: Gunakan GitHub API via Netlify Function
-                return await saveKeteranganToGitHub(pkk, keterangan);
+                return await saveKeteranganToGitHub(pkk, pkkInaportnet, keterangan);
             } else {
                 // Development: Gunakan local server
                 try {
@@ -5846,6 +5862,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                         },
                         body: JSON.stringify({
                             pkk: pkk,
+                            pkk_inaportnet: pkkInaportnet,
                             keterangan: keterangan
                         })
                     });
@@ -5873,9 +5890,9 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             }
         }
         
-        async function saveKeteranganToGitHub(pkk, keterangan) {
+        async function saveKeteranganToGitHub(pkk, pkkInaportnet, keterangan) {
             try {
-                console.log('🚀 Saving keterangan to GitHub:', { pkk, keterangan });
+                console.log('🚀 Saving keterangan to GitHub:', { pkk, pkkInaportnet, keterangan });
                 
                 // Baca file keterangan.csv dari GitHub
                 const response = await fetch('/api/abaikan-enhanced', {
@@ -5886,6 +5903,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                     body: JSON.stringify({
                         action: 'save_keterangan',
                         pkk: pkk,
+                        pkk_inaportnet: pkkInaportnet,
                         keterangan: keterangan
                     })
                 });
@@ -5896,11 +5914,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 if (response.ok) {
                     console.log('✅ Keterangan saved to GitHub:', result);
                     
-                    // Update cache immediately
+                    // Update cache immediately - use pkkInaportnet if available, else pkk
+                    const key = pkkInaportnet || pkk;
                     if (keterangan && keterangan.trim()) {
-                        keteranganFromFile[pkk] = keterangan.trim();
+                        keteranganFromFile[key] = keterangan.trim();
                     } else {
-                        delete keteranganFromFile[pkk];
+                        delete keteranganFromFile[key];
                     }
                     
                     // Reload keterangan from file after a short delay to ensure GitHub sync is complete
@@ -5919,8 +5938,9 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             }
         }
 
-        function showKeteranganModal(pkk, namaKapal, spb, rowIndex) {
+        function showKeteranganModal(pkk, pkkInaportnet, namaKapal, spb, rowIndex) {
             currentKeteranganPKK = pkk;
+            currentKeteranganPKKInaportnet = pkkInaportnet;
             currentKeteranganRowIndex = rowIndex;
             
             const modal = document.getElementById('keteranganModal');
@@ -5929,12 +5949,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             const spbEl = document.getElementById('keteranganSPB');
             const textEl = document.getElementById('keteranganText');
             
-            pkkEl.textContent = pkk;
+            pkkEl.textContent = pkkInaportnet || pkk;
             kapalEl.textContent = namaKapal || '-';
             spbEl.textContent = spb || '-';
             
-            // Load existing keterangan
-            const existingNote = getKeteranganForPKK(pkk);
+            // Load existing keterangan - use pkkInaportnet if available, else PKK
+            const existingNote = getKeteranganForPKK(pkkInaportnet || pkk);
             textEl.value = existingNote;
             
             modal.classList.remove('hidden');
@@ -5945,6 +5965,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             const modal = document.getElementById('keteranganModal');
             modal.classList.add('hidden');
             currentKeteranganPKK = '';
+            currentKeteranganPKKInaportnet = '';
             currentKeteranganRowIndex = -1;
         }
 
@@ -5957,13 +5978,13 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 return;
             }
             
-            if (!currentKeteranganPKK) {
+            if (!currentKeteranganPKK && !currentKeteranganPKKInaportnet) {
                 showNotification('Error: PKK tidak ditemukan', 'error');
                 return;
             }
             
             // 1. Simpan ke localStorage
-            const success = saveKeteranganToPKK(currentKeteranganPKK, keterangan);
+            const success = saveKeteranganToPKK(currentKeteranganPKK, currentKeteranganPKKInaportnet, keterangan);
             
             if (success) {
                 // 2. Update tampilan di modal (kolom keterangan)

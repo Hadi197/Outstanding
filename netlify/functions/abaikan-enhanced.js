@@ -162,21 +162,23 @@ async function handleSaveKeterangan(data, headers) {
   try {
     console.log('📝 handleSaveKeterangan called with:', JSON.stringify(data));
     
-    if (!data.pkk) {
-      console.error('❌ Missing PKK in data:', data);
+    if (!data.pkk && !data.pkk_inaportnet) {
+      console.error('❌ Missing PKK or pkk_inaportnet in data:', data);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: 'Missing PKK', received: data }),
+        body: JSON.stringify({ error: 'Missing PKK or pkk_inaportnet', received: data }),
       };
     }
 
     const csvPath = path.join('/tmp', 'keterangan.csv');
     const keterangan = data.keterangan || '';
+    const pkk = data.pkk || '';
+    const pkkInaportnet = data.pkk_inaportnet || '';
     
-    console.log(`💾 Saving keterangan for PKK: ${data.pkk}, keterangan: "${keterangan}"`);
+    console.log(`💾 Saving keterangan - PKK: ${pkk}, PKK_Inaportnet: ${pkkInaportnet}, keterangan: "${keterangan}"`);
     
-    // Read existing keterangan
+    // Read existing keterangan (now with 3 columns)
     let existingData = {};
     try {
       const csvContent = await fs.readFile(csvPath, 'utf8');
@@ -184,26 +186,38 @@ async function handleSaveKeterangan(data, headers) {
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
-        const match = line.match(/^"([^"]*)","([^"]*)"$/);
+        const match = line.match(/^"([^"]*)","([^"]*)","([^"]*)"$/);
         if (match) {
-          existingData[match[1]] = match[2];
+          const key = match[2] || match[1]; // Use pkk_inaportnet if exists, else PKK
+          existingData[key] = {
+            pkk: match[1],
+            pkk_inaportnet: match[2],
+            keterangan: match[3]
+          };
         }
       }
     } catch (error) {
       // File doesn't exist yet
     }
 
+    // Determine the key to use
+    const key = pkkInaportnet || pkk;
+
     // Update or delete
     if (keterangan.trim()) {
-      existingData[data.pkk] = keterangan.trim();
+      existingData[key] = {
+        pkk: pkk,
+        pkk_inaportnet: pkkInaportnet,
+        keterangan: keterangan.trim()
+      };
     } else {
-      delete existingData[data.pkk];
+      delete existingData[key];
     }
 
-    // Write back to CSV
-    let csvContent = 'no_pkk_inaportnet,keterangan\n';
-    for (const [pkk, ket] of Object.entries(existingData).sort()) {
-      csvContent += `"${pkk}","${ket}"\n`;
+    // Write back to CSV with 3 columns
+    let csvContent = 'PKK,no_pkk_inaportnet,keterangan\n';
+    for (const [k, v] of Object.entries(existingData).sort()) {
+      csvContent += `"${v.pkk}","${v.pkk_inaportnet}","${v.keterangan}"\n`;
     }
 
     await fs.writeFile(csvPath, csvContent);
@@ -226,7 +240,8 @@ async function handleSaveKeterangan(data, headers) {
       body: JSON.stringify({
         success: true,
         message: 'Keterangan saved successfully',
-        pkk: data.pkk,
+        pkk: pkk,
+        pkk_inaportnet: pkkInaportnet,
         keterangan: keterangan,
         github_sync: githubSyncStatus,
       }),

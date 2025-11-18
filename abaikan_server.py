@@ -141,16 +141,17 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
             
-            # Get data
+            # Get data - now with both PKK and pkk_inaportnet
             pkk = data.get('pkk', '')
+            pkk_inaportnet = data.get('pkk_inaportnet', '')
             keterangan_text = data.get('keterangan', '')
             
-            if not pkk:
-                self.send_error(400, "Missing PKK")
+            if not pkk and not pkk_inaportnet:
+                self.send_error(400, "Missing PKK or pkk_inaportnet")
                 return
             
-            # Save to CSV
-            success = self.save_to_keterangan_csv(pkk, keterangan_text)
+            # Save to CSV with both references
+            success = self.save_to_keterangan_csv(pkk, pkk_inaportnet, keterangan_text)
             
             # Send response
             self.send_response(200)
@@ -162,6 +163,7 @@ class AbaikanHandler(BaseHTTPRequestHandler):
                 'success': success,
                 'message': 'Keterangan saved successfully' if success else 'Failed to save keterangan',
                 'pkk': pkk,
+                'pkk_inaportnet': pkk_inaportnet,
                 'keterangan': keterangan_text
             }
             self.wfile.write(json.dumps(response).encode('utf-8'))
@@ -170,8 +172,8 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             print(f"❌ Error saving keterangan: {str(e)}")
             self.send_error(500, f"Internal server error: {str(e)}")
     
-    def save_to_keterangan_csv(self, pkk, keterangan_text):
-        """Save keterangan to keterangan.csv"""
+    def save_to_keterangan_csv(self, pkk, pkk_inaportnet, keterangan_text):
+        """Save keterangan to keterangan.csv with 3 columns: PKK, no_pkk_inaportnet, keterangan"""
         try:
             # Ensure CSV exists
             file_exists = os.path.isfile(self.keterangan_file)
@@ -182,22 +184,36 @@ class AbaikanHandler(BaseHTTPRequestHandler):
                 with open(self.keterangan_file, 'r', encoding='utf-8') as f:
                     reader = csv.DictReader(f)
                     for row in reader:
-                        data[row['no_pkk_inaportnet']] = row['keterangan']
+                        # Use pkk_inaportnet as key if exists, else PKK
+                        key = row.get('no_pkk_inaportnet', '') or row.get('PKK', '')
+                        if key:
+                            data[key] = {
+                                'PKK': row.get('PKK', ''),
+                                'no_pkk_inaportnet': row.get('no_pkk_inaportnet', ''),
+                                'keterangan': row.get('keterangan', '')
+                            }
+            
+            # Determine the key to use
+            key = pkk_inaportnet if pkk_inaportnet else pkk
             
             # Update or delete
             if keterangan_text.strip():
-                data[pkk] = keterangan_text.strip()
+                data[key] = {
+                    'PKK': pkk,
+                    'no_pkk_inaportnet': pkk_inaportnet,
+                    'keterangan': keterangan_text.strip()
+                }
             else:
-                data.pop(pkk, None)
+                data.pop(key, None)
             
-            # Write back
+            # Write back with 3 columns
             with open(self.keterangan_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow(['no_pkk_inaportnet', 'keterangan'])
+                writer.writerow(['PKK', 'no_pkk_inaportnet', 'keterangan'])
                 for k, v in sorted(data.items()):
-                    writer.writerow([k, v])
+                    writer.writerow([v['PKK'], v['no_pkk_inaportnet'], v['keterangan']])
             
-            print(f"✅ Saved keterangan to CSV: {pkk}")
+            print(f"✅ Saved keterangan to CSV: PKK={pkk}, PKK_Inaportnet={pkk_inaportnet}")
             return True
             
         except Exception as e:
@@ -211,15 +227,18 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             if not os.path.isfile(self.keterangan_file):
                 with open(self.keterangan_file, 'w', newline='', encoding='utf-8') as f:
                     writer = csv.writer(f)
-                    writer.writerow(['no_pkk_inaportnet', 'keterangan'])
+                    writer.writerow(['PKK', 'no_pkk_inaportnet', 'keterangan'])
             
             # Read all keterangan
             data = {}
             with open(self.keterangan_file, 'r', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    if row['keterangan'].strip():
-                        data[row['no_pkk_inaportnet']] = row['keterangan']
+                    if row.get('keterangan', '').strip():
+                        # Use pkk_inaportnet as key if exists, else PKK
+                        key = row.get('no_pkk_inaportnet', '') or row.get('PKK', '')
+                        if key:
+                            data[key] = row['keterangan']
             
             # Send response
             self.send_response(200)
