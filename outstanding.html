@@ -3293,6 +3293,14 @@ function renderPelabuhanCards(data) {
             key = 'MEKARPUTIH';
         }
         
+        // === REGION BALI NUSATENGGARA ===
+        // Gabungkan ZONA KUPANG ke TENAU KUPANG
+        if (keyLower.includes('zona kupang')) {
+            key = 'TENAU KUPANG';
+        } else if (keyLower.includes('tenau kupang') || keyLower.includes('kupang')) {
+            key = 'TENAU KUPANG';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5279,6 +5287,15 @@ function renderPelabuhanCards(data) {
                         resolvedZoneLower.includes('mekar putih') ||
                         resolvedZoneLower.includes('mekarputih')) {
                         resolvedZone = 'MEKARPUTIH';
+                    }
+                    
+                    // === REGION BALI NUSATENGGARA ===
+                    // Gabungkan ZONA KUPANG ke TENAU KUPANG
+                    if (resolvedZoneLower.includes('zona kupang')) {
+                        resolvedZone = 'TENAU KUPANG';
+                    } else if (resolvedZoneLower.includes('tenau kupang') || 
+                               resolvedZoneLower.includes('kupang')) {
+                        resolvedZone = 'TENAU KUPANG';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
