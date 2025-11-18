@@ -3148,8 +3148,18 @@ function renderPelabuhanCards(data) {
         const dnRows = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.DN'));
         const lnRows = rows.filter(r => (r['no_pkk_inaportnet'] || '').includes('PKK.LN'));
 
-        const dnSpbCount = dnRows.filter(r => spbNomorPkkSet.has(r['no_pkk_inaportnet'])).length;
-        const lnSpbCount = lnRows.filter(r => spbNomorPkkSet.has(r['no_pkk_inaportnet'])).length;
+        // Count SPB: row has nomor_spb filled OR PKK is in spbNomorPkkSet
+        const dnSpbCount = dnRows.filter(r => {
+            const pkk = r['no_pkk_inaportnet'] || '';
+            const spb = (r['nomor_spb'] || '').trim();
+            return spb !== '' || spbNomorPkkSet.has(pkk);
+        }).length;
+        
+        const lnSpbCount = lnRows.filter(r => {
+            const pkk = r['no_pkk_inaportnet'] || '';
+            const spb = (r['nomor_spb'] || '').trim();
+            return spb !== '' || spbNomorPkkSet.has(pkk);
+        }).length;
 
         return { dn: dnSpbCount, ln: lnSpbCount };
     }
