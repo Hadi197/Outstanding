@@ -17,6 +17,7 @@ import sys
 class AbaikanHandler(BaseHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         self.csv_file = os.path.join(os.path.dirname(__file__), 'abai.csv')
+        self.keterangan_file = os.path.join(os.path.dirname(__file__), 'keterangan.csv')
         super().__init__(*args, **kwargs)
     
     def do_OPTIONS(self):
@@ -28,11 +29,16 @@ class AbaikanHandler(BaseHTTPRequestHandler):
         self.end_headers()
     
     def do_POST(self):
-        """Handle POST request for /api/abaikan"""
-        if self.path != '/api/abaikan':
+        """Handle POST request for /api/abaikan or /api/keterangan"""
+        if self.path == '/api/abaikan':
+            self.handle_abaikan()
+        elif self.path == '/api/keterangan':
+            self.handle_keterangan_save()
+        else:
             self.send_error(404, "Not Found")
-            return
-            
+    
+    def handle_abaikan(self):
+        """Handle abaikan request"""
         try:
             # Get request data
             content_length = int(self.headers['Content-Length'])
@@ -115,9 +121,118 @@ class AbaikanHandler(BaseHTTPRequestHandler):
             return False
     
     def do_GET(self):
-        """Handle GET request - show status"""
+        """Handle GET request - show status or get keterangan"""
         if self.path == '/api/status':
             self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            response = {'status': 'ok', 'message': 'Abaikan server is running'}
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+        elif self.path == '/api/keterangan':
+            self.handle_keterangan_get()
+        else:
+            self.send_error(404, "Not Found")
+    
+    def handle_keterangan_save(self):
+        """Handle save keterangan request"""
+        try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+            
+            # Get data
+            pkk = data.get('pkk', '')
+            keterangan_text = data.get('keterangan', '')
+            
+            if not pkk:
+                self.send_error(400, "Missing PKK")
+                return
+            
+            # Save to CSV
+            success = self.save_to_keterangan_csv(pkk, keterangan_text)
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            response = {
+                'success': success,
+                'message': 'Keterangan saved successfully' if success else 'Failed to save keterangan',
+                'pkk': pkk,
+                'keterangan': keterangan_text
+            }
+            self.wfile.write(json.dumps(response).encode('utf-8'))
+            
+        except Exception as e:
+            print(f"❌ Error saving keterangan: {str(e)}")
+            self.send_error(500, f"Internal server error: {str(e)}")
+    
+    def save_to_keterangan_csv(self, pkk, keterangan_text):
+        """Save keterangan to keterangan.csv"""
+        try:
+            # Ensure CSV exists
+            file_exists = os.path.isfile(self.keterangan_file)
+            
+            # Read existing data
+            data = {}
+            if file_exists:
+                with open(self.keterangan_file, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        data[row['no_pkk_inaportnet']] = row['keterangan']
+            
+            # Update or delete
+            if keterangan_text.strip():
+                data[pkk] = keterangan_text.strip()
+            else:
+                data.pop(pkk, None)
+            
+            # Write back
+            with open(self.keterangan_file, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(['no_pkk_inaportnet', 'keterangan'])
+                for k, v in sorted(data.items()):
+                    writer.writerow([k, v])
+            
+            print(f"✅ Saved keterangan to CSV: {pkk}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error saving to keterangan CSV: {str(e)}")
+            return False
+    
+    def handle_keterangan_get(self):
+        """Handle get all keterangan request"""
+        try:
+            # Ensure CSV exists
+            if not os.path.isfile(self.keterangan_file):
+                with open(self.keterangan_file, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['no_pkk_inaportnet', 'keterangan'])
+            
+            # Read all keterangan
+            data = {}
+            with open(self.keterangan_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row['keterangan'].strip():
+                        data[row['no_pkk_inaportnet']] = row['keterangan']
+            
+            # Send response
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            
+            self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
+            print(f"📤 Sent {len(data)} keterangan entries")
+            
+        except Exception as e:
+            print(f"❌ Error loading keterangan: {str(e)}")
+            self.send_error(500, f"Internal server error: {str(e)}")
             self.send_header('Content-Type', 'application/json')
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()

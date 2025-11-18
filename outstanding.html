@@ -2387,10 +2387,59 @@
     let globalCardData = []; // used by cards/charts (filtered by abai)
     let globalHeaders = [];
     let barChart;
+    let keteranganFromFile = {}; // Keterangan dari CSV
     
     // Dashboard filter state
     let dashboardFilterMonth = 'ALL';
     let dashboardFilterYear = 'ALL';
+
+    // Load keterangan dari keterangan.csv via fetch (baca file langsung)
+    async function loadKeteranganFromFile() {
+        try {
+            // Coba baca dari server dulu (kalau server jalan)
+            const apiUrl = getApiUrl();
+            const response = await fetch(`${apiUrl}/keterangan`);
+            if (response.ok) {
+                keteranganFromFile = await response.json();
+                console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from server`);
+                return keteranganFromFile;
+            }
+        } catch (e) {
+            // Server tidak jalan, coba baca file CSV langsung
+            console.log('ℹ️ Server offline, trying to read keterangan.csv directly...');
+        }
+        
+        // Fallback: Baca file CSV langsung (untuk production/GitHub Pages)
+        try {
+            const response = await fetch('keterangan.csv');
+            if (response.ok) {
+                const csvText = await response.text();
+                const lines = csvText.split('\n');
+                keteranganFromFile = {};
+                
+                // Skip header, parse CSV
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const match = line.match(/^"([^"]*)","([^"]*)"$/);
+                    if (match) {
+                        const pkk = match[1];
+                        const keterangan = match[2];
+                        if (pkk && keterangan) {
+                            keteranganFromFile[pkk] = keterangan;
+                        }
+                    }
+                }
+                
+                console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from CSV file`);
+            }
+        } catch (e) {
+            console.warn('⚠️ Could not load keterangan.csv:', e);
+        }
+        
+        return keteranganFromFile;
+    }
         
         // Server management functions
         let serverCheckInterval;
@@ -2617,6 +2666,9 @@
         
         // Start checking server status on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Load keterangan dari file
+            loadKeteranganFromFile();
+            
             checkServerStatus();
             // Check server status every 30 seconds
             serverCheckInterval = setInterval(checkServerStatus, 30000);
@@ -5566,6 +5618,9 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
         // Function to display zone detail data in table
         function displayZoneDetailData(data) {
             const tbody = document.getElementById('zoneDetailTableBody');
+            
+            // Store data globally for keterangan modal
+            window.currentModalData = data;
 
             tbody.innerHTML = data.map((row, index) => {
                 const pkk = row['no_pkk'] || '';
@@ -5575,25 +5630,43 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 const grt = row['GT'] || '';
                 const agen = row['PERUSAHAAN'] || row['company_name'] || '';
                 const status = getStatusFromRow(row);
+                
+                // Get existing note from localStorage
+                const existingNote = getKeteranganForPKK(pkkInaportnet);
+                const noteDisplay = existingNote ? 
+                    `<div class="text-xs text-gray-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 max-w-xs">
+                        <div class="font-semibold text-yellow-800 mb-1">📝 Keterangan:</div>
+                        <div class="break-words">${escapeHtml(existingNote)}</div>
+                     </div>` : 
+                    '<span class="text-xs text-gray-400 italic">Belum ada keterangan</span>';
 
                 return `
-                    <tr class="hover:bg-gray-50" data-row-index="${index}">
+                    <tr class="hover:bg-gray-50" data-row-index="${index}" data-pkk="${escapeHtml(pkkInaportnet)}">
                         <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">
-                            <button onclick="handleModalAbaikan('${pkkInaportnet}', this, this.closest('tr'), ${index})" 
-                                    class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
-                                Abaikan
-                            </button>
+                            <div class="flex flex-col gap-1">
+                                <button onclick="handleModalAbaikan('${escapeHtml(pkkInaportnet)}', this, this.closest('tr'), ${index})" 
+                                        class="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1 w-full">
+                                    Abaikan
+                                </button>
+                                <button onclick="showKeteranganModalByIndex(${index})" 
+                                        class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 w-full">
+                                    ${existingNote ? 'Edit Keterangan' : 'Tambah Keterangan'}
+                                </button>
+                            </div>
                         </td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${pkk}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${pkkInaportnet}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${spb}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">${namaKapal}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 text-right">${grt}</td>
-                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">${agen}</td>
-                        <td class="px-3 py-2 text-sm">
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${escapeHtml(pkk)}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${escapeHtml(pkkInaportnet)}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 font-mono">${escapeHtml(spb)}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">${escapeHtml(namaKapal)}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200 text-right">${escapeHtml(grt)}</td>
+                        <td class="px-3 py-2 text-sm text-gray-900 border-r border-gray-200">${escapeHtml(agen)}</td>
+                        <td class="px-3 py-2 text-sm border-r border-gray-200">
                             <span class="px-2 py-1 text-xs rounded-full ${getStatusBadgeClass(status)}">
                                 ${status}
                             </span>
+                        </td>
+                        <td class="px-3 py-2 text-sm">
+                            ${noteDisplay}
                         </td>
                     </tr>
                 `;
@@ -5601,6 +5674,29 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
 
             // Update data count
             document.getElementById('detailDataCount').textContent = data.length.toLocaleString();
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // New function to show keterangan modal by index
+        function showKeteranganModalByIndex(index) {
+            if (!window.currentModalData || !window.currentModalData[index]) {
+                showNotification('Error: Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            const row = window.currentModalData[index];
+            const pkk = row['no_pkk_inaportnet'] || '';
+            const namaKapal = row['NAMA KAPAL'] || row['vessel_name_spb'] || '';
+            const spb = row['nomor_spb'] || '';
+            
+            showKeteranganModal(pkk, namaKapal, spb, index);
         }
 
         // Function to get status from row data
@@ -5689,6 +5785,182 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
         function closeZoneDetailModal() {
             const modal = document.getElementById('zoneDetailModal');
             modal.classList.add('hidden');
+        }
+
+        // Keterangan Management Functions
+        const KETERANGAN_STORAGE_KEY = 'outstanding_keterangan_data';
+        let currentKeteranganPKK = '';
+        let currentKeteranganRowIndex = -1;
+
+        function getKeteranganForPKK(pkk) {
+            // Baca dari data yang sudah di-load dari server
+            return keteranganFromFile[pkk] || '';
+        }
+
+        async function saveKeteranganToPKK(pkk, keterangan) {
+            const isProduction = isProductionEnvironment();
+            
+            if (isProduction) {
+                // Production: Gunakan GitHub API via Netlify Function
+                return await saveKeteranganToGitHub(pkk, keterangan);
+            } else {
+                // Development: Gunakan local server
+                try {
+                    const apiUrl = getApiUrl();
+                    
+                    const response = await fetch(`${apiUrl}/keterangan`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            pkk: pkk,
+                            keterangan: keterangan
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        console.log(`✅ Keterangan saved to keterangan.csv via server`);
+                        
+                        // Update cache lokal
+                        if (keterangan && keterangan.trim()) {
+                            keteranganFromFile[pkk] = keterangan.trim();
+                        } else {
+                            delete keteranganFromFile[pkk];
+                        }
+                        
+                        return true;
+                    } else {
+                        throw new Error('Server error');
+                    }
+                } catch (e) {
+                    console.error('❌ Error saving keterangan:', e);
+                    showNotification('❌ Server tidak aktif! Jalankan: python3 abaikan_server.py', 'error', 5000);
+                    return false;
+                }
+            }
+        }
+        
+        async function saveKeteranganToGitHub(pkk, keterangan) {
+            try {
+                // Baca file keterangan.csv dari GitHub
+                const response = await fetch('/api/abaikan-enhanced', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: 'save_keterangan',
+                        pkk: pkk,
+                        keterangan: keterangan
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('✅ Keterangan saved to GitHub:', result);
+                    
+                    // Update cache
+                    if (keterangan && keterangan.trim()) {
+                        keteranganFromFile[pkk] = keterangan.trim();
+                    } else {
+                        delete keteranganFromFile[pkk];
+                    }
+                    
+                    return true;
+                } else {
+                    throw new Error('GitHub API error');
+                }
+            } catch (e) {
+                console.error('❌ Error saving to GitHub:', e);
+                showNotification('❌ Gagal menyimpan ke GitHub', 'error');
+                return false;
+            }
+        }
+
+        function showKeteranganModal(pkk, namaKapal, spb, rowIndex) {
+            currentKeteranganPKK = pkk;
+            currentKeteranganRowIndex = rowIndex;
+            
+            const modal = document.getElementById('keteranganModal');
+            const pkkEl = document.getElementById('keteranganPKK');
+            const kapalEl = document.getElementById('keteranganKapal');
+            const spbEl = document.getElementById('keteranganSPB');
+            const textEl = document.getElementById('keteranganText');
+            
+            pkkEl.textContent = pkk;
+            kapalEl.textContent = namaKapal || '-';
+            spbEl.textContent = spb || '-';
+            
+            // Load existing keterangan
+            const existingNote = getKeteranganForPKK(pkk);
+            textEl.value = existingNote;
+            
+            modal.classList.remove('hidden');
+            textEl.focus();
+        }
+
+        function closeKeteranganModal() {
+            const modal = document.getElementById('keteranganModal');
+            modal.classList.add('hidden');
+            currentKeteranganPKK = '';
+            currentKeteranganRowIndex = -1;
+        }
+
+        function saveKeterangan() {
+            const textEl = document.getElementById('keteranganText');
+            const keterangan = textEl.value.trim();
+            
+            if (!keterangan) {
+                showNotification('Keterangan tidak boleh kosong', 'warning');
+                return;
+            }
+            
+            if (!currentKeteranganPKK) {
+                showNotification('Error: PKK tidak ditemukan', 'error');
+                return;
+            }
+            
+            // 1. Simpan ke localStorage
+            const success = saveKeteranganToPKK(currentKeteranganPKK, keterangan);
+            
+            if (success) {
+                // 2. Update tampilan di modal (kolom keterangan)
+                const tbody = document.getElementById('zoneDetailTableBody');
+                if (tbody && currentKeteranganRowIndex >= 0) {
+                    const rows = tbody.querySelectorAll('tr');
+                    const targetRow = rows[currentKeteranganRowIndex];
+                    
+                    if (targetRow) {
+                        // Update keterangan cell (index 8)
+                        const keteranganCell = targetRow.cells[8];
+                        if (keteranganCell) {
+                            keteranganCell.innerHTML = `
+                                <div class="text-xs text-gray-700 bg-yellow-50 border border-yellow-200 rounded px-2 py-1 max-w-xs">
+                                    <div class="font-semibold text-yellow-800 mb-1">📝 Keterangan:</div>
+                                    <div class="break-words">${escapeHtml(keterangan)}</div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Update button text (index 0)
+                        const actionCell = targetRow.cells[0];
+                        if (actionCell) {
+                            const keteranganBtn = actionCell.querySelectorAll('button')[1];
+                            if (keteranganBtn) {
+                                keteranganBtn.textContent = 'Edit Keterangan';
+                            }
+                        }
+                    }
+                }
+                
+                // 3. Tutup modal & show notification
+                showNotification('✅ Keterangan tersimpan di keterangan.csv', 'success');
+                closeKeteranganModal();
+            } else {
+                showNotification('Gagal menyimpan keterangan', 'error');
+            }
         }
 
         // Function to export zone detail data to Excel
@@ -5922,7 +6194,8 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                                 <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider border-r border-blue-500">Nama Kapal</th>
                                 <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider border-r border-blue-500">GRT</th>
                                 <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider border-r border-blue-500">Agen</th>
-                                <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Status</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider border-r border-blue-500">Status</th>
+                                <th class="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider">Keterangan</th>
                             </tr>
                         </thead>
                         <tbody id="zoneDetailTableBody" class="divide-y divide-gray-200">
@@ -5962,6 +6235,72 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                             Tutup
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Keterangan -->
+    <div id="keteranganModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden" style="z-index: 70;">
+        <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-2xl shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        Tambah Keterangan
+                    </h3>
+                    <button onclick="closeKeteranganModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Info -->
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div class="text-sm">
+                        <div class="font-semibold text-blue-900 mb-1">Data Outstanding:</div>
+                        <div class="text-blue-700">
+                            <span class="font-medium">PKK:</span> <span id="keteranganPKK" class="font-mono"></span>
+                        </div>
+                        <div class="text-blue-700">
+                            <span class="font-medium">Kapal:</span> <span id="keteranganKapal"></span>
+                        </div>
+                        <div class="text-blue-700">
+                            <span class="font-medium">SPB:</span> <span id="keteranganSPB" class="font-mono"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div class="mb-4">
+                    <label for="keteranganText" class="block text-sm font-medium text-gray-700 mb-2">
+                        Keterangan <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="keteranganText" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              placeholder="Masukkan keterangan untuk data outstanding ini..."></textarea>
+                    <div class="mt-1 text-xs text-gray-500">
+                        Contoh: "Sedang dalam proses verifikasi", "Menunggu dokumen dari agen", dll.
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                    <button onclick="closeKeteranganModal()" 
+                            class="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-md transition-colors">
+                        Batal
+                    </button>
+                    <button onclick="saveKeterangan()" 
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Simpan Keterangan
+                    </button>
                 </div>
             </div>
         </div>
