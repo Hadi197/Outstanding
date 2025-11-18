@@ -57,18 +57,24 @@ exports.handler = async (event, context) => {
   if (event.httpMethod === 'POST') {
     try {
       const data = JSON.parse(event.body);
+      console.log('📨 POST request received:', JSON.stringify(data));
       
-      // Handle keterangan action
+      // Handle keterangan action FIRST - must return immediately
       if (data.action === 'save_keterangan') {
+        console.log('🔀 Routing to handleSaveKeterangan');
         return await handleSaveKeterangan(data, headers);
       }
       
-      // Handle abaikan (original logic)
+      // Handle abaikan (original logic) - only if not keterangan
+      console.log('🔀 Routing to abaikan handler');
       if (!data.no_pkk_inaportnet) {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ error: 'Missing no_pkk_inaportnet' }),
+          body: JSON.stringify({ 
+            error: 'Missing no_pkk_inaportnet',
+            debug: 'Required field not provided'
+          }),
         };
       }
 
