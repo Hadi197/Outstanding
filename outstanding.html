@@ -3301,6 +3301,27 @@ function renderPelabuhanCards(data) {
             key = 'TENAU KUPANG';
         }
         
+        // Gabungkan ZONA LEMBAR ke LEMBAR
+        if (keyLower.includes('zona lembar')) {
+            key = 'LEMBAR';
+        } else if (keyLower.includes('lembar')) {
+            key = 'LEMBAR';
+        }
+        
+        // Gabungkan ZONA BENOA ke BENOA
+        if (keyLower.includes('zona benoa')) {
+            key = 'BENOA';
+        } else if (keyLower.includes('benoa')) {
+            key = 'BENOA';
+        }
+        
+        // Gabungkan ZONA UMUM CELUKAN BAWANG ke CELUKAN BAWANG
+        if (keyLower.includes('zona umum celukan bawang') || keyLower.includes('zona celukan bawang')) {
+            key = 'CELUKAN BAWANG';
+        } else if (keyLower.includes('celukan bawang')) {
+            key = 'CELUKAN BAWANG';
+        }
+        
         if (!zoneGroups[key]) zoneGroups[key] = [];
         zoneGroups[key].push(row);
     });
@@ -5296,6 +5317,28 @@ function renderPelabuhanCards(data) {
                     } else if (resolvedZoneLower.includes('tenau kupang') || 
                                resolvedZoneLower.includes('kupang')) {
                         resolvedZone = 'TENAU KUPANG';
+                    }
+                    
+                    // Gabungkan ZONA LEMBAR ke LEMBAR
+                    if (resolvedZoneLower.includes('zona lembar')) {
+                        resolvedZone = 'LEMBAR';
+                    } else if (resolvedZoneLower.includes('lembar')) {
+                        resolvedZone = 'LEMBAR';
+                    }
+                    
+                    // Gabungkan ZONA BENOA ke BENOA
+                    if (resolvedZoneLower.includes('zona benoa')) {
+                        resolvedZone = 'BENOA';
+                    } else if (resolvedZoneLower.includes('benoa')) {
+                        resolvedZone = 'BENOA';
+                    }
+                    
+                    // Gabungkan ZONA UMUM CELUKAN BAWANG ke CELUKAN BAWANG
+                    if (resolvedZoneLower.includes('zona umum celukan bawang') || 
+                        resolvedZoneLower.includes('zona celukan bawang')) {
+                        resolvedZone = 'CELUKAN BAWANG';
+                    } else if (resolvedZoneLower.includes('celukan bawang')) {
+                        resolvedZone = 'CELUKAN BAWANG';
                     }
                     
                     // Use exact zone matching (same as dashboard grouping)
