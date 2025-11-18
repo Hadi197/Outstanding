@@ -2396,20 +2396,51 @@
     // Load keterangan dari keterangan.csv via fetch (baca file langsung)
     async function loadKeteranganFromFile() {
         try {
-            // Coba baca dari server dulu (kalau server jalan)
-            const apiUrl = getApiUrl();
-            const response = await fetch(`${apiUrl}/keterangan`);
-            if (response.ok) {
-                keteranganFromFile = await response.json();
-                console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from server`);
-                return keteranganFromFile;
+            const isProduction = isProductionEnvironment();
+            
+            if (isProduction) {
+                // Production: Load from GitHub via Netlify Function
+                console.log('🌐 Loading keterangan from production (Netlify/GitHub)...');
+                const response = await fetch('keterangan.csv');
+                if (response.ok) {
+                    const csvText = await response.text();
+                    const lines = csvText.split('\n');
+                    keteranganFromFile = {};
+                    
+                    // Skip header, parse CSV
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+                        
+                        const match = line.match(/^"([^"]*)","([^"]*)"$/);
+                        if (match) {
+                            const pkk = match[1];
+                            const keterangan = match[2];
+                            if (pkk && keterangan) {
+                                keteranganFromFile[pkk] = keterangan;
+                            }
+                        }
+                    }
+                    
+                    console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from production CSV`);
+                    return keteranganFromFile;
+                }
+            } else {
+                // Development: Try local server first
+                console.log('🔧 Loading keterangan from local server...');
+                const apiUrl = getApiUrl();
+                const response = await fetch(`${apiUrl}/keterangan`);
+                if (response.ok) {
+                    keteranganFromFile = await response.json();
+                    console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from local server`);
+                    return keteranganFromFile;
+                }
             }
         } catch (e) {
-            // Server tidak jalan, coba baca file CSV langsung
-            console.log('ℹ️ Server offline, trying to read keterangan.csv directly...');
+            console.warn('⚠️ Could not load keterangan:', e);
         }
         
-        // Fallback: Baca file CSV langsung (untuk production/GitHub Pages)
+        // Fallback: Try to read CSV file directly
         try {
             const response = await fetch('keterangan.csv');
             if (response.ok) {
@@ -2432,10 +2463,10 @@
                     }
                 }
                 
-                console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from CSV file`);
+                console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from fallback CSV`);
             }
         } catch (e) {
-            console.warn('⚠️ Could not load keterangan.csv:', e);
+            console.warn('⚠️ Could not load keterangan.csv from fallback:', e);
         }
         
         return keteranganFromFile;
@@ -5865,12 +5896,17 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 if (response.ok) {
                     console.log('✅ Keterangan saved to GitHub:', result);
                     
-                    // Update cache
+                    // Update cache immediately
                     if (keterangan && keterangan.trim()) {
                         keteranganFromFile[pkk] = keterangan.trim();
                     } else {
                         delete keteranganFromFile[pkk];
                     }
+                    
+                    // Reload keterangan from file after a short delay to ensure GitHub sync is complete
+                    setTimeout(() => {
+                        loadKeteranganFromFile();
+                    }, 2000);
                     
                     return true;
                 } else {
