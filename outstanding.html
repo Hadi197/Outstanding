@@ -2400,9 +2400,37 @@
             const isProduction = isProductionEnvironment();
             
             if (isProduction) {
-                // Production: Load from GitHub via Netlify Function
-                console.log('🌐 Loading keterangan from production (Netlify/GitHub)...');
-                const response = await fetch('keterangan.csv');
+                // Production: Load DIRECTLY from GitHub via Netlify Function (bypass static file cache!)
+                console.log('🌐 Loading keterangan from GitHub via Netlify Function...');
+                try {
+                    const response = await fetch('/api/abaikan-enhanced', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: 'get_keterangan'
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        keteranganFromFile = await response.json();
+                        console.log(`✅ Loaded ${Object.keys(keteranganFromFile).length} keterangan from GitHub`);
+                        return keteranganFromFile;
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Failed to load from Netlify Function, trying static file...', error);
+                }
+                
+                // Fallback to static file with cache busting
+                const cacheBuster = new Date().getTime();
+                const response = await fetch(`keterangan.csv?_=${cacheBuster}`, {
+                    cache: 'no-store', // Force fresh fetch, bypass browser cache
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 if (response.ok) {
                     const csvText = await response.text();
                     const lines = csvText.split('\n');
@@ -2421,10 +2449,9 @@
                             const keterangan = match[3];
                             
                             // Store by primary key (no_pkk_inaportnet if exists, otherwise PKK)
-                            if (pkkInaportnet && keterangan) {
-                                keteranganFromFile[pkkInaportnet] = keterangan;
-                            } else if (pkk && keterangan) {
-                                keteranganFromFile[pkk] = keterangan;
+                            const key = pkkInaportnet || pkk;
+                            if (key && keterangan) {
+                                keteranganFromFile[key] = keterangan;
                             }
                         }
                     }
@@ -2447,9 +2474,16 @@
             console.warn('⚠️ Could not load keterangan:', e);
         }
         
-        // Fallback: Try to read CSV file directly
+        // Fallback: Try to read CSV file directly with cache busting
         try {
-            const response = await fetch('keterangan.csv');
+            const cacheBuster = new Date().getTime();
+            const response = await fetch(`keterangan.csv?_=${cacheBuster}`, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache',
+                    'Pragma': 'no-cache'
+                }
+            });
             if (response.ok) {
                 const csvText = await response.text();
                 const lines = csvText.split('\n');
@@ -2468,10 +2502,9 @@
                         const keterangan = match[3];
                         
                         // Store by primary key (no_pkk_inaportnet if exists, otherwise PKK)
-                        if (pkkInaportnet && keterangan) {
-                            keteranganFromFile[pkkInaportnet] = keterangan;
-                        } else if (pkk && keterangan) {
-                            keteranganFromFile[pkk] = keterangan;
+                        const key = pkkInaportnet || pkk;
+                        if (key && keterangan) {
+                            keteranganFromFile[key] = keterangan;
                         }
                     }
                 }
@@ -5922,10 +5955,11 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                         delete keteranganFromFile[key];
                     }
                     
-                    // Reload keterangan from file after a short delay to ensure GitHub sync is complete
-                    setTimeout(() => {
-                        loadKeteranganFromFile();
-                    }, 2000);
+                    // Reload keterangan directly from GitHub (bypassing static file cache)
+                    setTimeout(async () => {
+                        console.log('🔄 Reloading keterangan from GitHub...');
+                        await loadKeteranganFromFile();
+                    }, 1000);
                     
                     return true;
                 } else {
@@ -5969,7 +6003,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
             currentKeteranganRowIndex = -1;
         }
 
-        function saveKeterangan() {
+        async function saveKeterangan() {
             const textEl = document.getElementById('keteranganText');
             const keterangan = textEl.value.trim();
             
@@ -5983,8 +6017,11 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 return;
             }
             
-            // 1. Simpan ke localStorage
-            const success = saveKeteranganToPKK(currentKeteranganPKK, currentKeteranganPKKInaportnet, keterangan);
+            // Show loading state
+            showNotification('⏳ Menyimpan keterangan...', 'info', 2000);
+            
+            // 1. Simpan ke server/GitHub (with await!)
+            const success = await saveKeteranganToPKK(currentKeteranganPKK, currentKeteranganPKKInaportnet, keterangan);
             
             if (success) {
                 // 2. Update tampilan di modal (kolom keterangan)
@@ -6020,7 +6057,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 showNotification('✅ Keterangan tersimpan di keterangan.csv', 'success');
                 closeKeteranganModal();
             } else {
-                showNotification('Gagal menyimpan keterangan', 'error');
+                showNotification('❌ Gagal menyimpan keterangan', 'error');
             }
         }
 

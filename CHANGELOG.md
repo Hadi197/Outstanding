@@ -1,5 +1,106 @@
 # Changelog - Outstanding Dashboard
 
+## [2025-11-22] - Critical Bugfix: Keterangan Data Persistence
+
+### 🐛 Bug Fixed
+**Issue**: User-reported bug where keterangan (notes) data disappeared after browser refresh.
+
+**Root Causes Identified:**
+1. **Missing `await` in saveKeterangan function** (Line ~5987)
+   - Function called async `saveKeteranganToPKK()` without await
+   - Variable `success` always evaluated to `true` (Promise object)
+   - Data save not completed before UI update
+   
+2. **Production cache issue**
+   - Production site loaded `keterangan.csv` from static files (cached)
+   - Static files not updated until Netlify redeploy
+   - GitHub data saved correctly but not reflected in UI
+
+**Solutions Implemented:**
+
+### 1. Fixed Missing Await
+```javascript
+// BEFORE (WRONG):
+function saveKeterangan() {
+    const success = saveKeteranganToPKK(...);
+    if (success) { ... }
+}
+
+// AFTER (CORRECT):
+async function saveKeterangan() {
+    const success = await saveKeteranganToPKK(...);
+    if (success) { ... }
+}
+```
+
+### 2. GitHub Direct-Read Implementation
+- **New Netlify Function Action**: `get_keterangan`
+- Reads keterangan.csv **directly from GitHub** (bypassing static file cache)
+- Returns fresh data every time
+
+**Backend Changes (`netlify/functions/abaikan-enhanced.js`):**
+```javascript
+// New handler added
+if (data.action === 'get_keterangan') {
+  return await handleGetKeterangan(headers);
+}
+
+async function handleGetKeterangan(headers) {
+  // Read from GitHub API using Octokit
+  const { data } = await octokit.rest.repos.getContent({
+    owner: GITHUB_REPO.split('/')[0],
+    repo: GITHUB_REPO.split('/')[1],
+    path: 'keterangan.csv',
+  });
+  // Parse and return JSON
+}
+```
+
+**Frontend Changes (`outstanding.html`):**
+```javascript
+async function loadKeteranganFromFile() {
+  if (isProduction) {
+    // NEW: Call Netlify function to get fresh data from GitHub
+    const response = await fetch('/api/abaikan-enhanced', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'get_keterangan' })
+    });
+    keteranganFromFile = await response.json();
+    
+    // FALLBACK: Static file with cache-busting if function fails
+    const cacheBuster = new Date().getTime();
+    fetch(`keterangan.csv?_=${cacheBuster}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache' }
+    });
+  }
+}
+```
+
+### 3. Additional Improvements
+- Added cache-busting parameters (`?_=timestamp`)
+- Added `cache: 'no-store'` fetch option
+- Added auto-reload after save with 1-second delay
+- Improved loading notification ("⏳ Menyimpan keterangan...")
+
+---
+
+### 📋 Impact
+- ✅ Keterangan data now persists correctly after save
+- ✅ Browser refresh loads latest data from GitHub
+- ✅ No more data loss complaints from users
+- ✅ Production site always shows fresh data (no redeploy needed)
+
+---
+
+### 🔍 Testing Notes
+1. Save keterangan → should see "⏳ Menyimpan keterangan..."
+2. Save completes → should see "✅ Keterangan tersimpan"
+3. Refresh browser → keterangan should still be visible
+4. Check browser console → should see "Loaded X keterangan from GitHub"
+
+---
+
 ## [2025-11-18] - Update Keterangan System & UI Improvements
 
 ### 🎯 Summary

@@ -59,7 +59,13 @@ exports.handler = async (event, context) => {
       const data = JSON.parse(event.body);
       console.log('📨 POST request received:', JSON.stringify(data));
       
-      // Handle keterangan action FIRST - must return immediately
+      // Handle keterangan GET action - read from GitHub
+      if (data.action === 'get_keterangan') {
+        console.log('🔀 Routing to handleGetKeterangan');
+        return await handleGetKeterangan(headers);
+      }
+      
+      // Handle keterangan SAVE action - must return immediately
       if (data.action === 'save_keterangan') {
         console.log('🔀 Routing to handleSaveKeterangan');
         return await handleSaveKeterangan(data, headers);
@@ -156,6 +162,103 @@ exports.handler = async (event, context) => {
     body: JSON.stringify({ error: 'Method not allowed' }),
   };
 };
+
+// Handler to GET keterangan directly from GitHub (bypass static file cache)
+async function handleGetKeterangan(headers) {
+  try {
+    console.log('📖 handleGetKeterangan: Reading from GitHub...');
+    
+    if (!GITHUB_TOKEN) {
+      // Fallback to local /tmp if no GitHub token
+      const csvPath = path.join('/tmp', 'keterangan.csv');
+      try {
+        const csvContent = await fs.readFile(csvPath, 'utf8');
+        const lines = csvContent.split('\n');
+        const keteranganData = {};
+        
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const match = line.match(/^"([^"]*)","([^"]*)","([^"]*)"$/);
+          if (match) {
+            const key = match[2] || match[1];
+            keteranganData[key] = match[3];
+          }
+        }
+        
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify(keteranganData),
+        };
+      } catch (error) {
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({}), // Empty object if file doesn't exist
+        };
+      }
+    }
+    
+    // Read directly from GitHub
+    const { Octokit } = require('@octokit/rest');
+    const octokit = new Octokit({ auth: GITHUB_TOKEN });
+    
+    try {
+      const { data } = await octokit.rest.repos.getContent({
+        owner: GITHUB_REPO.split('/')[0],
+        repo: GITHUB_REPO.split('/')[1],
+        path: 'keterangan.csv',
+      });
+      
+      // Decode base64 content
+      const csvContent = Buffer.from(data.content, 'base64').toString('utf8');
+      const lines = csvContent.split('\n');
+      const keteranganData = {};
+      
+      // Parse CSV (3 columns: PKK, no_pkk_inaportnet, keterangan)
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const match = line.match(/^"([^"]*)","([^"]*)","([^"]*)"$/);
+        if (match) {
+          const key = match[2] || match[1]; // Use pkk_inaportnet if exists, else PKK
+          keteranganData[key] = match[3];
+        }
+      }
+      
+      console.log(`✅ Loaded ${Object.keys(keteranganData).length} keterangan from GitHub`);
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(keteranganData),
+      };
+      
+    } catch (error) {
+      if (error.status === 404) {
+        // File doesn't exist yet
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({}),
+        };
+      }
+      throw error;
+    }
+    
+  } catch (error) {
+    console.error('❌ Error in handleGetKeterangan:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ 
+        error: error.message,
+        stack: error.stack 
+      }),
+    };
+  }
+}
 
 // Handle save keterangan
 async function handleSaveKeterangan(data, headers) {
