@@ -5727,7 +5727,7 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                                     Abaikan
                                 </button>
                                 <button onclick="showKeteranganModalByIndex(${index})" 
-                                        class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 w-full">
+                                        class="px-3 py-1 ${existingNote ? 'bg-green-500 hover:bg-green-600 focus:ring-green-500' : 'bg-blue-500 hover:bg-blue-600 focus:ring-blue-500'} text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 w-full">
                                     ${existingNote ? 'Edit Keterangan' : 'Tambah Keterangan'}
                                 </button>
                             </div>
@@ -6042,12 +6042,14 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                             `;
                         }
                         
-                        // Update button text (index 0)
+                        // Update button text and color (index 0)
                         const actionCell = targetRow.cells[0];
                         if (actionCell) {
                             const keteranganBtn = actionCell.querySelectorAll('button')[1];
                             if (keteranganBtn) {
                                 keteranganBtn.textContent = 'Edit Keterangan';
+                                // Change button color to green
+                                keteranganBtn.className = 'px-3 py-1 bg-green-500 hover:bg-green-600 text-white text-xs font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 w-full';
                             }
                         }
                     }
