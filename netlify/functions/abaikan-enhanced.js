@@ -324,17 +324,34 @@ async function handleSaveKeterangan(data, headers) {
     }
 
     await fs.writeFile(csvPath, csvContent);
+    console.log(`💾 Saved to /tmp/keterangan.csv (${Object.keys(existingData).length} entries)`);
 
-    // Optional: Sync to GitHub
+    // Sync to GitHub - CRITICAL for persistence!
     let githubSyncStatus = 'disabled';
     if (GITHUB_TOKEN) {
       try {
+        console.log('🔄 Syncing to GitHub...');
         await syncKeteranganToGitHub(csvContent);
         githubSyncStatus = 'success';
+        console.log('✅ GitHub sync successful');
       } catch (error) {
-        console.error('GitHub sync failed:', error);
+        console.error('❌ GitHub sync failed:', error.message);
         githubSyncStatus = 'failed';
+        // Return error if GitHub sync fails - data won't persist!
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({
+            success: false,
+            error: 'GitHub sync failed - data not persisted',
+            message: error.message,
+            github_sync: 'failed',
+          }),
+        };
       }
+    } else {
+      console.warn('⚠️ GITHUB_TOKEN not set - data will not persist after function restart!');
+      githubSyncStatus = 'no_token';
     }
 
     return {
@@ -347,6 +364,7 @@ async function handleSaveKeterangan(data, headers) {
         pkk_inaportnet: pkkInaportnet,
         keterangan: keterangan,
         github_sync: githubSyncStatus,
+        warning: githubSyncStatus === 'no_token' ? 'GITHUB_TOKEN not set - data not persisted to GitHub!' : null,
       }),
     };
 

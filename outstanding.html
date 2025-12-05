@@ -5904,11 +5904,12 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                         const result = await response.json();
                         console.log(`✅ Keterangan saved to keterangan.csv via server`);
                         
-                        // Update cache lokal
+                        // Update cache lokal - use pkkInaportnet if available, else pkk (same as production)
+                        const key = pkkInaportnet || pkk;
                         if (keterangan && keterangan.trim()) {
-                            keteranganFromFile[pkk] = keterangan.trim();
+                            keteranganFromFile[key] = keterangan.trim();
                         } else {
-                            delete keteranganFromFile[pkk];
+                            delete keteranganFromFile[key];
                         }
                         
                         return true;
@@ -5946,6 +5947,14 @@ function renderPelabuhanCards(data, filterMonth = 'ALL', filterYear = 'ALL') {
                 
                 if (response.ok) {
                     console.log('✅ Keterangan saved to GitHub:', result);
+                    
+                    // Check GitHub sync status
+                    if (result.github_sync === 'no_token') {
+                        console.warn('⚠️ WARNING: GITHUB_TOKEN not set - data saved to /tmp only (will be lost on redeploy!)');
+                        showNotification('⚠️ WARNING: Data tersimpan tapi tidak persist! Set GITHUB_TOKEN di Netlify.', 'warning', 5000);
+                    } else if (result.github_sync === 'success') {
+                        console.log('✅ Data persisted to GitHub successfully');
+                    }
                     
                     // Update cache immediately - use pkkInaportnet if available, else pkk
                     const key = pkkInaportnet || pkk;
