@@ -6,6 +6,7 @@ import asyncio
 import aiohttp
 from concurrent.futures import ThreadPoolExecutor
 import time
+import os
 
 # tolerant mapping: list of possible source names (prioritized) for each output column
 CANDIDATES = {
